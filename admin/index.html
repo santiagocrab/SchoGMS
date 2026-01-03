@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <!-- Favicon icon -->
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/logo.png">
+    <title> Scholarship and Grants Management System | SchoGMS </title>
+    <!-- Custom CSS -->
+    <link href="../dist/css/style.min.css" rel="stylesheet">
+    <!-- Bootstrap CDN Fallback -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- Basic inline styles as fallback -->
+    <style>
+        .preloader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .lds-ripple { display: inline-block; position: relative; width: 80px; height: 80px; }
+        .lds-ripple div { position: absolute; border: 4px solid #5f76e8; opacity: 1; border-radius: 50%; animation: lds-ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite; }
+        .lds-ripple div:nth-child(2) { animation-delay: -0.5s; }
+        @keyframes lds-ripple { 0% { top: 36px; left: 36px; width: 0; height: 0; opacity: 1; } 100% { top: 0px; left: 0px; width: 72px; height: 72px; opacity: 0; } }
+        .auth-wrapper { min-height: 100vh; padding: 20px; }
+        .auth-box { max-width: 500px; margin: 0 auto; }
+    </style>
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+<link rel="manifest" href="manifest.json">
+    
+</head>
+
+<body>
+    <div class="main-wrapper">
+        <!-- ============================================================== -->
+        <!-- Preloader - style you can find in spinners.css -->
+        <!-- ============================================================== -->
+        <div class="preloader">
+            <div class="lds-ripple">
+                <div class="lds-pos"></div>
+                <div class="lds-pos"></div>
+            </div>
+        </div>
+        <!-- ============================================================== -->
+        <!-- Preloader - style you can find in spinners.css -->
+        <!-- ============================================================== -->
+        <!-- ============================================================== -->
+        <!-- Login box.scss -->
+        <!-- ============================================================== -->
+        <div class="auth-wrapper d-flex no-block justify-content-center align-items-center position-relative"
+            style="background:url(../assets/images/) no-repeat center center;">
+            <div class="auth-box row">
+                <!-- <div class="col-lg-7 col-md-5 modal-bg-img" style="background-image: url(../assets/images/logo.png);height:5px;"> -->
+                </div>
+                <div class="col-lg-5 col-md-7 bg-white">
+                    <div class="p-3">
+                        <!-- <div class="text-center">
+                            <img src="../assets/images/big/icon.png" alt="wrapkit">
+                        </div> -->
+                        <img src="../assets/images/logo.png" style="height: auto; width: 100%;" alt="homepage" class="dark-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <h2 class="text-center" style="display:none;">SchoGMS</h2>
+                               
+                        <p class="text-center">Admin | Login</p>
+                        
+                        <!-- Error Message Display -->
+                        <div id="error-message" style="display: none;" class="alert alert-danger text-center">
+                            <span id="error-text"></span>
+                        </div>
+                        
+                        <form class="mt-4" action="login.php" method="post" id="loginForm">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <div class="form-group">
+                                        <label class="text-dark" for="uname">Username</label>
+                                        <input class="form-control" id="uname" name="username" type="text"
+                                            placeholder="enter your username" required>
+                                    </div>
+                                </div>
+                                <div class="col-lg-12">
+                                    <div class="form-group">
+                                        <label class="text-dark" for="pwd">Password</label>
+                                        <input class="form-control" id="pwd" name="password" type="password"
+                                            placeholder="enter your password" required>
+                                    </div>
+                                </div>
+                                <div class="col-lg-12 text-center">
+                                    <button type="submit" class="btn btn-block btn-dark">Sign In</button>
+                                </div>
+                                <div class="col-lg-12 text-center mt-5">
+                                    <!-- Don't have an account? <a href="#" class="text-danger">Sign Up</a> -->
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ============================================================== -->
+        <!-- Login box.scss -->
+        <!-- ============================================================== -->
+    </div>
+    <!-- ============================================================== -->
+    <!-- All Required js -->
+    <!-- ============================================================== -->
+    <!-- jQuery CDN -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <!-- Popper.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+    <!-- Bootstrap JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js" integrity="sha384-fbbOQedDUMZZ9KrtV6tG2PIvEixdJ8qVh8q5Vq6Q8ZSzg==" crossorigin="anonymous"></script>
+    <!-- Fallback to local files if CDN fails -->
+    <script>
+        if (typeof jQuery === 'undefined') {
+            document.write('<script src="../assets/libs/jquery/dist/jquery.min.js"><\/script>');
+        }
+    </script>
+    <!-- ============================================================== -->
+    <!-- This page plugin js -->
+    <!-- ============================================================== -->
+    <script>
+        $(".preloader ").fadeOut();
+        
+        // Check for error messages in URL parameters
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+        
+        // Check if there's an error message
+        var errorMsg = getUrlParameter('error');
+        if (errorMsg) {
+            document.getElementById('error-text').textContent = errorMsg;
+            document.getElementById('error-message').style.display = 'block';
+        }
+        
+        // Form validation
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            var username = document.getElementById('uname').value.trim();
+            var password = document.getElementById('pwd').value;
+            
+            if (!username || !password) {
+                e.preventDefault();
+                document.getElementById('error-text').textContent = 'Please enter both username and password';
+                document.getElementById('error-message').style.display = 'block';
+                return false;
+            }
+        });
+    </script>
+    <footer>
+        
+ 
+     <script>
+if(navigator.serviceWorker) { // Ensure this path is correct
+    navigator.serviceWorker.register('serviceWorker-sw.js') 
+}
+</script>
+    </footer>
+</body>
+
+</html>
