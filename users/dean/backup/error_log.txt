@@ -1,0 +1,5 @@
+[20-Feb-2025 01:05:03 Europe/Berlin] PHP Warning:  Undefined array key "course_program_enrolled" in C:\xampp\htdocs\schoGMS\users\dean\submit_chair.php on line 38
+[20-Feb-2025 01:05:03 Europe/Berlin] PHP Deprecated:  trim(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\schoGMS\users\dean\submit_chair.php on line 38
+[20-Feb-2025 01:08:39 Europe/Berlin] PHP Warning:  Undefined array key "course_program_enrolled" in C:\xampp\htdocs\schoGMS\users\dean\submit_chair.php on line 37
+[20-Feb-2025 01:08:39 Europe/Berlin] PHP Deprecated:  trim(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\schoGMS\users\dean\submit_chair.php on line 37
+[20-Feb-2025 01:28:31 Europe/Berlin] PHP Warning:  Undefined variable $fileGroup in C:\xampp\htdocs\schoGMS\users\dean\submit_chair.php on line 107

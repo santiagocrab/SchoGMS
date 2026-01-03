@@ -1,0 +1,25 @@
+[20-Feb-2025 01:05:03 Europe/Berlin] PHP Warning:  Undefined array key "course_program_enrolled" in C:\xampp\htdocs\schoGMS\users\dean\submit_chair.php on line 38
+[20-Feb-2025 01:05:03 Europe/Berlin] PHP Deprecated:  trim(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\schoGMS\users\dean\submit_chair.php on line 38
+[20-Feb-2025 01:08:39 Europe/Berlin] PHP Warning:  Undefined array key "course_program_enrolled" in C:\xampp\htdocs\schoGMS\users\dean\submit_chair.php on line 37
+[20-Feb-2025 01:08:39 Europe/Berlin] PHP Deprecated:  trim(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\schoGMS\users\dean\submit_chair.php on line 37
+[20-Feb-2025 01:28:31 Europe/Berlin] PHP Warning:  Undefined variable $fileGroup in C:\xampp\htdocs\schoGMS\users\dean\submit_chair.php on line 107
+[24-Feb-2025 17:49:39 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Duplicate entry 'riveracjjanjan6@gmail.com' for key 'email' in /home/u957444413/domains/schogms.cloudhost.host/public_html/SchoGMS/users/director/submit_chair.php:65
+Stack trace:
+#0 /home/u957444413/domains/schogms.cloudhost.host/public_html/SchoGMS/users/director/submit_chair.php(65): mysqli_stmt->execute()
+#1 {main}
+  thrown in /home/u957444413/domains/schogms.cloudhost.host/public_html/SchoGMS/users/director/submit_chair.php on line 65
+[20-Mar-2025 04:01:28 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Duplicate entry 'florlynmaeremegio@sksu.edu.ph' for key 'email' in /home/u957444413/domains/schogms.cloudhost.host/public_html/SchoGMS/users/director/submit_chair.php:65
+Stack trace:
+#0 /home/u957444413/domains/schogms.cloudhost.host/public_html/SchoGMS/users/director/submit_chair.php(65): mysqli_stmt->execute()
+#1 {main}
+  thrown in /home/u957444413/domains/schogms.cloudhost.host/public_html/SchoGMS/users/director/submit_chair.php on line 65
+[20-Mar-2025 04:01:40 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Duplicate entry 'florlynmaeremegio@sksu.edu.ph' for key 'email' in /home/u957444413/domains/schogms.cloudhost.host/public_html/SchoGMS/users/director/submit_chair.php:65
+Stack trace:
+#0 /home/u957444413/domains/schogms.cloudhost.host/public_html/SchoGMS/users/director/submit_chair.php(65): mysqli_stmt->execute()
+#1 {main}
+  thrown in /home/u957444413/domains/schogms.cloudhost.host/public_html/SchoGMS/users/director/submit_chair.php on line 65
+[20-Mar-2025 04:01:47 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Duplicate entry 'florlynmaeremegio@sksu.edu.ph' for key 'email' in /home/u957444413/domains/schogms.cloudhost.host/public_html/SchoGMS/users/director/submit_chair.php:65
+Stack trace:
+#0 /home/u957444413/domains/schogms.cloudhost.host/public_html/SchoGMS/users/director/submit_chair.php(65): mysqli_stmt->execute()
+#1 {main}
+  thrown in /home/u957444413/domains/schogms.cloudhost.host/public_html/SchoGMS/users/director/submit_chair.php on line 65

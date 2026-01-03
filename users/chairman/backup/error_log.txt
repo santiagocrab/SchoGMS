@@ -1,0 +1,23 @@
+[02-Feb-2025 01:09:10 Europe/Berlin] PHP Warning:  Undefined array key "file-group" in C:\xampp\htdocs\schoGMS\users\registrar\submit_master_list.php on line 25
+[2025-02-02 01:09:12] Failed to prepare SQL statement: Unknown column 'file_group' in 'field list'
+[02-Feb-2025 01:10:29 Europe/Berlin] PHP Warning:  Undefined array key "file-group" in C:\xampp\htdocs\schoGMS\users\registrar\submit_master_list.php on line 25
+[05-Feb-2025 12:24:54 UTC] PHP Deprecated:  Constant FILTER_SANITIZE_STRING is deprecated in /home/u957444413/domains/schogms.cloudhost.host/public_html/SchoGMS/users/registrar/submit_master_list.php on line 26
+[07-Feb-2025 04:28:34 Europe/Berlin] PHP Deprecated:  Constant FILTER_SANITIZE_STRING is deprecated in C:\xampp\htdocs\schoGMS\users\chairman\submit_master_list.php on line 26
+[07-Feb-2025 04:28:47 Europe/Berlin] PHP Deprecated:  Constant FILTER_SANITIZE_STRING is deprecated in C:\xampp\htdocs\schoGMS\users\chairman\submit_master_list.php on line 26
+[2025-02-07 04:28:48] Error processing file: Duplicate entry '28457' for key 'id_number'
+[07-Feb-2025 05:47:27 Europe/Berlin] PHP Deprecated:  Constant FILTER_SANITIZE_STRING is deprecated in C:\xampp\htdocs\schoGMS\users\chairman\submit_master_list.php on line 26
+[2025-02-07 05:47:28] Error processing file: Duplicate entry '28457' for key 'id_number'
+[07-Feb-2025 06:01:43 Europe/Berlin] PHP Deprecated:  Constant FILTER_SANITIZE_STRING is deprecated in C:\xampp\htdocs\schoGMS\users\chairman\submit_master_list.php on line 26
+[07-Feb-2025 06:03:45 Europe/Berlin] PHP Deprecated:  Constant FILTER_SANITIZE_STRING is deprecated in C:\xampp\htdocs\schoGMS\users\chairman\submit_master_list.php on line 26
+[07-Feb-2025 06:13:42 Europe/Berlin] PHP Deprecated:  trim(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\schoGMS\users\chairman\submit_master_list.php on line 110
+[2025-02-07 06:13:42] Invalid name detected: ABEDIN, GIVRIEL JANYL, ABORDE, 
+[07-Feb-2025 06:13:51 Europe/Berlin] PHP Deprecated:  trim(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\schoGMS\users\chairman\submit_master_list.php on line 110
+[2025-02-07 06:13:51] Invalid name detected: ABEDIN, GIVRIEL JANYL, ABORDE, 
+[2025-02-07 06:17:26] Invalid name detected: ABEDIN, GIVRIEL JANYL, ABORDE, 
+[2025-02-07 06:20:48] Invalid name detected: 'ABEDIN', 'GIVRIEL JANYL', 'ABORDE', ''
+[07-Feb-2025 06:23:02 Europe/Berlin] PHP Deprecated:  Constant FILTER_SANITIZE_STRING is deprecated in C:\xampp\htdocs\schoGMS\users\chairman\submit_master_list.php on line 26
+[2025-02-07 06:45:51] Error processing file: Unknown column 'status_of_enrollment' in 'field list'
+[2025-02-07 06:46:22] Error processing file: Unknown column 'status_of_enrollment' in 'field list'
+[2025-02-07 06:53:20] Error processing file: Unknown column 'app_no' in 'field list'
+[2025-02-07 06:53:36] Error processing file: Unknown column 'app_no' in 'field list'
+[2025-02-07 06:54:50] Error processing file: Unknown column 'app_no' in 'field list'
