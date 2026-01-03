@@ -1,0 +1,77 @@
+<?php
+// Include database connection and session files
+include 'config/conn.php';
+include 'config/session.php';
+
+// Initialize response array
+$response = array();
+
+// Ensure `campus` (sheet_name) and `file_group` are set from session
+$campus = isset($_SESSION['campus']) ? $conn->real_escape_string($_SESSION['campus']) : '';
+$file_group = isset($_SESSION['course_program']) ? $conn->real_escape_string($_SESSION['course_program']) : '';
+
+if (empty($campus) || empty($file_group)) {
+    $response['error'] = "Campus or File Group not found in session.";
+    echo json_encode($response);
+    exit();
+}
+
+// Fetch total students for the campus (same as old script)
+$totalQuery = "
+    SELECT COUNT(DISTINCT id) AS total_students
+    FROM ched_masterlist 
+    WHERE sheet_name = ?";
+$stmt = $conn->prepare($totalQuery);
+$stmt->bind_param("s", $campus);
+$stmt->execute();
+$totalResult = $stmt->get_result();
+$totalRow = $totalResult->fetch_assoc();
+$totalStudentsCampus = $totalRow['total_students'] ?? 0;
+$stmt->close();
+
+// Fetch student count per `file_group` for the selected campus
+$studentQuery = "
+    SELECT 
+        rm.file_group, 
+        cm.sheet_name, 
+        cm.course_program_enrolled, 
+        COUNT(DISTINCT cm.id) AS total_students
+    FROM ched_masterlist cm
+    INNER JOIN registrar_master_list rm
+        ON cm.lastname COLLATE utf8mb4_general_ci = rm.last_name COLLATE utf8mb4_general_ci 
+        AND cm.firstname COLLATE utf8mb4_general_ci = rm.first_name COLLATE utf8mb4_general_ci
+        AND (
+            cm.middlename COLLATE utf8mb4_general_ci = rm.middle_name COLLATE utf8mb4_general_ci 
+            OR cm.middlename IS NULL 
+            OR rm.middle_name IS NULL 
+            OR cm.middlename = '' 
+            OR rm.middle_name = ''
+        )
+    WHERE cm.sheet_name = ? 
+    AND cm.course_program_enrolled = ?
+    ORDER BY cm.lastname ASC";
+
+$stmt = $conn->prepare($studentQuery);
+$stmt->bind_param("ss", $campus, $file_group);
+$stmt->execute();
+$result = $stmt->get_result();
+$studentsData = [];
+
+// Fetch data
+while ($row = $result->fetch_assoc()) {
+    // Calculate percentage based on the total campus students
+    $row['percentage'] = ($totalStudentsCampus > 0) ? round(($row['total_students'] / $totalStudentsCampus) * 100, 2) : 0;
+    $studentsData[] = $row;
+}
+$stmt->close();
+
+$response['students_data'] = $studentsData;
+$response['total_students'] = $totalStudentsCampus; // Send total for reference
+
+// Close the connection
+$conn->close();
+
+// Return the data as JSON
+header('Content-Type: application/json');
+echo json_encode($response);
+?>

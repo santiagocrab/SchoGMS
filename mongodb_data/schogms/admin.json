@@ -1,0 +1,18 @@
+[
+    {
+        "admin_id": 1,
+        "username": "admin",
+        "password": "$2y$10$\/K655y65NtaUjlBS4ftLuuVosrJNPLAdPM0gjExlJAXHC4\/xEXDsO",
+        "created_at": "2024-04-01 11:20:00",
+        "_id": "68c9dead658ab_9091",
+        "updated_at": "2025-09-17 00:03:25"
+    },
+    {
+        "admin_id": 1,
+        "username": "admin",
+        "password": "$2y$10$\/K655y65NtaUjlBS4ftLuuVosrJNPLAdPM0gjExlJAXHC4\/xEXDsO",
+        "created_at": "2024-04-01 11:20:00",
+        "_id": "68c9decd4ed8a_8303",
+        "updated_at": "2025-09-17 00:03:57"
+    }
+]
