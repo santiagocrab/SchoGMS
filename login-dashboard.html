@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoGMS - Login Pages Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .card h2 {
+            color: #667eea;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .card h3 {
+            color: #764ba2;
+            font-size: 1.2em;
+            margin: 20px 0 10px 0;
+        }
+        
+        .link-list {
+            list-style: none;
+        }
+        
+        .link-list li {
+            margin: 10px 0;
+        }
+        
+        .link-list a {
+            display: block;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+        
+        .link-list a:hover {
+            background: #667eea;
+            color: white;
+            border-left-color: #764ba2;
+            transform: translateX(5px);
+        }
+        
+        .link-list a:active {
+            transform: translateX(2px);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        
+        .badge-mongodb {
+            background: #10b981;
+            color: white;
+        }
+        
+        .badge-mysql {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .badge-test {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .badge-debug {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .footer {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            color: #666;
+        }
+        
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 SchoGMS Login Pages Dashboard</h1>
+            <p>Quick access to all login pages and authentication entry points</p>
+        </div>
+        
+        <div class="grid">
+            <!-- Main User Logins -->
+            <div class="card">
+                <h2>👥 Main User Logins</h2>
+                <ul class="link-list">
+                    <li><a href="index.php" target="_blank">Main Login Page <span class="badge badge-mongodb">MongoDB</span></a></li>
+                    <li><a href="login.php" target="_blank">Login Handler <span class="badge badge-mongodb">MongoDB</span></a></li>
+                    <li><a href="new_login.php" target="_blank">New/Alternative Login <span class="badge badge-mongodb">MongoDB</span></a></li>
+                </ul>
+            </div>
+            
+            <!-- Role-Specific Logins -->
+            <div class="card">
+                <h2>🎭 Role-Specific Logins</h2>
+                <ul class="link-list">
+                    <li><a href="login-chair.php" target="_blank">Program Chair Login <span class="badge badge-mongodb">MongoDB</span></a></li>
+                    <li><a href="login_chair.php" target="_blank">Chair Login Handler <span class="badge badge-mongodb">MongoDB</span></a></li>
+                    <li><a href="login-dean.php" target="_blank">Dean Login <span class="badge badge-mongodb">MongoDB</span></a></li>
+                    <li><a href="login_dean.php" target="_blank">Dean Login Handler <span class="badge badge-mongodb">MongoDB</span></a></li>
+                    <li><a href="login-chairman-confirm.php" target="_blank">Chairman Confirmation</a></li>
+                    <li><a href="login-dean-confirm.php" target="_blank">Dean Confirmation</a></li>
+                </ul>
+            </div>
+            
+            <!-- Admin Logins -->
+            <div class="card">
+                <h2>👨‍💼 Admin Logins</h2>
+                <h3>Main Admin</h3>
+                <ul class="link-list">
+                    <li><a href="admin/index.html" target="_blank">Admin Login Form <span class="badge badge-mysql">MySQL</span></a></li>
+                    <li><a href="admin/login.php" target="_blank">Admin Login Handler <span class="badge badge-mysql">MySQL</span></a></li>
+                </ul>
+                
+                <h3>Admin Versions</h3>
+                <ul class="link-list">
+                    <li><a href="admin-12-02/index.html" target="_blank">Admin 12-02 <span class="badge badge-mysql">MySQL</span></a></li>
+                    <li><a href="admin-14-2/index.html" target="_blank">Admin 14-2 <span class="badge badge-mysql">MySQL</span></a></li>
+                    <li><a href="admin-2-13/index.html" target="_blank">Admin 2-13 <span class="badge badge-mysql">MySQL</span></a></li>
+                    <li><a href="admin-31-01/index.html" target="_blank">Admin 31-01 <span class="badge badge-mysql">MySQL</span></a></li>
+                </ul>
+            </div>
+            
+            <!-- Test Login Pages -->
+            <div class="card">
+                <h2>🧪 Test Login Pages</h2>
+                <ul class="link-list">
+                    <li><a href="test_login_simple.php" target="_blank">Simple Login Test <span class="badge badge-test">TEST</span></a></li>
+                    <li><a href="test_login_direct.php" target="_blank">Direct Login Test <span class="badge badge-test">TEST</span></a></li>
+                    <li><a href="test_mongodb_login.php" target="_blank">MongoDB Login Test <span class="badge badge-test">TEST</span></a></li>
+                    <li><a href="create_test_login.php" target="_blank">Create Test Login <span class="badge badge-test">TEST</span></a></li>
+                    <li><a href="TEST_LOGIN_WORKING.php" target="_blank">Login Working Test <span class="badge badge-test">TEST</span></a></li>
+                    <li><a href="admin/test_login.php" target="_blank">Admin Test Login <span class="badge badge-test">TEST</span></a></li>
+                </ul>
+            </div>
+            
+            <!-- Debug Login Pages -->
+            <div class="card">
+                <h2>🐛 Debug Login Pages</h2>
+                <ul class="link-list">
+                    <li><a href="debug_login_mongodb.php" target="_blank">MongoDB Debug <span class="badge badge-debug">DEBUG</span></a></li>
+                    <li><a href="admin/debug_login.php" target="_blank">Admin Debug <span class="badge badge-debug">DEBUG</span></a></li>
+                </ul>
+            </div>
+            
+            <!-- Fix/Utility Scripts -->
+            <div class="card">
+                <h2>🔧 Login Fix Utilities</h2>
+                <ul class="link-list">
+                    <li><a href="LOGIN-GUIDE.php" target="_blank">Login Guide</a></li>
+                    <li><a href="fix_all_logins.php" target="_blank">Fix All Logins</a></li>
+                    <li><a href="force_login_fix.php" target="_blank">Force Login Fix</a></li>
+                    <li><a href="FINAL_FIX_PASSWORDS.php" target="_blank">Fix Passwords</a></li>
+                    <li><a href="REAL_TIME_FIX.php" target="_blank">Real-Time Fix</a></li>
+                    <li><a href="DIRECT_JSON_FIX.php" target="_blank">JSON Fix</a></li>
+                    <li><a href="FIX_NOW.php" target="_blank">Quick Fix</a></li>
+                </ul>
+            </div>
+            
+            <!-- User Dashboards -->
+            <div class="card">
+                <h2>📊 User Dashboards</h2>
+                <ul class="link-list">
+                    <li><a href="users/chairman/index.php" target="_blank">Chairman Dashboard</a></li>
+                    <li><a href="users/coordinator/index.php" target="_blank">Coordinator Dashboard</a></li>
+                    <li><a href="users/dean/index.php" target="_blank">Dean Dashboard</a></li>
+                    <li><a href="users/director/index.php" target="_blank">Director Dashboard</a></li>
+                    <li><a href="users/program-chair/index.php" target="_blank">Program Chair Dashboard</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>📄 Documentation: <a href="LOGIN_PAGES_TRACKER.md" target="_blank">Full Tracker</a> | <a href="LOGIN_PAGES_QUICK_REFERENCE.md" target="_blank">Quick Reference</a></p>
+            <p style="margin-top: 10px;">💡 <strong>Tip:</strong> All links open in new tabs. MongoDB badges indicate MongoDB authentication, MySQL badges indicate MySQL authentication.</p>
+        </div>
+    </div>
+</body>
+</html>
+
+

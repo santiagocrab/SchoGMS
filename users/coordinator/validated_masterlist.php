@@ -352,6 +352,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
 </head>
 
 <body>
+    <?php include 'loading-screen.php'; ?>
 
     <h2>Filtered Data Results</h2>
 

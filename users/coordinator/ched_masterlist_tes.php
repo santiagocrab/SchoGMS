@@ -30,6 +30,7 @@
 </head>
 
 <body>
+    <?php include 'loading-screen.php'; ?>
     <!-- ============================================================== -->
     <!-- Preloader - style you can find in spinners.css -->
     <!-- ============================================================== -->
@@ -285,17 +286,17 @@
                                     <?php
                                     // session_start();
                                     require '../config/conn.php';
-                                    // $sheet_name = $sheet_name;
-                                    
-                                    // if (empty($sheet_name)) {
-                                    //     die("No campus assigned to this session.");
-                                    // }
                                     
                                     // Query to join ched_masterlist with document_uploads for COR & COG validation
+                                    // FIXED: Removed registrar fields from GROUP BY to prevent collapsing records
                                     $query = "
                                         SELECT 
                                         cm.*, 
-                                        rm.id_number, rm.enrolled, rm.zip_code, rm.email_address, rm.mobile_number,
+                                        MAX(rm.id_number) as id_number, 
+                                        MAX(rm.enrolled) as enrolled, 
+                                        MAX(rm.zip_code) as zip_code, 
+                                        MAX(rm.email_address) as email_address, 
+                                        MAX(rm.mobile_number) as mobile_number,
 
                                         -- Get categories (COR & COG) uploaded for each student
                                         GROUP_CONCAT(DISTINCT du.category ORDER BY du.category SEPARATOR ', ') AS uploaded_categories,
@@ -315,16 +316,20 @@
                                     LEFT JOIN registrar_master_list rm
                                         ON cm.lastname COLLATE utf8mb4_general_ci = rm.last_name COLLATE utf8mb4_general_ci 
                                         AND cm.firstname COLLATE utf8mb4_general_ci = rm.first_name COLLATE utf8mb4_general_ci
-                                        AND cm.middlename COLLATE utf8mb4_general_ci = rm.middle_name COLLATE utf8mb4_general_ci
+                                        AND (cm.middlename COLLATE utf8mb4_general_ci = rm.middle_name COLLATE utf8mb4_general_ci 
+                                             OR cm.middlename IS NULL 
+                                             OR rm.middle_name IS NULL 
+                                             OR cm.middlename = '' 
+                                             OR rm.middle_name = '')
 
                                     -- LEFT JOIN with document_uploads based on student name AND campus restriction
                                     LEFT JOIN document_uploads du 
-                                        ON du.file_name LIKE CONCAT(cm.lastname, ', ', cm.firstname, ' ', cm.middlename, '%')
+                                        ON du.file_name LIKE CONCAT(cm.lastname, ', ', cm.firstname, ' ', COALESCE(cm.middlename, ''), '%')
                                         AND du.campus = '" . $conn->real_escape_string($sheet_name) . "'
 
                                     WHERE cm.campus = '" . $conn->real_escape_string($sheet_name) . "'
 
-                                    GROUP BY cm.id, cm.lastname, cm.firstname, cm.middlename, rm.id_number, rm.enrolled, rm.zip_code, rm.email_address, rm.mobile_number
+                                    GROUP BY cm.id
 
                                     ORDER BY cm.campus ASC, cm.id ASC;
 
