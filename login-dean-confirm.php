@@ -1,6 +1,6 @@
 <?php
 session_start();
-require 'conn.php';  // Include database connection
+require_once __DIR__ . '/users/dean/config/conn.php';
 
 // Check if required parameters are in the URL
 if (!isset($_GET['username']) || !isset($_GET['email']) || !isset($_GET['campus'])) {

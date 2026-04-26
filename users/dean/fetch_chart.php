@@ -73,7 +73,8 @@ if ($totalStudents > 0) {
     $response['matched_total'] = $matchedTotal;
 
 } else {
-    $response['error'] = "No students found in the total campus list.";
+    $response['students_data_tdp'] = [];
+    $response['matched_total'] = 0;
 }
 
 // Final output

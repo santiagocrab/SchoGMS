@@ -299,16 +299,30 @@ $conn->close();
     </div>
       <div class="card border-right">
         <div class="card-body">
-            <h2 class="text-dark mb-1 font-weight-medium"><?= $masterlistCourse; ?><strong class="<?= $masterlistTextColor; ?>">(<?= number_format($masterlistCoursePercentage, 2); ?>%) Availed</strong></h2>
-            <h6 class="text-muted font-weight-normal mb-0">Total TDP Scholars from College of Engineering </h6>
+            <h2 class="text-dark mb-1 font-weight-medium"><?= (int) $masterlistCourse; ?></h2>
+            <?php if ((int) $enrolledCourse > 0) : ?>
+            <p class="mb-1 <?= $masterlistTextColor; ?> small font-weight-medium">
+                <?= number_format($masterlistCoursePercentage, 1) ?>% of <?= (int) $enrolledCourse; ?> program enrollees
+            </p>
+            <?php else: ?>
+            <p class="mb-1 text-muted small">Add enrollees in the registrar for this file group to see a percentage.</p>
+            <?php endif; ?>
+            <h6 class="text-muted font-weight-normal mb-0">Total TDP scholars from College of Engineering</h6>
         </div>
     </div>
 
     <div class="card border-right">
        
         <div class="card-body">
-           <h2 class="text-dark mb-1 font-weight-medium"><?= $tesMasterlistCourse; ?><strong class="<?= $masterlistTextColor; ?>">(<?= number_format($tesMasterlistCoursePercentage, 2); ?>%) Availed</strong></h2>
-            <h6 class="text-muted font-weight-normal mb-0">Total TES Scholars from College of Engineering </h6>
+            <h2 class="text-dark mb-1 font-weight-medium"><?= (int) $tesMasterlistCourse; ?></h2>
+            <?php if ((int) $enrolledCourse > 0) : ?>
+            <p class="mb-1 <?= $tesMasterlistTextColor; ?> small font-weight-medium">
+                <?= number_format($tesMasterlistCoursePercentage, 1) ?>% of <?= (int) $enrolledCourse; ?> program enrollees
+            </p>
+            <?php else: ?>
+            <p class="mb-1 text-muted small">Add enrollees in the registrar for this file group to see a percentage.</p>
+            <?php endif; ?>
+            <h6 class="text-muted font-weight-normal mb-0">Total TES scholars from College of Engineering</h6>
         </div>
     </div>
 
@@ -536,14 +550,19 @@ $conn->close();
                     <div class="col-lg-8 col-md-12">
                         <div class="card">
                             <div class="card-body">
+                                <h4 class="card-title mb-3">Number of TDP scholars</h4>
+                                <p id="course-chart-tdp-empty" class="text-muted small mb-0 d-none">No TDP data to show for this program yet.</p>
                                 <canvas id="course-chart" width="400" height="200"></canvas>
                             </div>
                         </div>
-                    </div
+                    </div>
+                </div>
                 <div class="row">
                     <div class="col-lg-8 col-md-12">
                         <div class="card">
                             <div class="card-body">
+                                <h4 class="card-title mb-3">Number of TES scholars</h4>
+                                <p id="course-chart-tes-empty" class="text-muted small mb-0 d-none">No TES data to show for this program yet.</p>
                                 <canvas id="course-chart-tes" width="400" height="200"></canvas>
                             </div>
                         </div>
@@ -569,7 +588,7 @@ $conn->close();
             <!-- footer -->
             <!-- ============================================================== -->
             <footer class="footer text-center text-muted">
-                All Rights Reserved 2025. Scholarship and Grants Management System <a href="">(SchoGMS)</a>.
+                All Rights Reserved 2026. Scholarship and Grants Management System <a href="">(SchoGMS)</a>.
             </footer>
             <!-- ============================================================== -->
             <!-- End footer -->
@@ -604,21 +623,33 @@ $(document).ready(function () {
         method: 'GET',
         dataType: 'json',
         success: function (data) {
-            if (!data || data.error) {
-                console.error("Error fetching data:", data.error);
+            if (data && data.error && !data.students_data_tdp) {
+                console.error("Error fetching TDP data:", data.error);
                 return;
             }
 
-          
+            const studentsData = (data && data.students_data_tdp) ? data.students_data_tdp : [];
+            const totalStudents = data && (data.registrar_total_students != null) ? Number(data.registrar_total_students) : 0;
 
-           const studentsData = data.students_data_tdp; // This is the array you want
-            const totalStudents = data.registrar_total_students; // This is correct
+            const tdpEmpty = document.getElementById('course-chart-tdp-empty');
+            const tdpCanvas = document.getElementById('course-chart');
+            if (!studentsData.length) {
+                if (tdpEmpty) tdpEmpty.classList.remove('d-none');
+                if (tdpCanvas) tdpCanvas.style.display = 'none';
+                return;
+            }
+            if (tdpEmpty) tdpEmpty.classList.add('d-none');
+            if (tdpCanvas) tdpCanvas.style.display = 'block';
             
             const courseLabels = studentsData.map(item => {
-                const percentage = totalStudents > 0 
-                    ? ((item.total_students / totalStudents) * 100).toFixed(2) 
-                    : 0;
-                return `${item.course_program_enrolled} (${percentage}%)`; // Fixed backticks
+                if (!item.total_students || totalStudents < 1) {
+                    return item.course_program_enrolled;
+                }
+                const percentage = (item.total_students / totalStudents) * 100;
+                if (percentage < 0.05) {
+                    return item.course_program_enrolled;
+                }
+                return item.course_program_enrolled + ' (' + percentage.toFixed(0) + '%)';
             });
             
             const studentCounts = studentsData.map(item => item.total_students);
@@ -686,19 +717,33 @@ $(document).ready(function () {
         method: 'GET',
         dataType: 'json',
         success: function (data) {
-            if (!data || data.error) {
-                console.error("Error fetching data:", data.error);
+            if (data && data.error && !data.students_data_tes) {
+                console.error("Error fetching TES data:", data.error);
                 return;
             }
 
-            // Extract response data
-            const studentsData = data.students_data_tes;
+            const studentsData = (data && data.students_data_tes) ? data.students_data_tes : [];
+            const enrolledCourse = <?php echo json_encode((int) $enrolledCourse); ?>;
 
-             const enrolledCourse = <?php echo json_encode($enrolledCourse); ?>;
-            // Use enrolledCourse from PHP to compute percentages
+            const tesEmpty = document.getElementById('course-chart-tes-empty');
+            const tesCanvas = document.getElementById('course-chart-tes');
+            if (!studentsData.length) {
+                if (tesEmpty) tesEmpty.classList.remove('d-none');
+                if (tesCanvas) tesCanvas.style.display = 'none';
+                return;
+            }
+            if (tesEmpty) tesEmpty.classList.add('d-none');
+            if (tesCanvas) tesCanvas.style.display = 'block';
+
             const courseLabels = studentsData.map(item => {
-                const percentage = enrolledCourse > 0 ? ((item.total_students / enrolledCourse) * 100).toFixed(2) : 0;
-                return `${item.course_program_enrolled} (${percentage}%)`;
+                if (!item.total_students || enrolledCourse < 1) {
+                    return item.course_program_enrolled;
+                }
+                const percentage = (item.total_students / enrolledCourse) * 100;
+                if (percentage < 0.05) {
+                    return item.course_program_enrolled;
+                }
+                return item.course_program_enrolled + ' (' + percentage.toFixed(0) + '%)';
             });
             
             const studentCounts = studentsData.map(item => item.total_students);
@@ -709,14 +754,13 @@ $(document).ready(function () {
             ];
             var backgroundColors = courseLabels.map((_, i) => dynamicColors[i % dynamicColors.length]);
 
-            // Destroy existing chart if it exists
-            // if (window.courseChart) {
-            //     window.courseChart.destroy();
-            // }
+            if (window.courseChartTes) {
+                window.courseChartTes.destroy();
+            }
 
             // Create the chart
             var ctx = document.getElementById("course-chart-tes").getContext('2d');
-            window.courseChart = new Chart(ctx, {
+            window.courseChartTes = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: courseLabels,

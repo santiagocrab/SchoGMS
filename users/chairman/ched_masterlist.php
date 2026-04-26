@@ -169,6 +169,7 @@
                         </li>
 
                     </ul>
+                </nav>
                 <!-- End Sidebar navigation -->
             </div>
             <!-- End Sidebar scroll-->
@@ -355,7 +356,7 @@
                 <!-- footer -->
                 <!-- ============================================================== -->
                 <footer class="footer text-center text-muted">
-                    All Rights Reserved 2025. Scholarship and Grants Management System <a href="">(SchoGMS)</a>.
+                    All Rights Reserved 2026. Scholarship and Grants Management System <a href="">(SchoGMS)</a>.
                 </footer>
                 <!-- ============================================================== -->
                 <!-- End footer -->

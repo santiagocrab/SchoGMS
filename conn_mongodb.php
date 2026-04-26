@@ -4,7 +4,7 @@
  * This replaces the MySQL connection with MongoDB functionality
  */
 
-require_once 'mongodb_simple_fast.php';
+require_once __DIR__ . '/mongodb_simple_fast.php';
 
 // MongoDB connection settings
 $mongodb_database = 'schogms';

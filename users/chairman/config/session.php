@@ -15,8 +15,8 @@ if (!isset($_SESSION['user_id'])) {
         exit;
     }
 }
-// Include your database connection
-include 'conn.php'; // Update with your actual database connection script
+// MongoDB users collection (local config/conn.php is MySQL-only and does not define $users)
+require_once __DIR__ . '/../../../conn_mongodb.php';
 
 // If you want to include user details, you can fetch them from the session
 $user_id = $_SESSION['user_id']; // Assuming user_id is stored in the session

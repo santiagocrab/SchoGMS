@@ -1,7 +1,7 @@
 <?php
 session_start();
-// Include database connection
-include 'conn.php';
+// Real MySQL (assigned_dean lives in MySQL; root conn.php is MongoDB-only and cannot run this login)
+require_once __DIR__ . '/users/dean/config/conn.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Retrieve form inputs
