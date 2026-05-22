@@ -169,6 +169,8 @@ if (isset($_POST['export'])) {
 </head>
 
 <body>
+<?php schogms_loading_screen_once(); ?>
+
 
     <h2>Data TES Delisting Results</h2>
 

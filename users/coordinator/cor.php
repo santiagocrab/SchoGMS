@@ -23,6 +23,8 @@
 </head>
 
 <body>
+<?php schogms_loading_screen_once(); ?>
+
     <?php include 'loading-screen.php'; ?>
     <!-- ============================================================== -->
     <!-- Preloader - style you can find in spinners.css -->
@@ -58,8 +60,9 @@
                         <div class="customize-input float-right">
                             <button type="button" class="btn waves-effect waves-light btn-rounded btn-success"
                                 data-toggle="modal" data-target="#uploadModal">
-                                Upload File
+                                Bulk upload COR
                             </button>
+                            <a href="cor-cog.php#bulk-cor-cog-upload" class="btn btn-outline-primary btn-rounded ml-1">COR &amp; COG bulk</a>
                         </div>
                     </div>
                 </div>
@@ -163,7 +166,7 @@
         <!-- ============================================================== -->
         <!-- End Wrapper -->
         <!-- ============================================================== -->
-    <?php require_once __DIR__ . '/inc/assets.php'; schogms_coordinator_footer_scripts(['datatables' => true]); ?>
+    <?php schogms_coordinator_footer_scripts(['datatables' => true, 'sweetalert' => true]); ?>
     <?php require __DIR__ . '/inc/cor_cog_upload_script.php'; ?>
 
 </body>

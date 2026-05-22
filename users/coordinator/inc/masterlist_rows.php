@@ -207,9 +207,10 @@ if (!function_exists('schogms_coordinator_ched_tes_rows')) {
                         }
                     }
                 }
-                $row['cor_path'] = $doc['cor_path'] ?? '';
-                $row['cog_path'] = $doc['cog_path'] ?? '';
-                $row['enrollment_status'] = (($doc['COR'] ?? false) && ($doc['COG'] ?? false)) ? 'Enrolled' : 'Not Enrolled';
+                $resolved = schogms_coordinator_resolve_doc($docIndex, $row);
+                $row['cor_path'] = $resolved['cor_path'];
+                $row['cog_path'] = $resolved['cog_path'];
+                $row['enrollment_status'] = ($resolved['has_cor'] && $resolved['has_cog']) ? 'Enrolled' : 'Not Enrolled';
             }
             unset($row);
         } catch (Throwable $e) {
@@ -218,5 +219,70 @@ if (!function_exists('schogms_coordinator_ched_tes_rows')) {
         }
 
         return ['rows' => $rows, 'error' => ''];
+    }
+}
+
+if (!function_exists('schogms_coordinator_ched_filter_options')) {
+    /**
+     * @return array{filenames: list<string>, file_groups: list<string>}
+     */
+    function schogms_coordinator_ched_filter_options(mysqli $conn, string $campus, string $program): array
+    {
+        $out = ['filenames' => [], 'file_groups' => []];
+        $campus = trim($campus);
+        if ($campus === '') {
+            return $out;
+        }
+
+        $program = strtolower(trim($program));
+        $sql = $program === 'tes'
+            ? 'SELECT DISTINCT filename, file_group FROM ched_masterlist_tes WHERE campus = ? ORDER BY file_group, filename'
+            : 'SELECT DISTINCT filename, file_group FROM ched_masterlist WHERE sheet_name = ? ORDER BY file_group, filename';
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return $out;
+        }
+        $stmt->bind_param('s', $campus);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $seenFn = [];
+        $seenFg = [];
+        while ($res && ($opt = $res->fetch_assoc())) {
+            $fn = trim((string) ($opt['filename'] ?? ''));
+            $fg = trim((string) ($opt['file_group'] ?? ''));
+            if ($fn !== '' && !isset($seenFn[$fn])) {
+                $out['filenames'][] = $fn;
+                $seenFn[$fn] = true;
+            }
+            if ($fg !== '' && !isset($seenFg[$fg])) {
+                $out['file_groups'][] = $fg;
+                $seenFg[$fg] = true;
+            }
+        }
+        $stmt->close();
+
+        return $out;
+    }
+}
+
+if (!function_exists('schogms_coordinator_ched_apply_row_filters')) {
+    /** @param list<array<string, mixed>> $rows */
+    function schogms_coordinator_ched_apply_row_filters(array $rows, string $filename, string $fileGroup): array
+    {
+        if ($filename !== '') {
+            $rows = array_values(array_filter(
+                $rows,
+                static fn(array $r): bool => (string) ($r['filename'] ?? '') === $filename
+            ));
+        }
+        if ($fileGroup !== '') {
+            $rows = array_values(array_filter(
+                $rows,
+                static fn(array $r): bool => (string) ($r['file_group'] ?? '') === $fileGroup
+            ));
+        }
+
+        return $rows;
     }
 }

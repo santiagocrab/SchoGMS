@@ -65,6 +65,8 @@ if (($viewCor || $viewCog) && !empty($filePath)) {
 </head>
 
 <body>
+<?php schogms_loading_screen_once(); ?>
+
     <!-- ============================================================== -->
     <!-- Preloader - style you can find in spinners.css -->
     <!-- ============================================================== -->
@@ -480,7 +482,7 @@ if (($viewCor || $viewCog) && !empty($filePath)) {
                                         <li><strong>Search by academic year:</strong> Try "2024-2025", "2023-2024"</li>
                                         <li><strong>Search by semester:</strong> Try "1st Semester", "2nd Semester"</li>
                                         <li><strong>Search by category:</strong> Try "COR", "COG"</li>
-                                        <li><strong>Character encoding:</strong> Works with both "?" and "Ñ" characters</li>
+                                        <li><strong>Character encoding:</strong> Search matches <strong>ñ</strong>, <strong>Ñ</strong>, and legacy <strong>?</strong> in names</li>
                                         <li><strong>Partial names:</strong> Search for "ABA" to find "ABACARO"</li>
                                     </ul>
                                 </div>
@@ -506,7 +508,7 @@ if (($viewCor || $viewCog) && !empty($filePath)) {
                                             foreach ($documentRows as $doc) {
                                                 $cat = (string) ($doc['category'] ?? '');
                                                 $badge = $cat === 'COR' ? 'success' : 'primary';
-                                                $displayName = str_replace('?', 'Ñ', (string) ($doc['original_name'] ?? 'Unknown'));
+                                                $displayName = schogms_fix_enye_in_name((string) ($doc['original_name'] ?? 'Unknown'));
                                                 $path = (string) ($doc['file_path'] ?? '');
                                                 $diskPath = $path;
                                                 if ($diskPath !== '' && !file_exists($diskPath) && str_starts_with($diskPath, '../../')) {
@@ -701,13 +703,9 @@ if (($viewCor || $viewCog) && !empty($filePath)) {
                     const text = row.textContent.toLowerCase();
                     
                     // Enhanced character encoding handling for search
-                    // Convert ? to Ñ for search matching
+                    // Treat ? as ñ for search (legacy import encoding)
                     const normalizedText = text.replace(/\?/g, 'ñ');
                     const normalizedSearchTerm = searchTerm.replace(/\?/g, 'ñ');
-                    
-                    // Also handle reverse - convert Ñ to ? for matching
-                    const reverseText = text.replace(/ñ/g, '?');
-                    const reverseSearchTerm = searchTerm.replace(/ñ/g, '?');
                     
                     // Handle uppercase/lowercase variations
                     const upperText = text.toUpperCase();
@@ -717,19 +715,18 @@ if (($viewCor || $viewCog) && !empty($filePath)) {
                     const searchVariations = [
                         searchTerm,
                         normalizedSearchTerm,
-                        reverseSearchTerm,
                         upperSearchTerm,
-                        searchTerm.replace(/[^a-z0-9]/g, ''), // Remove special characters
-                        searchTerm.replace(/\s+/g, ' '), // Normalize spaces
-                        searchTerm.replace(/[ñÑ]/g, 'n'), // Convert ñ to n
-                        searchTerm.replace(/[ñÑ]/g, 'N')  // Convert ñ to N
+                        searchTerm.replace(/[^a-z0-9ñ]/gi, ''),
+                        searchTerm.replace(/\s+/g, ' '),
+                        searchTerm.replace(/[ñÑ?]/g, 'n'),
+                        searchTerm.replace(/[ñÑ?]/g, 'N')
                     ];
                     
                     let found = false;
                     for (let variation of searchVariations) {
-                        if (text.indexOf(variation) !== -1 || 
-                            normalizedText.indexOf(variation) !== -1 || 
-                            reverseText.indexOf(variation) !== -1 ||
+                        if (variation === '') continue;
+                        if (text.indexOf(variation) !== -1 ||
+                            normalizedText.indexOf(variation) !== -1 ||
                             upperText.indexOf(variation.toUpperCase()) !== -1) {
                             found = true;
                             break;

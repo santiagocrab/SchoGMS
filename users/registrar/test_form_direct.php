@@ -5,6 +5,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
+<?php schogms_loading_screen_once(); ?>
+
     <div class="container mt-5">
         <h2>Direct Form Test - No Modal</h2>
         <form action="submit_document.php" method="post" enctype="multipart/form-data">

@@ -21,7 +21,7 @@
     <link href="../../assets/extra-libs/jvector/jquery-jvectormap-2.0.2.css" rel="stylesheet" />
     <!-- Custom CSS -->
     <link href="../../dist/css/style.min.css" rel="stylesheet">
-    
+    <style>.preloader{display:none!important}#main-wrapper{opacity:1!important}</style>
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -31,6 +31,8 @@
 </head>
 
 <body>
+<?php schogms_loading_screen_once(); ?>
+
     <!-- ============================================================== -->
     <!-- Preloader - style you can find in spinners.css -->
     <!-- ============================================================== -->
@@ -186,13 +188,26 @@
             <!-- ============================================================== -->
             <div class="container-fluid">
                 <?php
+// Legacy dashboard vars (referenced in old HTML comment blocks — keep defined to avoid notices)
+$joinedStudents = 0;
+$joinedPercentage = 0.0;
+$textColorClass = 'text-muted';
+$joinedStudentsTes = 0;
+$joinedPercentageTes = 0.0;
+$textColorClassTes = 'text-muted';
+$totalCourses = 0;
+$totalFileGroups = 0;
+$totalFilenames = 0;
+
 // Include the database connection
 include 'config/conn.php';
+$course_program_esc = $conn->real_escape_string((string) ($course_program ?? ''));
+$campus_esc = $conn->real_escape_string((string) ($campus ?? ''));
 
 // 1. Get TOTAL students enrolled in registrar master list for the campus
 $totalEnrolledQuery = "SELECT COUNT(DISTINCT id) AS total_enrolled 
     FROM registrar_master_list 
-    WHERE campus = '$campus'";
+    WHERE campus = '$campus_esc'";
 
 $totalEnrolledResult = $conn->query($totalEnrolledQuery);
 $totalEnrolled = ($totalEnrolledResult && $row = $totalEnrolledResult->fetch_assoc()) ? $row['total_enrolled'] : 0;
@@ -200,7 +215,7 @@ $totalEnrolled = ($totalEnrolledResult && $row = $totalEnrolledResult->fetch_ass
 // 2. Get TOTAL students in CHED master list for the campus
 $totalMasterlistQuery = "SELECT COUNT(DISTINCT id) AS total_masterlist 
     FROM ched_masterlist 
-    WHERE sheet_name = '$campus'";
+    WHERE sheet_name = '$campus_esc'";
 
 $totalMasterlistResult = $conn->query($totalMasterlistQuery);
 $totalMasterlist = ($totalMasterlistResult && $row = $totalMasterlistResult->fetch_assoc()) ? $row['total_masterlist'] : 0;
@@ -208,7 +223,7 @@ $totalMasterlist = ($totalMasterlistResult && $row = $totalMasterlistResult->fet
 // 3. Get TOTAL students in CHED masterlist TES for the campus
 $totalTesMasterlistQuery = "SELECT COUNT(DISTINCT id) AS total_tes_masterlist 
     FROM ched_masterlist_tes 
-    WHERE campus = '$campus'";
+    WHERE campus = '$campus_esc'";
 
 $totalTesMasterlistResult = $conn->query($totalTesMasterlistQuery);
 $totalTesMasterlist = ($totalTesMasterlistResult && $row = $totalTesMasterlistResult->fetch_assoc()) ? $row['total_tes_masterlist'] : 0;
@@ -216,8 +231,8 @@ $totalTesMasterlist = ($totalTesMasterlistResult && $row = $totalTesMasterlistRe
 // 4. Get total ENROLLED students under the specific course
 $enrolledByCourseQuery = "SELECT COUNT(DISTINCT id) AS enrolled_course 
     FROM registrar_master_list 
-    WHERE campus = '$campus' 
-      AND file_group = '$course_program'";
+    WHERE campus = '$campus_esc' 
+      AND file_group = '$course_program_esc'";
 
 $enrolledByCourseResult = $conn->query($enrolledByCourseQuery);
 $enrolledCourse = ($enrolledByCourseResult && $row = $enrolledByCourseResult->fetch_assoc()) ? $row['enrolled_course'] : 0;
@@ -235,8 +250,8 @@ $masterlistByCourseQuery = "SELECT COUNT(DISTINCT cm.id) AS masterlist_course
             OR rm.middle_name IS NULL
             OR rm.middle_name = ''
         )
-    WHERE cm.sheet_name = '$campus'
-      AND rm.file_group = '$course_program'";
+    WHERE cm.sheet_name = '$campus_esc'
+      AND rm.file_group = '$course_program_esc'";
 
 $masterlistByCourseResult = $conn->query($masterlistByCourseQuery);
 $masterlistCourse = ($masterlistByCourseResult && $row = $masterlistByCourseResult->fetch_assoc()) ? $row['masterlist_course'] : 0;
@@ -254,8 +269,8 @@ $tesMasterlistByCourseQuery = "SELECT COUNT(DISTINCT cm.id) AS tes_masterlist_co
             OR rm.middle_name IS NULL
             OR rm.middle_name = ''
         )
-    WHERE cm.campus = '$campus' and course_program_enrolled != 'BACHELOR OF SCIENCE IN INDUSTRIAL TECHNOLOGY MAJOR IN CIVIL TECHNOLOGY' 
-      AND rm.file_group = '$course_program'";
+    WHERE cm.campus = '$campus_esc'
+      AND rm.file_group = '$course_program_esc'";
 
 $tesMasterlistByCourseResult = $conn->query($tesMasterlistByCourseQuery);
 $tesMasterlistCourse = ($tesMasterlistByCourseResult && $row = $tesMasterlistByCourseResult->fetch_assoc()) ? $row['tes_masterlist_course'] : 0;

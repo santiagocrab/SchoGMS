@@ -20,6 +20,8 @@ include 'config/session.php';
     </style>
 </head>
 <body>
+<?php schogms_loading_screen_once(); ?>
+
     <div class="d-flex">
         <!-- Sidebar -->
         <div class="sidebar" style="width: 250px; position: fixed; top: 0; left: 0;">

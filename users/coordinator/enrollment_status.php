@@ -22,6 +22,8 @@
 </head>
 
 <body>
+<?php schogms_loading_screen_once(); ?>
+
     <?php include 'loading-screen.php'; ?>
     <!-- ============================================================== -->
     <!-- Preloader - style you can find in spinners.css -->
@@ -35,360 +37,251 @@
     <!-- ============================================================== -->
     <!-- Main wrapper - style you can find in pages.scss -->
     <!-- ============================================================== -->
-    <?php require_once __DIR__ . '/inc/coordinator_nav.php'; schogms_coordinator_shell_open(); ?>
+    <?php
+    require_once __DIR__ . '/inc/coordinator_nav.php';
+    require_once __DIR__ . '/inc/masterlist_rows.php';
+    require_once __DIR__ . '/inc/ched_masterlist_import.php';
 
-            <!-- ============================================================== -->
-            <!-- Bread crumb and right sidebar toggle -->
-            <!-- ============================================================== -->
+    $program = strtolower(trim((string) ($_GET['program'] ?? 'tdp')));
+    if (!in_array($program, ['tdp', 'tes'], true)) {
+        $program = 'tdp';
+    }
+
+    $campus = trim((string) ($sheet_name ?? ''));
+    $filterFilename = trim((string) ($_GET['filename'] ?? ''));
+    $filterFileGroup = trim((string) ($_GET['file_group'] ?? ''));
+    $progLabel = $program === 'tes' ? 'TES' : 'TDP';
+    $masterlistPage = $program === 'tes' ? 'ched_masterlist_tes.php' : 'ched_masterlist.php';
+
+    $filterOptions = ['filenames' => [], 'file_groups' => []];
+    $enrollmentRows = [];
+    $loadError = '';
+
+    if ($campus === '') {
+        $loadError = 'No campus assigned to your account.';
+    } elseif ($conn instanceof mysqli) {
+        $filterOptions = schogms_coordinator_ched_filter_options($conn, $campus, $program);
+        $listData = $program === 'tes'
+            ? schogms_coordinator_ched_tes_rows($conn, $campus)
+            : schogms_coordinator_ched_tdp_rows($conn, $campus);
+        $enrollmentRows = $listData['rows'];
+        $loadError = $listData['error'];
+        $enrollmentRows = schogms_coordinator_ched_apply_row_filters($enrollmentRows, $filterFilename, $filterFileGroup);
+    }
+
+    $enrolledCount = 0;
+    $notEnrolledCount = 0;
+    $chedStatusCount = 0;
+    foreach ($enrollmentRows as $r) {
+        if (($r['enrollment_status'] ?? '') === 'Enrolled') {
+            $enrolledCount++;
+        } else {
+            $notEnrolledCount++;
+        }
+        if (schogms_ched_import_status_value($r) !== '') {
+            $chedStatusCount++;
+        }
+    }
+
+    schogms_coordinator_shell_open('Enrollment Status');
+    ?>
+
             <div class="page-breadcrumb">
                 <div class="row">
-                    <div class="col-7 align-self-center">
-                        <!-- <h3 class="page-title text-truncate text-dark font-weight-medium mb-1">Good Coordinator!</h3> -->
-                        <div class="d-flex align-items-center">
-                            <nav aria-label="breadcrumb">
-                                <ol class="breadcrumb m-0 p-0">
-                                    <li class="breadcrumb-item"><a href="index.php">Dashboard</a>
-                                    </li>
-                                </ol>
-                            </nav>
-                        </div>
-                    </div>
-                    <!-- <div class="col-5 align-self-center">
-                        <div class="customize-input float-right">
-                            <button type="button" class="btn waves-effect waves-light btn-rounded btn-success"
-                                data-toggle="modal" data-target="#uploadModal">
-                                Upload File
-                            </button>
-                        </div>
-                    </div> -->
-                </div>
-            </div>
-            <div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel"
-                aria-hidden="true">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="uploadModalLabel">Upload Student Data</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <form id="uploadForm">
-                                <div class="mb-3">
-                                    <label for="file-group" class="form-label">File Group</label>
-                                    <input type="text" class="form-control" id="file_group" name="file_group"
-                                        placeholder="Input file group name">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="excelFile" class="form-label">Choose Excel File</label>
-                                    <input type="file" class="form-control" id="excelFile" name="excelFile"
-                                        accept=".xls,.xlsx, .csv">
-                                </div>
-                                <button type="submit" class="btn btn-primary">Upload</button>
-                            </form>
-                            <div id="message"></div>
-                        </div>
+                    <div class="col-12">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb m-0 p-0">
+                                <li class="breadcrumb-item"><a href="index.php">Dashboard</a></li>
+                                <li class="breadcrumb-item active">Enrollment status</li>
+                            </ol>
+                        </nav>
                     </div>
                 </div>
             </div>
-            <!-- Modal -->
-            <!-- ============================================================== -->
-            <!-- End Bread crumb and right sidebar toggle -->
-            <!-- ============================================================== -->
-            <!-- ============================================================== -->
-            <!-- Container fluid  -->
-            <!-- ============================================================== -->
-            <!-- Container fluid  -->
-            <!-- ============================================================== -->
+
             <div class="container-fluid">
-                <!-- ============================================================== -->
-                <!-- Start Page Content -->
-                <!-- ============================================================== -->
-                <!-- basic table -->
+                <ul class="nav nav-pills mb-3">
+                    <li class="nav-item">
+                        <a class="nav-link <?= $program === 'tdp' ? 'active' : '' ?>"
+                           href="enrollment_status.php?program=tdp">TDP enrollment</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= $program === 'tes' ? 'active' : '' ?>"
+                           href="enrollment_status.php?program=tes">TES enrollment</a>
+                    </li>
+                </ul>
+
                 <div class="row">
                     <div class="col-12">
                         <div class="card">
                             <div class="card-body">
-                                <div class="row">
-                                    <div class="table-responsive">
-                                        <?php
-                                        require '../config/conn.php';
-
-                                        // Get the selected category and file_group from the form (if any)
-                                        $category = isset($_GET['category']) ? $_GET['category'] : '';
-                                        $file_group = isset($_GET['file_group']) ? $_GET['file_group'] : '';
-
-                                        // Query to get distinct categories and file groups from document_uploads table
-                                        $categoryQuery = "SELECT DISTINCT file_group, filename FROM ched_masterlist";
-                                        $categoryResult = $conn->query($categoryQuery);
-
-                                        // Check for errors in the query
-                                        if (!$categoryResult) {
-                                            die("Query failed: " . $conn->error);
-                                        }
-
-                                        // Query to select data from document_uploads table (based on selected category and file_group)
-                                        $query = "SELECT * FROM ched_masterlist";
-                                        $filters = [];
-                                        if ($category !== '') {  // Apply the category filter if a category is selected
-                                            $filters[] = "filename = '" . $conn->real_escape_string($category) . "'";
-                                        }
-                                        if ($file_group !== '') {  // Apply the file_group filter if a file_group is selected
-                                            $filters[] = "file_group = '" . $conn->real_escape_string($file_group) . "'";
-                                        }
-                                        if (count($filters) > 0) {
-                                            $query .= " WHERE " . implode(" AND ", $filters);
-                                        }
-
-                                        $result = $conn->query($query);
-
-                                        // Check for errors in the query
-                                        if (!$result) {
-                                            die("Query failed: " . $conn->error);
-                                        }
-                                        ?>
-
-                                        <div class="table-responsive">
-                                            <!-- Dropdown to select category and file group -->
-                                            <form method="GET" action="" class="col-md-8">
-                                                <label for="categoryFilter">Select Category:</label>
-                                                <select id="categoryFilter" name="filename" class="form-control">
-                                                    <option value="">All</option>
-                                                    <?php while ($row = $categoryResult->fetch_assoc()): ?>
-                                                        <option value="<?php echo htmlspecialchars($row['filename']); ?>"
-                                                            <?php echo ($category == $row['filename']) ? 'selected' : ''; ?>>
-                                                            <?php echo htmlspecialchars($row['filename']); ?>
-                                                        </option>
-                                                    <?php endwhile; ?>
-                                                </select>
-
-                                                <label for="fileGroupFilter" class="mt-2">Select File Group:</label>
-                                                <select id="fileGroupFilter" name="file_group" class="form-control">
-                                                    <option value="">All</option>
-                                                    <?php
-                                                    // Reset the result pointer for file group options
-                                                    $categoryResult->data_seek(0);
-                                                    while ($row = $categoryResult->fetch_assoc()): ?>
-                                                        <option value="<?php echo htmlspecialchars($row['file_group']); ?>"
-                                                            <?php echo ($file_group == $row['file_group']) ? 'selected' : ''; ?>>
-                                                            <?php echo htmlspecialchars($row['file_group']); ?>
-                                                        </option>
-                                                    <?php endwhile; ?>
-                                                </select>
-                                                <br>
-                                                <button type="submit"
-                                                    class="btn waves-effect waves-light btn-rounded btn-success">Apply
-                                                    Filter Select</button>
-                                                <br>
-                                                <br>
-                                            </form>
-
-                                            <table id="zero_config" class="table table-striped table-bordered no-wrap">
-                                                <thead>
-                                                    <tr>
-                                                        <th>SEQ</th>
-                                                        <th>APP NO</th>
-                                                        <th>AWARD NO.</th>
-                                                        <th>LASTNAME</th>
-                                                        <th>FIRSTNAME</th>
-                                                        <th>EXTNAME</th>
-                                                        <th>MIDDLENAME</th>
-                                                        <th>SEX</th>
-                                                        <th>BIRTHDATE</th>
-                                                        <th>COURSE/PROGRAM ENROLLED</th>
-                                                        <th>YEAR LEVEL</th>
-                                                        <th>TOTAL UNITS ENROLLED</th>
-                                                        <th>STATUS OF ENROLLMENT</th>
-                                                        <th>REMARKS</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php while ($row = $result->fetch_assoc()): ?>
-                                                        <tr>
-                                                            <td><?php echo htmlspecialchars($row['seq']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['app_no']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['award_no']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['lastname']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['firstname']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['extname']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['middlename']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['sex']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['birthdate']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['course_program_enrolled']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['year_level']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['total_units_enrolled']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['status_of_enrollment']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['remarks']); ?></td>
-                                                        </tr>
-                                                    <?php endwhile; ?>
-                                                </tbody>
-                                            </table>
-                                        </div>
-
-                                        <?php
-                                        $conn->close();
-                                        ?>
-
-
+                                <?php if ($loadError !== ''): ?>
+                                    <div class="alert alert-warning"><?= htmlspecialchars($loadError, ENT_QUOTES, 'UTF-8') ?></div>
+                                <?php else: ?>
+                                    <h4 class="card-title">Enrollment status — <?= htmlspecialchars($progLabel, ENT_QUOTES, 'UTF-8') ?> scholars</h4>
+                                    <p class="text-muted mb-3">
+                                        Campus: <strong><?= htmlspecialchars($campus, ENT_QUOTES, 'UTF-8') ?></strong>.
+                                        <strong>Enrollment status</strong> is computed from uploaded <strong>COR</strong> and <strong>COG</strong>
+                                        (both required for <span class="badge badge-success">Enrolled</span>).
+                                        <?php if ($program === 'tdp'): ?>
+                                        <strong>CHED status (import)</strong> comes from column <em>Status of enrollment</em> in your TDP masterlist Excel (column M).
+                                        <?php endif; ?>
+                                    </p>
+                                    <div class="mb-3">
+                                        <span class="badge badge-success mr-2">Enrolled (COR+COG): <?= (int) $enrolledCount ?></span>
+                                        <span class="badge badge-warning mr-2">Not enrolled: <?= (int) $notEnrolledCount ?></span>
+                                        <?php if ($program === 'tdp'): ?>
+                                            <span class="badge badge-info mr-2">With CHED status: <?= (int) $chedStatusCount ?></span>
+                                        <?php endif; ?>
+                                        <span class="badge badge-secondary">Total: <?= count($enrollmentRows) ?></span>
                                     </div>
-                                </div>
+                                    <?php if ($program === 'tdp' && count($enrollmentRows) > 0 && $chedStatusCount === 0): ?>
+                                        <div class="alert alert-info py-2">
+                                            No CHED import status is stored yet for these rows. Re-upload the masterlist via
+                                            <a href="ched_masterlist.php">TDP Masterlist</a> and ensure the Excel file includes
+                                            <strong>Status of enrollment</strong> (column M).
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <form method="get" action="" class="row mb-4">
+                                        <input type="hidden" name="program" value="<?= htmlspecialchars($program, ENT_QUOTES, 'UTF-8') ?>">
+                                        <div class="col-md-4">
+                                            <label for="filename">Source file</label>
+                                            <select id="filename" name="filename" class="form-control">
+                                                <option value="">All files</option>
+                                                <?php foreach ($filterOptions['filenames'] as $fn): ?>
+                                                    <option value="<?= htmlspecialchars($fn, ENT_QUOTES, 'UTF-8') ?>"
+                                                        <?= $filterFilename === $fn ? 'selected' : '' ?>><?= htmlspecialchars($fn, ENT_QUOTES, 'UTF-8') ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="file_group">File group</label>
+                                            <select id="file_group" name="file_group" class="form-control">
+                                                <option value="">All groups</option>
+                                                <?php foreach ($filterOptions['file_groups'] as $fg): ?>
+                                                    <option value="<?= htmlspecialchars($fg, ENT_QUOTES, 'UTF-8') ?>"
+                                                        <?= $filterFileGroup === $fg ? 'selected' : '' ?>><?= htmlspecialchars($fg, ENT_QUOTES, 'UTF-8') ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 d-flex align-items-end">
+                                            <button type="submit" class="btn btn-success btn-rounded mr-2">Apply filter</button>
+                                            <a href="enrollment_status.php?program=<?= rawurlencode($program) ?>" class="btn btn-outline-secondary btn-rounded">Clear</a>
+                                        </div>
+                                    </form>
+
+                                    <div class="table-responsive">
+                                        <table id="zero_config" class="table table-striped table-bordered no-wrap">
+                                            <thead>
+                                                <tr>
+                                                    <th>SEQ</th>
+                                                    <th>APP NO</th>
+                                                    <th>LASTNAME</th>
+                                                    <th>FIRSTNAME</th>
+                                                    <?php if ($program === 'tes'): ?>
+                                                        <th>EXT</th>
+                                                    <?php endif; ?>
+                                                    <th>COURSE</th>
+                                                    <th>YEAR</th>
+                                                    <?php if ($program === 'tes'): ?>
+                                                        <th>BATCH NO</th>
+                                                        <th>CONTACT</th>
+                                                    <?php else: ?>
+                                                        <th>UNITS</th>
+                                                    <?php endif; ?>
+                                                    <th>COR / COG</th>
+                                                    <th>ENROLLMENT STATUS</th>
+                                                    <?php if ($program === 'tdp'): ?>
+                                                        <th>CHED STATUS (import)</th>
+                                                        <th>REMARKS</th>
+                                                    <?php endif; ?>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php
+                                                $colspan = $program === 'tes' ? 11 : 11;
+                                                if (empty($enrollmentRows)): ?>
+                                                    <tr>
+                                                        <td colspan="<?= $colspan ?>" class="text-center text-muted">
+                                                            No <?= htmlspecialchars($progLabel, ENT_QUOTES, 'UTF-8') ?> records for this campus or filter.
+                                                            Upload data via <a href="<?= htmlspecialchars($masterlistPage, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($progLabel, ENT_QUOTES, 'UTF-8') ?> Masterlist</a>.
+                                                        </td>
+                                                    </tr>
+                                                <?php else:
+                                                    $viewBase = '../../view_document.php?path=';
+                                                    foreach ($enrollmentRows as $row):
+                                                        $hasCor = !empty($row['cor_path']);
+                                                        $hasCog = !empty($row['cog_path']);
+                                                        $isEnrolled = ($row['enrollment_status'] ?? '') === 'Enrolled';
+                                                        $chedStatus = schogms_ched_import_status_value($row);
+                                                        $chedBadge = schogms_ched_import_status_badge_class($chedStatus);
+                                                ?>
+                                                    <tr>
+                                                        <td><?= htmlspecialchars((string) ($row['seq'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                                        <td><?= htmlspecialchars((string) ($row['app_no'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                                        <td><?= htmlspecialchars((string) ($row['lastname'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                                        <td><?= htmlspecialchars((string) ($row['firstname'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                                        <?php if ($program === 'tes'): ?>
+                                                            <td><?= htmlspecialchars((string) ($row['ext'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                                        <?php endif; ?>
+                                                        <td><?= htmlspecialchars((string) ($row['course_program_enrolled'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                                        <td><?= htmlspecialchars((string) ($row['year_level'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                                        <?php if ($program === 'tes'): ?>
+                                                            <td><?= htmlspecialchars((string) ($row['batch_no'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                                            <td><?= htmlspecialchars((string) ($row['contact'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                                        <?php else: ?>
+                                                            <td><?= htmlspecialchars((string) ($row['total_units_enrolled'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                                        <?php endif; ?>
+                                                        <td>
+                                                            <div class="btn-group" role="group">
+                                                                <?php if ($hasCor): ?>
+                                                                    <a href="<?= htmlspecialchars($viewBase . urlencode(base64_encode((string) $row['cor_path'])), ENT_QUOTES, 'UTF-8') ?>" target="_blank" class="btn btn-sm btn-success">COR</a>
+                                                                <?php else: ?><span class="badge badge-secondary">No COR</span><?php endif; ?>
+                                                                <?php if ($hasCog): ?>
+                                                                    <a href="<?= htmlspecialchars($viewBase . urlencode(base64_encode((string) $row['cog_path'])), ENT_QUOTES, 'UTF-8') ?>" target="_blank" class="btn btn-sm btn-primary">COG</a>
+                                                                <?php else: ?><span class="badge badge-secondary">No COG</span><?php endif; ?>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <?php if ($isEnrolled): ?>
+                                                                <span class="badge badge-success">Enrolled</span>
+                                                            <?php else: ?>
+                                                                <span class="badge badge-warning">Not Enrolled</span>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <?php if ($program === 'tdp'): ?>
+                                                            <td>
+                                                                <?php if ($chedStatus !== ''): ?>
+                                                                    <span class="badge badge-<?= htmlspecialchars($chedBadge, ENT_QUOTES, 'UTF-8') ?>">
+                                                                        <?= htmlspecialchars($chedStatus, ENT_QUOTES, 'UTF-8') ?>
+                                                                    </span>
+                                                                <?php else: ?>
+                                                                    <span class="text-muted" title="Not in database — re-import masterlist with Status of enrollment column">—</span>
+                                                                <?php endif; ?>
+                                                            </td>
+                                                            <td><?= htmlspecialchars((string) ($row['remarks'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                                        <?php endif; ?>
+                                                    </tr>
+                                                <?php endforeach; endif; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
-                    <!-- ============================================================== -->
-                    <!-- End PAge Content -->
-                    <!-- ============================================================== -->
                 </div>
-                <!-- ============================================================== -->
-                <!-- End Container fluid  -->
-                <!-- ============================================================== -->
-                <!-- ============================================================== -->
-                <!-- footer -->
-                <!-- ============================================================== -->
-                <footer class="footer text-center text-muted">
-                    All Rights Reserved 2026. Scholarship and Grants Management System <a href="">(SchoGMS)</a>.
-                </footer>
-                <!-- ============================================================== -->
-                <!-- End footer -->
-                <!-- ============================================================== -->
             </div>
-            <!-- ============================================================== -->
-            <!-- End Page wrapper  -->
-            <!-- ============================================================== -->
-        </div>
-        <!-- ============================================================== -->
-        <!-- End Wrapper -->
-        <!-- ============================================================== -->
-        <!-- End Wrapper -->
-        <!-- ============================================================== -->
-        <!-- All Jquery -->
-        <!-- ============================================================== -->
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-        <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <script>
-            document.getElementById('uploadForm').addEventListener('submit', function (event) {
-                event.preventDefault();
 
-                const fileGroupInput = document.getElementById('file_group');
-                const fileInput = document.getElementById('excelFile');
-                const file = fileInput.files[0];
-
-                if (!file) {
-                    showToast("Please select a file!", "error");
-                    return;
-                }
-
-                const fileGroup = fileGroupInput.value.trim();
-                if (!fileGroup) {
-                    showToast("Please enter a file group name!", "error");
-                    return;
-                }
-
-                // Validate file type (Accepts CSV, XLS, XLSX)
-                const allowedTypes = [
-                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-                    'application/vnd.ms-excel', // .xls
-                    'text/csv' // .csv
-                ];
-
-                const fileExtension = file.name.split('.').pop().toLowerCase();
-                const allowedExtensions = ['xls', 'xlsx', 'csv'];
-
-                if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
-                    showToast("Please upload a valid Excel or CSV file.", "error");
-                    console.error("Invalid file type:", file.type);
-                    return;
-                }
-
-                // Show SweetAlert confirmation before proceeding
-                Swal.fire({
-                    title: "Are you sure?",
-                    text: "Do you want to upload and process this file?",
-                    icon: "question",
-                    showCancelButton: true,
-                    confirmButtonText: "Yes, upload it!",
-                    cancelButtonText: "Cancel",
-                    reverseButtons: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const formData = new FormData();
-                        formData.append('file_group', fileGroup);
-                        formData.append('excelFile', file);
-
-                        // Display loading message
-                        Swal.fire({
-                            title: "Uploading...",
-                            text: "Please wait while the file is being uploaded and processed.",
-                            icon: "info",
-                            allowOutsideClick: false,
-                            showConfirmButton: false,
-                            willOpen: () => {
-                                Swal.showLoading();
-                            }
-                        });
-
-                        // Send file via Fetch API
-                        fetch('submit_ched_masterlist.php', {
-                            method: 'POST',
-                            body: formData
-                        })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    Swal.fire({
-                                        title: "Success!",
-                                        text: data.message || "File processed successfully!",
-                                        icon: "success",
-                                        timer: 3000
-                                    });
-                                    setTimeout(() => {
-                                        location.reload();
-                                    }, 1500);
-                                } else {
-                                    Swal.fire({
-                                        title: "Error!",
-                                        text: data.error || "An error occurred during file processing.",
-                                        icon: "error"
-                                    });
-                                    console.error("Server error:", data.error);
-                                }
-                            })
-                            .catch(error => {
-                                Swal.fire({
-                                    title: "Upload Failed!",
-                                    text: "An error occurred while uploading the file.",
-                                    icon: "error"
-                                });
-                                console.error("Fetch error:", error);
-                            });
-                    }
-                });
-            });
-        </script>
-
-
-
-
-        <script src="../../assets/libs/jquery/dist/jquery.min.js"></script>
-        <script src="../../assets/libs/popper.js/dist/umd/popper.min.js"></script>
-        <script src="../../assets/libs/bootstrap/dist/js/bootstrap.min.js"></script>
-        <!-- apps -->
-
-        <!-- apps -->
-        <script src="../../dist/js/app-style-switcher.js"></script>
-        <script src="../../dist/js/feather.min.js"></script>
-        <script src="../../assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js"></script>
-        <script src="../../dist/js/sidebarmenu.js"></script>
-        <!--Custom JavaScript -->
-        <script src="../../dist/js/custom.min.js"></script>
-    <?php require_once __DIR__ . '/inc/assets.php'; schogms_coordinator_footer_scripts(['datatables' => true]); ?>
+            <footer class="footer text-center text-muted">
+                All Rights Reserved 2026. Scholarship and Grants Management System <a href="">(SchoGMS)</a>.
+            </footer>
+    <?php
+    schogms_coordinator_shell_close();
+    require_once __DIR__ . '/inc/assets.php';
+    schogms_coordinator_footer_scripts(['datatables' => true]);
+    ?>
 
 </body>
 

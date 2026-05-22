@@ -22,6 +22,8 @@
 </head>
 
 <body>
+<?php schogms_loading_screen_once(); ?>
+
     <?php include 'loading-screen.php'; ?>
     <!-- ============================================================== -->
     <!-- Preloader - style you can find in spinners.css -->

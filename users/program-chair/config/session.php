@@ -3,6 +3,8 @@
  * Program chair: supports Mongo `users` (auth_type mongodb) and MySQL `assigned_program_chairs` (auth_type mysql_apc).
  * Login for MySQL-only chairs is handled in /login.php after Mongo lookup fails.
  */
+require_once __DIR__ . '/../../../config/schogms_helpers.php';
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }

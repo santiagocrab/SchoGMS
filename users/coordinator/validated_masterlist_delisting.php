@@ -333,6 +333,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
 </head>
 
 <body>
+<?php schogms_loading_screen_once(); ?>
+
     <?php include 'loading-screen.php'; ?>
 
     <h2>Form 2 Annex Data Delisting Results</h2>

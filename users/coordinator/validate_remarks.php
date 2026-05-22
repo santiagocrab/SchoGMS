@@ -1,533 +1,368 @@
-<?php include '../config/session.php'; ?>
+<?php
+include '../config/session.php';
+require_once __DIR__ . '/inc/validation_filters.php';
+require_once __DIR__ . '/inc/validation_export.php';
+require_once __DIR__ . '/inc/remarks_export.php';
+require_once __DIR__ . '/inc/validation_edit_guide.php';
+
+$program = strtolower(trim((string) ($_GET['program'] ?? 'tdp')));
+if (!in_array($program, ['tdp', 'tes'], true)) {
+    $program = 'tdp';
+}
+
+$campus = trim((string) ($sheet_name ?? ''));
+$rows = [];
+$vfOptions = [];
+$loadError = '';
+$prepared = [];
+$stats = [
+    'total' => 0,
+    'enrolled' => 0,
+    'passed' => 0,
+    'failed' => 0,
+    'pending' => 0,
+    'no_cor' => 0,
+    'no_cog' => 0,
+];
+
+if ($campus === '') {
+    $loadError = 'No campus assigned to your account.';
+} elseif ($conn instanceof mysqli) {
+    $rows = schogms_validation_fetch_rows($conn, $program, $campus, $_GET, true);
+    $vfOptions = schogms_validation_filter_options($conn, $program, $campus);
+    $prepared = schogms_remarks_prepare_rows($rows, $program);
+    $stats = schogms_remarks_stats($prepared);
+}
+
+$vfExportQs = schogms_validation_export_query($program, $campus, $_GET);
+$csvQsTemplate = $vfExportQs . '&format=template';
+$csvQsExtended = $vfExportQs . '&format=extended';
+$exportPage = $program === 'tes' ? 'validated_remarks_tes.php' : 'validated_remarks.php';
+$validatePage = $program === 'tes' ? 'validate_tes.php' : 'validate.php';
+$progLabel = $program === 'tes' ? 'TES' : 'TDP';
+$colspan = $program === 'tdp' ? 13 : 12;
+?>
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
-
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <!-- Tell the browser to be responsive to screen width -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <!-- Favicon icon -->
     <link rel="icon" type="image/png" sizes="16x16" href="../../assets/images/logo.png">
-    <title> Scholarship and Grants Management System | SchoGMS </title>
-    <!-- Custom CSS -->    <?php require_once __DIR__ . '/inc/assets.php'; schogms_coordinator_head(true); ?>
-    <style>.preloader{display:none!important}</style>
-    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-<![endif]-->
+    <title>Validate remarks — SchoGMS</title>
+    <?php require_once __DIR__ . '/inc/assets.php'; schogms_coordinator_head(true); ?>
+    <style>
+        .remarks-hero {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2962ff 55%, #5c6bc0 100%);
+            border-radius: 12px;
+            color: #fff;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.25rem;
+        }
+        .remarks-hero .badge-light { color: #1e3a5f; font-weight: 600; }
+        .remarks-stat {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.06);
+            transition: transform .15s ease;
+        }
+        .remarks-stat:hover { transform: translateY(-2px); }
+        .remarks-stat .stat-num { font-size: 1.75rem; font-weight: 700; line-height: 1.1; }
+        .remarks-stat .stat-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: #6c757d; }
+        .remarks-toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(0,0,0,.08);
+            padding: .75rem 1rem;
+            margin-bottom: 1rem;
+        }
+        #remarksTable tbody tr.row-failed { background-color: rgba(220, 53, 69, .06); }
+        #remarksTable tbody tr.row-passed { background-color: rgba(40, 167, 69, .04); }
+        #remarksTable tbody tr.row-pending { background-color: rgba(255, 193, 7, .08); }
+        #remarksTable .suggested-remarks {
+            max-width: 220px;
+            font-size: .85rem;
+            color: #495057;
+        }
+        #remarksTable thead th {
+            font-size: .72rem;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+            white-space: nowrap;
+        }
+        .remarks-format-hint {
+            font-size: .8rem;
+            color: #6c757d;
+            border-left: 3px solid #2962ff;
+            padding-left: .75rem;
+            margin-top: .5rem;
+        }
+    </style>
 </head>
-
 <body>
-    <?php include 'loading-screen.php'; ?>
-    <!-- ============================================================== -->
-    <!-- Preloader - style you can find in spinners.css -->
-    <!-- ============================================================== -->
-    <div class="preloader">
-        <div class="lds-ripple">
-            <div class="lds-pos"></div>
-            <div class="lds-pos"></div>
+<?php schogms_loading_screen_once(); ?>
+
+<?php include __DIR__ . '/loading-screen.php'; ?>
+<?php require_once __DIR__ . '/inc/coordinator_nav.php'; schogms_coordinator_shell_open('Validate remarks'); ?>
+
+<div class="page-breadcrumb">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb m-0 p-0">
+                    <li class="breadcrumb-item"><a href="index.php">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="<?= htmlspecialchars($validatePage, ENT_QUOTES, 'UTF-8') ?>?bulk=1">Validation</a></li>
+                    <li class="breadcrumb-item active">Validate remarks</li>
+                </ol>
+            </nav>
         </div>
     </div>
-    <!-- ============================================================== -->
-    <!-- Main wrapper - style you can find in pages.scss -->
-    <!-- ============================================================== -->
-    <?php require_once __DIR__ . '/inc/coordinator_nav.php'; schogms_coordinator_shell_open(); ?>
+</div>
 
-            <!-- ============================================================== -->
-            <!-- Bread crumb and right sidebar toggle -->
-            <!-- ============================================================== -->
-            <div class="page-breadcrumb">
-                <div class="row">
-                    <div class="col-7 align-self-center">
-                        <!-- <h3 class="page-title text-truncate text-dark font-weight-medium mb-1">Good Coordinator!</h3> -->
-                        <div class="d-flex align-items-center">
-                            <nav aria-label="breadcrumb">
-                                <ol class="breadcrumb m-0 p-0">
-                                    <li class="breadcrumb-item"><a href="index.php">Dashboard</a>
-                                    </li>
-                                </ol>
-                            </nav>
-                        </div>
-                    </div>
-                    <div class="col-5 align-self-center">
-                        <div class="customize-input float-right">
-                            <button type="button" class="btn waves-effect waves-light btn-rounded btn-success"
-                                data-toggle="modal" data-target="#uploadModal">
-                                Upload File
-                            </button>
-                        </div>
+<div class="container-fluid">
+    <ul class="nav nav-pills mb-3">
+        <li class="nav-item">
+            <a class="nav-link <?= $program === 'tdp' ? 'active' : '' ?>"
+               href="validate_remarks.php?program=tdp&amp;bulk=1&amp;sheet_name=<?= rawurlencode($campus) ?>">TDP remarks</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <?= $program === 'tes' ? 'active' : '' ?>"
+               href="validate_remarks.php?program=tes&amp;bulk=1&amp;sheet_name=<?= rawurlencode($campus) ?>">TES remarks</a>
+        </li>
+    </ul>
+
+    <?php if ($loadError !== ''): ?>
+        <div class="alert alert-warning"><?= htmlspecialchars($loadError, ENT_QUOTES, 'UTF-8') ?></div>
+    <?php else: ?>
+
+        <div class="remarks-hero d-flex flex-wrap align-items-center justify-content-between">
+            <div>
+                <h4 class="mb-1 text-white font-weight-bold"><?= htmlspecialchars($progLabel, ENT_QUOTES, 'UTF-8') ?> — remarks validation</h4>
+                <p class="mb-0 small opacity-90">
+                    Review document status, enrollment, and remarks before exporting for the chairman.
+                </p>
+            </div>
+            <span class="badge badge-light badge-pill mt-2 mt-md-0 px-3 py-2"><?= htmlspecialchars($campus, ENT_QUOTES, 'UTF-8') ?></span>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-6 col-md-4 col-lg-2 mb-2">
+                <div class="card remarks-stat h-100 mb-0">
+                    <div class="card-body py-3 text-center">
+                        <div class="stat-num text-primary"><?= (int) $stats['total'] ?></div>
+                        <div class="stat-label">Total scholars</div>
                     </div>
                 </div>
             </div>
-            <div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel"
-                aria-hidden="true">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="uploadModalLabel">Upload Student Data</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <form id="uploadForm">
-                                <div class="mb-3">
-                                    <label for="excelFile" class="form-label">Choose Excel File</label>
-                                    <input type="file" class="form-control" id="excelFile" name="excelFile"
-                                        accept=".xls,.xlsx, .csv">
-                                </div>
-                                <button type="submit" class="btn btn-primary">Upload</button>
-                            </form>
-                            <div id="message"></div>
-                        </div>
+            <div class="col-6 col-md-4 col-lg-2 mb-2">
+                <div class="card remarks-stat h-100 mb-0">
+                    <div class="card-body py-3 text-center">
+                        <div class="stat-num text-success"><?= (int) $stats['enrolled'] ?></div>
+                        <div class="stat-label">Enrolled</div>
                     </div>
                 </div>
             </div>
-            <!-- Modal -->
-            <!-- ============================================================== -->
-            <!-- End Bread crumb and right sidebar toggle -->
-            <!-- ============================================================== -->
-            <!-- ============================================================== -->
-            <!-- Container fluid  -->
-            <!-- ============================================================== -->
-            <!-- Container fluid  -->
-            <!-- ============================================================== -->
-            <div class="container-fluid">
-                <!-- ============================================================== -->
-                <!-- Start Page Content -->
-                <!-- ============================================================== -->
-                <!-- basic table -->
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="table-responsive">
-                                        <?php
-                                        // Include your database connection
-                                        require '../config/conn.php';
-
-                                        // Get the selected category and file_group from the form (if any)
-                                        $category = isset($_GET['category']) ? $_GET['category'] : '';
-                                        $file_group = isset($_GET['file_group']) ? $_GET['file_group'] : '';
-
-                                        // Query to get distinct categories and file groups from registrar_master_list table
-                                        $categoryQuery = "SELECT DISTINCT filename, file_group FROM registrar_master_list";
-                                        $categoryResult = $conn->query($categoryQuery);
-
-                                        if (!$categoryResult) {
-                                            die("Query failed: " . $conn->error);
-                                        }
-
-                                        // Base query to select data with LEFT JOIN, using GROUP_CONCAT to merge multiple categories per student
-                                        $query = "
-                                            SELECT rml.*, 
-                                                GROUP_CONCAT(DISTINCT du.category ORDER BY du.category SEPARATOR ', ') AS uploaded_categories,
-                                                GROUP_CONCAT(DISTINCT du.file_name ORDER BY du.file_name SEPARATOR ', ') AS uploaded_files
-                                            FROM registrar_master_list rml
-                                            LEFT JOIN document_uploads du 
-                                            ON du.file_name LIKE CONCAT(rml.last_name, ', ', rml.first_name, ' ', rml.middle_name, '%')
-                                        ";
-
-                                        // Apply filters if selected
-                                        $filters = [];
-                                        if ($category !== '') {
-                                            $filters[] = "rml.filename = '" . $conn->real_escape_string($category) . "'";
-                                        }
-                                        if ($file_group !== '') {
-                                            $filters[] = "rml.file_group = '" . $conn->real_escape_string($file_group) . "'";
-                                        }
-
-                                        // Append the WHERE clause if filters are set
-                                        if (count($filters) > 0) {
-                                            $query .= " WHERE " . implode(" AND ", $filters);
-                                        }
-
-                                        // Adding the GROUP BY clause
-                                        $query .= " GROUP BY rml.last_name, rml.first_name, rml.middle_name";
-
-                                        // Execute the query
-                                        $result = $conn->query($query);
-
-                                        if (!$result) {
-                                            die("Query failed: " . $conn->error);
-                                        }
-                                        ?>
-
-
-                                        <div class="table-responsive">
-                                            <!-- Dropdown to select category and file group -->
-                                            <form method="GET" action="" class="col-md-8">
-                                                <label for="categoryFilter" hidden>Select Category:</label>
-                                                <select id="categoryFilter" name="category" class="form-control"hidden>
-                                                    <option value="">All</option>
-                                                    <?php while ($row = $categoryResult->fetch_assoc()): ?>
-                                                        <option value="<?php echo htmlspecialchars($row['filename']); ?>"
-                                                            <?php echo ($category == $row['filename']) ? 'selected' : ''; ?>>
-                                                            <?php echo htmlspecialchars($row['filename']); ?>
-                                                        </option>
-                                                    <?php endwhile; ?>
-                                                </select>
-
-                                                <label for="fileGroupFilter" class="mt-2">Select File Group:</label>
-                                                <select id="fileGroupFilter" name="file_group" class="form-control">
-                                                    <option value="">All</option>
-                                                    <?php
-                                                    $categoryResult->data_seek(0);
-                                                    while ($row = $categoryResult->fetch_assoc()): ?>
-                                                        <option value="<?php echo htmlspecialchars($row['file_group']); ?>"
-                                                            <?php echo ($file_group == $row['file_group']) ? 'selected' : ''; ?>>
-                                                            <?php echo htmlspecialchars($row['file_group']); ?>
-                                                        </option>
-                                                    <?php endwhile; ?>
-                                                </select>
-                                                <br>
-                                                <button type="submit"
-                                                    class="btn waves-effect waves-light btn-rounded btn-success">Apply
-                                                    Filter</button>
-                                                <br><br>
-                                            </form>
-                                            <table id="zero_config" class="table table-striped table-bordered no-wrap">
-                                                <thead>
-                                                    <tr>
-                                                        <th hidden>File Name</th>
-                                                        <th>Full Name</th>
-                                                        <th>Ext. Name</th>
-                                                        <th>ID Number</th>
-                                                        <th>Gender</th>
-                                                        <th>Student Type</th>
-                                                        <th>Year Level</th>
-                                                        <th>Attended</th>
-                                                        <th>Course</th>
-                                                        <th>Curriculum</th>
-                                                        <th>Scholarship</th>
-                                                        <th>GPA</th>
-                                                        <th>CGPA</th>
-                                                        <th>% Pass</th>
-                                                        <th>Grade Remarks</th>
-                                                        <th>Enrolled</th>
-                                                        <th>Lec. Unit</th>
-                                                        <th>Lab. Unit</th>
-                                                        <th>COR Printed</th>
-                                                        <th>Billing Profile</th>
-                                                        <th>Misc. Fee Total</th>
-                                                        <th>Misc. Fee Paid</th>
-                                                        <th>Tuition Fee Total</th>
-                                                        <th>Tuition Fee Paid</th>
-                                                        <th>Street</th>
-                                                        <th>Barangay</th>
-                                                        <th>Municipality/City</th>
-                                                        <th>Province</th>
-                                                        <th>Zip Code</th>
-                                                        <th>Date of Birth</th>
-                                                        <th>Place of Birth</th>
-                                                        <th>Civil Status</th>
-                                                        <th>Tribe</th>
-                                                        <th>Religion</th>
-                                                        <th>Year Admitted</th>
-                                                        <th>Semester Admitted</th>
-                                                        <th>School Last Attended</th>
-                                                        <th>Year Last Attended</th>
-                                                        <th>Semester Last Attended</th>
-                                                        <th>High School Graduated</th>
-                                                        <th>Exam Date</th>
-                                                        <th>Exam Rating</th>
-                                                        <th>Ref. Number</th>
-                                                        <th>Guardian</th>
-                                                        <th>Address</th>
-                                                        <th>Contact Nos.</th>
-                                                        <th>Blood Type</th>
-                                                        <th>Email Address</th>
-                                                        <th>Mobile Number</th>
-                                                        <th>DEPED Number</th>
-                                                        <th>Scholarship Grant</th>
-                                                        <th>Scholarship Allowance</th>
-                                                        <th>Documents Submitted</th>
-                                                        <th>Lacking Document(s)</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php while ($row = $result->fetch_assoc()): ?>
-                                                        <tr>
-                                                            <td hidden><?php echo htmlspecialchars($row['filename']); ?>
-                                                            </td>
-                                                            <!-- Status Column -->
-                                                            <!-- Status Column (Check COR or COG) -->
-                                                            <td><?php echo htmlspecialchars($row['last_name'] . ', ' . $row['first_name'] . ' ' . $row['middle_name']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['ext_name']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['id_number']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['gender']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['student_type']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['year_level']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['attended']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['course']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['curriculum']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['scholarship']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['gpa']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['cgpa']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['pass_percentage']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['grade_remarks']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['enrolled']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['lec_unit']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['lab_unit']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['cor_printed']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['billing_profile']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['misc_fee_total']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['misc_fee_paid']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['tuition_fee_total']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['tuition_fee_paid']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['street']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['barangay']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['municipality_city']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['province']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['zip_code']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['date_of_birth']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['place_of_birth']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['civil_status']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['tribe']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['religion']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['year_admitted']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['semester_admitted']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['school_last_attended']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['year_last_attended']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['semester_last_attended']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['high_school_graduated']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['exam_date']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['exam_rating']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['ref_number']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['guardian']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['guardian_address']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['guardian_contact']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['blood_type']); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['email_address']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['mobile_number']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['deped_number']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['scholarship_grant']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['scholarship_allowance']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['documents_submitted']); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['lacking_documents']); ?>
-                                                            </td>
-                                                        </tr>
-                                                    <?php endwhile; ?>
-                                                </tbody>
-                                            </table>
-
-                                            <?php
-                                            // Close the database connection
-                                            $conn->close();
-                                            ?>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- ============================================================== -->
-                            <!-- End PAge Content -->
-                            <!-- ============================================================== -->
-                        </div>
-                        <!-- ============================================================== -->
-                        <!-- End Container fluid  -->
-                        <!-- ============================================================== -->
-                        <!-- ============================================================== -->
-                        <!-- footer -->
-                        <!-- ============================================================== -->
-                        <footer class="footer text-center text-muted">
-                            All Rights Reserved 2026. Scholarship and Grants Management System <a href="">(SchoGMS)</a>.
-                        </footer>
-                        <!-- ============================================================== -->
-                        <!-- End footer -->
-                        <!-- ============================================================== -->
+            <div class="col-6 col-md-4 col-lg-2 mb-2">
+                <div class="card remarks-stat h-100 mb-0">
+                    <div class="card-body py-3 text-center">
+                        <div class="stat-num text-success"><?= (int) $stats['passed'] ?></div>
+                        <div class="stat-label">Validated</div>
                     </div>
-                    <!-- ============================================================== -->
-                    <!-- End Page wrapper  -->
-                    <!-- ============================================================== -->
                 </div>
-                <!-- ============================================================== -->
-                <!-- End Wrapper -->
-                <!-- ============================================================== -->
-                <!-- End Wrapper -->
-                <!-- ============================================================== -->
-                <!-- All Jquery -->
-                <!-- ============================================================== -->
-                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-                <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-                <script>
-                    document.getElementById('uploadForm').addEventListener('submit', function (event) {
-                        event.preventDefault();
+            </div>
+            <div class="col-6 col-md-4 col-lg-2 mb-2">
+                <div class="card remarks-stat h-100 mb-0">
+                    <div class="card-body py-3 text-center">
+                        <div class="stat-num text-danger"><?= (int) $stats['failed'] ?></div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2 mb-2">
+                <div class="card remarks-stat h-100 mb-0">
+                    <div class="card-body py-3 text-center">
+                        <div class="stat-num text-warning"><?= (int) $stats['pending'] ?></div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2 mb-2">
+                <div class="card remarks-stat h-100 mb-0">
+                    <div class="card-body py-3 text-center">
+                        <div class="stat-num text-secondary"><?= (int) $stats['no_cor'] ?></div>
+                        <div class="stat-label">No COR</div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                        const fileInput = document.getElementById('excelFile');
-                        const file = fileInput.files[0];
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body py-3">
+                <?php
+                $vfProgram = $program;
+                $vfCampus = $campus;
+                $vfGet = $_GET;
+                $vfPage = 'validate_remarks.php';
+                require __DIR__ . '/inc/validation_filters_ui.php';
+                ?>
+            </div>
+        </div>
 
-                        if (!file) {
-                            showToast("Please select a file!", "error");
-                            return;
-                        }
+        <div class="remarks-toolbar d-flex flex-wrap align-items-center gap-2">
+            <a class="btn btn-success btn-sm px-3"
+               href="export_remarks_csv.php?<?= htmlspecialchars($csvQsTemplate, ENT_QUOTES, 'UTF-8') ?>">
+                <i data-feather="download" class="feather-icon" style="width:14px;height:14px"></i>
+                Export CSV (main format)
+            </a>
+            <a class="btn btn-outline-success btn-sm"
+               href="export_remarks_csv.php?<?= htmlspecialchars($csvQsExtended, ENT_QUOTES, 'UTF-8') ?>">
+                Extended CSV
+            </a>
+            <a class="btn btn-outline-primary btn-sm"
+               href="<?= htmlspecialchars($exportPage . '?' . $vfExportQs, ENT_QUOTES, 'UTF-8') ?>"
+               target="_blank" rel="noopener">
+                <i data-feather="file-text" class="feather-icon" style="width:14px;height:14px"></i>
+                Excel template
+            </a>
+            <a class="btn btn-outline-secondary btn-sm ml-md-auto"
+               href="<?= htmlspecialchars($validatePage . '?bulk=1&amp;sheet_name=' . rawurlencode($campus), ENT_QUOTES, 'UTF-8') ?>">
+                ← Back to validation
+            </a>
+        </div>
+        <p class="remarks-format-hint mb-3">
+            <strong>Main format</strong> matches the <?= htmlspecialchars($progLabel, ENT_QUOTES, 'UTF-8') ?> verification spreadsheet
+            (<?= $program === 'tes' ? 'columns A–P' : 'columns A–O' ?>): scholar fields, registrar units, COR/COG status, enrollment status, and remarks.
+            Opens in Excel with UTF-8. Use <em>Extended CSV</em> for validation status and separate suggested-remarks columns.
+            Use <strong>Edit</strong> / <strong>Fix</strong> on a row to update remarks, enrollment status, course/year, or upload COR/COG.
+        </p>
 
-                        // Validate file type (Accepts CSV, XLS, XLSX)
-                        const allowedTypes = [
-                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-                            'application/vnd.ms-excel', // .xls
-                            'text/csv' // .csv
-                        ];
-
-                        const fileExtension = file.name.split('.').pop().toLowerCase();
-                        const allowedExtensions = ['xls', 'xlsx', 'csv'];
-
-                        if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
-                            showToast("Please upload a valid Excel or CSV file.", "error");
-                            console.error("Invalid file type:", file.type);
-                            return;
-                        }
-
-                        // Show SweetAlert confirmation before proceeding
-                        Swal.fire({
-                            title: "Are you sure?",
-                            text: "Do you want to upload and process this file?",
-                            icon: "question",
-                            showCancelButton: true,
-                            confirmButtonText: "Yes, upload it!",
-                            cancelButtonText: "Cancel",
-                            reverseButtons: true
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                const formData = new FormData();
-                                formData.append('excelFile', file);
-
-                                // Display loading message
-                                Swal.fire({
-                                    title: "Uploading...",
-                                    text: "Please wait while the file is being uploaded and processed.",
-                                    icon: "info",
-                                    allowOutsideClick: false,
-                                    showConfirmButton: false,
-                                    willOpen: () => {
-                                        Swal.showLoading();
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="remarksTable" class="table table-hover table-bordered table-sm mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>SEQ</th>
+                                <th>APP NO</th>
+                                <?php if ($program === 'tdp'): ?><th>AWARD</th><?php endif; ?>
+                                <th>Name</th>
+                                <th>Course</th>
+                                <th>Year</th>
+                                <th>COR / COG</th>
+                                <th>Enrollment</th>
+                                <th>Validation</th>
+                                <th>Masterlist remarks</th>
+                                <th>Suggested remarks</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($prepared)): ?>
+                                <tr>
+                                    <td colspan="<?= $colspan ?>" class="text-center text-muted py-4">
+                                        No records for this campus or filter. Adjust filters or upload the registrar masterlist.
+                                    </td>
+                                </tr>
+                            <?php else:
+                                foreach ($prepared as $item):
+                                    $row = $item['row'];
+                                    $check = $item['check'];
+                                    $hasCor = !empty($check['has_cor']);
+                                    $hasCog = !empty($check['has_cog']);
+                                    $corCog = schogms_remarks_cor_cog_label($check);
+                                    $enrollment = (string) ($check['enrollment'] ?? 'Not Enrolled');
+                                    $validation = (string) ($check['validation_label'] ?? 'Failed');
+                                    $masterRemarks = trim((string) ($row['remarks'] ?? ''));
+                                    $suggested = schogms_remarks_suggested_text($row, $check);
+                                    $name = trim((string) ($row['lastname'] ?? '') . ', ' . (string) ($row['firstname'] ?? '') . ' ' . (string) ($row['middlename'] ?? ''));
+                                    $rowClass = 'row-failed';
+                                    if (!empty($check['passed'])) {
+                                        $rowClass = 'row-passed';
+                                    } elseif (strtolower($validation) === 'pending') {
+                                        $rowClass = 'row-pending';
                                     }
-                                });
+                                    $valBadge = 'danger';
+                                    if (!empty($check['passed'])) {
+                                        $valBadge = 'success';
+                                    } elseif (strtolower($validation) === 'pending') {
+                                        $valBadge = 'warning';
+                                    }
+                            ?>
+                                <tr class="<?= htmlspecialchars($rowClass, ENT_QUOTES, 'UTF-8') ?>">
+                                    <td><?= htmlspecialchars((string) ($row['seq'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) ($row['app_no'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                    <?php if ($program === 'tdp'): ?>
+                                        <td><?= htmlspecialchars((string) ($row['award_no'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                    <?php endif; ?>
+                                    <td class="text-nowrap"><?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) ($row['course_program_enrolled'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) ($row['year_level'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td>
+                                        <?php if ($hasCor && $hasCog): ?>
+                                            <span class="badge badge-success"><?= htmlspecialchars($corCog, ENT_QUOTES, 'UTF-8') ?></span>
+                                        <?php elseif ($hasCor || $hasCog): ?>
+                                            <span class="badge badge-warning"><?= htmlspecialchars($corCog, ENT_QUOTES, 'UTF-8') ?></span>
+                                        <?php else: ?>
+                                            <span class="badge badge-danger"><?= htmlspecialchars($corCog, ENT_QUOTES, 'UTF-8') ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-<?= $enrollment === 'Enrolled' ? 'success' : 'secondary' ?>">
+                                            <?= htmlspecialchars($enrollment, ENT_QUOTES, 'UTF-8') ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-<?= $valBadge ?>"><?= htmlspecialchars($validation, ENT_QUOTES, 'UTF-8') ?></span>
+                                    </td>
+                                    <td><?php if ($masterRemarks !== ''): ?><?= htmlspecialchars($masterRemarks, ENT_QUOTES, 'UTF-8') ?><?php else: ?><span class="text-muted">—</span><?php endif; ?></td>
+                                    <td class="suggested-remarks" title="<?= htmlspecialchars($suggested, ENT_QUOTES, 'UTF-8') ?>">
+                                        <?= htmlspecialchars($suggested, ENT_QUOTES, 'UTF-8') ?>
+                                    </td>
+                                    <td class="text-nowrap">
+                                        <button type="button"
+                                            class="btn btn-sm <?= !empty($check['passed']) ? 'btn-outline-primary' : 'btn-warning' ?> btn-edit-student"
+                                            data-id="<?= (int) ($row['id'] ?? 0) ?>"
+                                            data-guide="<?= schogms_validation_edit_guide_attr($row, $check) ?>">
+                                            <?= !empty($check['passed']) ? 'Edit' : 'Fix' ?>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+</div>
 
-                                // Send file via Fetch API
-                                fetch('submit_master_list.php', {
-                                    method: 'POST',
-                                    body: formData
-                                })
-                                    .then(response => {
-                                        if (!response.ok) {
-                                            throw new Error(`HTTP error! status: ${response.status}`);
-                                        }
-                                        return response.json();
-                                    })
-                                    .then(data => {
-                                        if (data.success) {
-                                            Swal.fire({
-                                                title: "Success!",
-                                                text: data.message || "File processed successfully!",
-                                                icon: "success",
-                                                timer: 3000
-                                            });
-                                        } else {
-                                            Swal.fire({
-                                                title: "Error!",
-                                                text: data.error || "An error occurred during file processing.",
-                                                icon: "error"
-                                            });
-                                            console.error("Server error:", data.error);
-                                        }
-                                    })
-                                    .catch(error => {
-                                        Swal.fire({
-                                            title: "Upload Failed!",
-                                            text: "An error occurred while uploading the file.",
-                                            icon: "error"
-                                        });
-                                        console.error("Fetch error:", error);
-                                    });
-                            }
-                        });
-                    });
+<footer class="footer text-center text-muted">
+    All Rights Reserved 2026. Scholarship and Grants Management System (SchoGMS).
+</footer>
 
-                    /**
-                     * Displays a toast message using Toastify.
-                     * @param {string} message - The message to display.
-                     * @param {string} type - The type of the message (success, error).
-                     */
-                    function showToast(message, type) {
-                        let style;
-                        switch (type) {
-                            case "success":
-                                style = "linear-gradient(to right, #00b09b, #96c93d)";
-                                break;
-                            case "error":
-                                style = "linear-gradient(to right, #ff5f6d, #ffc371)";
-                                break;
-                            default:
-                                style = "linear-gradient(to right, #555, #888)";
-                        }
-
-                        Toastify({
-                            text: message,
-                            duration: 3000,
-                            close: true,
-                            gravity: "top",
-                            position: "center",
-                            style: { background: style }
-                        }).showToast();
-                    }
-                </script>
-
-
-
-
-                <script src="../../assets/libs/jquery/dist/jquery.min.js"></script>
-                <script src="../../assets/libs/popper.js/dist/umd/popper.min.js"></script>
-                <script src="../../assets/libs/bootstrap/dist/js/bootstrap.min.js"></script>
-                <!-- apps -->
-
-                <!-- apps -->
-                <script src="../../dist/js/app-style-switcher.js"></script>
-                <script src="../../dist/js/feather.min.js"></script>
-                <script src="../../assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js"></script>
-                <script src="../../dist/js/sidebarmenu.js"></script>
-                <!--Custom JavaScript -->
-                <script src="../../dist/js/custom.min.js"></script>
-    <?php require_once __DIR__ . '/inc/assets.php'; schogms_coordinator_footer_scripts(['datatables' => true]); ?>
-
+<?php
+schogms_coordinator_shell_close();
+schogms_coordinator_footer_scripts(['datatables' => true, 'sweetalert' => true]);
+$mlProgram = $program;
+$mlCampus = $campus;
+require __DIR__ . '/inc/masterlist_edit_ui.php';
+?>
+<script>
+(function () {
+    if (typeof $ === 'undefined' || !$.fn.DataTable) return;
+    var $t = $('#remarksTable');
+    if (!$t.length || $t.find('tbody tr td[colspan]').length) return;
+    $t.DataTable({
+        pageLength: 25,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'All']],
+        order: [[0, 'asc']],
+        dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>rtip',
+        language: { search: 'Filter table:', lengthMenu: 'Show _MENU_ rows' }
+    });
+})();
+</script>
 </body>
-
 </html>

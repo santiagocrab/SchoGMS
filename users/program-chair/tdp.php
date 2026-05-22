@@ -33,6 +33,8 @@ require_once __DIR__ . '/../../inc/campus_access.php';
 </head>
 
 <body>
+<?php schogms_loading_screen_once(); ?>
+
     <!-- ============================================================== -->
     <!-- Preloader - style you can find in spinners.css -->
     <!-- ============================================================== -->

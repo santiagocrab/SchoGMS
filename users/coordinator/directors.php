@@ -37,6 +37,8 @@ $coordinatorCampus = schogms_resolve_catalog_campus(trim((string) ($sheet_name ?
     <?php require_once __DIR__ . '/inc/assets.php'; schogms_coordinator_head(true); ?>
 </head>
 <body>
+<?php schogms_loading_screen_once(); ?>
+
 <?php require_once __DIR__ . '/inc/coordinator_nav.php'; schogms_coordinator_shell_open('Campus directors'); ?>
         <div class="container-fluid">
             <div class="page-breadcrumb">

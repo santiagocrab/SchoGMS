@@ -1,0 +1,279 @@
+/* SchoGMS page loader — brand colors from logo (cyan → purple) */
+
+.preloader {
+    display: none !important;
+}
+
+:root {
+    --schogms-loader-cyan: #00d4ff;
+    --schogms-loader-cyan-soft: rgba(0, 212, 255, 0.35);
+    --schogms-loader-purple: #9d4edd;
+    --schogms-loader-purple-soft: rgba(157, 78, 221, 0.35);
+    --schogms-loader-bg: #06080f;
+    --schogms-loader-surface: rgba(255, 255, 255, 0.06);
+    --schogms-loader-text: #f4f7ff;
+    --schogms-loader-muted: rgba(244, 247, 255, 0.72);
+    --schogms-loader-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --schogms-loader-ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+.schogms-page-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--schogms-loader-bg);
+    overflow: hidden;
+    transition:
+        opacity 0.55s var(--schogms-loader-ease-out),
+        visibility 0.55s var(--schogms-loader-ease-out);
+}
+
+.schogms-page-loader.is-exiting {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.schogms-page-loader.is-exiting .schogms-loader-panel {
+    transform: translateY(-12px) scale(0.98);
+    opacity: 0;
+}
+
+.schogms-page-loader.is-exiting .schogms-loader-curtain {
+    transform: translateY(0);
+}
+
+/* Ambient brand glow */
+.schogms-loader-ambient {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.schogms-loader-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(72px);
+    opacity: 0.55;
+    animation: schogmsOrbDrift 14s var(--schogms-loader-ease-in-out) infinite alternate;
+}
+
+.schogms-loader-orb--cyan {
+    width: min(52vw, 420px);
+    height: min(52vw, 420px);
+    top: -8%;
+    left: -6%;
+    background: radial-gradient(circle, var(--schogms-loader-cyan-soft) 0%, transparent 70%);
+}
+
+.schogms-loader-orb--purple {
+    width: min(48vw, 380px);
+    height: min(48vw, 380px);
+    bottom: -10%;
+    right: -4%;
+    background: radial-gradient(circle, var(--schogms-loader-purple-soft) 0%, transparent 70%);
+    animation-delay: -4s;
+}
+
+.schogms-loader-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 45%, #000 20%, transparent 75%);
+    opacity: 0.4;
+}
+
+.schogms-loader-curtain {
+    position: absolute;
+    inset: 0;
+    background: var(--schogms-loader-bg);
+    transform: translateY(100%);
+    transition: transform 0.7s var(--schogms-loader-ease-out);
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* Center panel */
+.schogms-loader-panel {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 2rem 1.5rem 2.25rem;
+    max-width: 92vw;
+    transition:
+        transform 0.55s var(--schogms-loader-ease-out),
+        opacity 0.55s var(--schogms-loader-ease-out);
+    animation: schogmsPanelIn 0.85s var(--schogms-loader-ease-out) both;
+}
+
+@keyframes schogmsPanelIn {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Logo only */
+.schogms-loader-emblem {
+    margin-bottom: 1.75rem;
+    line-height: 0;
+}
+
+.schogms-loader-logo {
+    display: block;
+    width: min(280px, 78vw);
+    height: auto;
+    object-fit: contain;
+    filter:
+        drop-shadow(0 8px 24px rgba(0, 0, 0, 0.55))
+        drop-shadow(0 4px 20px rgba(0, 212, 255, 0.35))
+        drop-shadow(0 8px 32px rgba(157, 78, 221, 0.4));
+    animation: schogmsLogoFloat 3s ease-in-out infinite;
+}
+
+/* Typography — mirrors logo gradient */
+.schogms-loader-eyebrow {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    margin: 0 0 0.35rem;
+    background: linear-gradient(90deg, var(--schogms-loader-cyan), var(--schogms-loader-purple));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.schogms-loader-title {
+    margin: 0 0 0.85rem;
+    font-size: clamp(1.65rem, 5vw, 2.1rem);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.15;
+    background: linear-gradient(
+        105deg,
+        var(--schogms-loader-cyan) 0%,
+        #7b61ff 48%,
+        var(--schogms-loader-purple) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.schogms-loader-status {
+    margin: 0 0 1.35rem;
+    min-height: 1.35rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--schogms-loader-muted);
+    letter-spacing: 0.02em;
+}
+
+.schogms-loader-status.is-changing {
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* Progress track */
+.schogms-loader-track {
+    width: min(240px, 72vw);
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    position: relative;
+}
+
+.schogms-loader-track::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.06),
+        transparent
+    );
+}
+
+.schogms-loader-bar {
+    height: 100%;
+    width: 38%;
+    border-radius: inherit;
+    background: linear-gradient(
+        90deg,
+        var(--schogms-loader-cyan),
+        #7b61ff,
+        var(--schogms-loader-purple)
+    );
+    box-shadow: 0 0 12px var(--schogms-loader-cyan-soft);
+    animation: schogmsBarSweep 1.8s var(--schogms-loader-ease-in-out) infinite;
+}
+
+@keyframes schogmsLogoFloat {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-4px);
+    }
+}
+
+@keyframes schogmsOrbDrift {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+    100% {
+        transform: translate(24px, 18px) scale(1.08);
+    }
+}
+
+@keyframes schogmsBarSweep {
+    0% {
+        transform: translateX(-120%);
+    }
+    100% {
+        transform: translateX(320%);
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .schogms-loader-orb,
+    .schogms-loader-logo,
+    .schogms-loader-bar,
+    .schogms-loader-panel {
+        animation: none !important;
+    }
+
+    .schogms-loader-panel {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .schogms-loader-emblem {
+        margin-bottom: 1.35rem;
+    }
+
+    .schogms-loader-logo {
+        width: min(240px, 88vw);
+    }
+}

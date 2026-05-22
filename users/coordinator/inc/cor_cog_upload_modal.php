@@ -16,7 +16,7 @@ $corCogDocLabel = $corCogCategory === 'COR' ? 'Certificate of Registration' : 'C
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="uploadModalLabel">Upload <?= htmlspecialchars($corCogCategory) ?> documents</h5>
+                <h5 class="modal-title" id="uploadModalLabel">Bulk upload <?= htmlspecialchars($corCogCategory) ?> documents</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -24,8 +24,8 @@ $corCogDocLabel = $corCogCategory === 'COR' ? 'Certificate of Registration' : 'C
             <div class="modal-body">
                 <p class="text-muted small mb-3">
                     <?= htmlspecialchars($corCogDocLabel) ?> — one file per scholar.
-                    Name each file <strong>LASTNAME, FIRSTNAME MIDDLENAME.pdf</strong> (see
-                    <a href="#upload-format">format guide</a> below the table).
+                    Name each file <strong>LASTNAME, FIRSTNAME MIDDLENAME.pdf</strong> (must match the CHED masterlist).
+                    Files that do not match any scholar on the masterlist are <strong>not saved</strong> and will be listed as removed.
                 </p>
                 <form id="corCogUploadForm" enctype="multipart/form-data">
                     <input type="hidden" name="category" value="<?= htmlspecialchars($corCogCategory) ?>">
@@ -33,6 +33,14 @@ $corCogDocLabel = $corCogCategory === 'COR' ? 'Certificate of Registration' : 'C
                         <label>Campus</label>
                         <input type="text" class="form-control" name="campus" readonly
                                value="<?= htmlspecialchars($corCogCampus) ?>" style="background:#f8f9fa">
+                    </div>
+                    <div class="form-group">
+                        <label for="masterlist_scope">Match scholars from</label>
+                        <select class="form-control" id="masterlist_scope" name="masterlist_scope">
+                            <option value="all" selected>TDP + TES masterlist</option>
+                            <option value="tdp">TDP masterlist only</option>
+                            <option value="tes">TES masterlist only</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="fileGroup">File group <span class="text-danger">*</span></label>
@@ -45,7 +53,7 @@ $corCogDocLabel = $corCogCategory === 'COR' ? 'Certificate of Registration' : 'C
                         <label for="fileUpload"><?= htmlspecialchars($corCogCategory) ?> files <span class="text-danger">*</span></label>
                         <input type="file" class="form-control" id="fileUpload" name="fileUpload[]" multiple
                                accept=".pdf,.jpg,.jpeg,.png" required>
-                        <small class="form-text text-muted">PDF, JPG, or PNG — multiple files allowed.</small>
+                        <small class="form-text text-muted">PDF, JPG, or PNG — select many files at once (bulk upload).</small>
                     </div>
                     <button type="submit" class="btn btn-primary">
                         <i data-feather="upload" class="feather-icon"></i> Upload

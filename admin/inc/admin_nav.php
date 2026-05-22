@@ -2,6 +2,7 @@
 /**
  * Unified admin top bar + sidebar.
  */
+require_once __DIR__ . '/../../config/schogms_helpers.php';
 
 if (!function_exists('schogms_admin_nav_script')) {
     function schogms_admin_nav_script(): string
@@ -135,6 +136,7 @@ if (!function_exists('schogms_admin_render_sidebar')) {
 if (!function_exists('schogms_admin_shell_open')) {
     function schogms_admin_shell_open(?string $pageTitle = null): void
     {
+        schogms_loading_screen_once();
         ?>
         <div id="main-wrapper" data-theme="light" data-layout="vertical" data-navbarbg="skin6"
             data-sidebartype="full" data-sidebar-position="fixed" data-header-position="fixed" data-boxed-layout="full">

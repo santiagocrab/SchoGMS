@@ -36,6 +36,8 @@ include 'config/session.php';
 </head>
 
 <body>
+<?php schogms_loading_screen_once(); ?>
+
     <!-- ============================================================== -->
     <!-- Preloader - style you can find in spinners.css -->
     <!-- ============================================================== -->

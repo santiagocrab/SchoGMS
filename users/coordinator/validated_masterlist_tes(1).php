@@ -223,6 +223,8 @@ $conn->close();
 </head>
 
 <body>
+<?php schogms_loading_screen_once(); ?>
+
 
     <h2>Form 2 Anex Data Results</h2>
 

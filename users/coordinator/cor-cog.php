@@ -14,6 +14,9 @@ require __DIR__ . '/../config/session.php';
     <?php require_once __DIR__ . '/inc/assets.php'; schogms_coordinator_head(false); ?>
 </head>
 <body>
+<?php schogms_loading_screen_once(); ?>
+
+<?php include __DIR__ . '/loading-screen.php'; ?>
 <?php require_once __DIR__ . '/inc/coordinator_nav.php'; schogms_coordinator_shell_open('COR & COG'); ?>
         <div class="container-fluid">
             <div class="page-breadcrumb"><nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="index.php">Dashboard</a></li><li class="breadcrumb-item active">COR &amp; COG</li></ol></nav></div>
@@ -41,6 +44,10 @@ require __DIR__ . '/../config/session.php';
                     </div>
                 </div>
             </div>
+            <?php
+            $corCogCampus = trim((string) ($sheet_name ?? ''));
+            require __DIR__ . '/inc/cor_cog_bulk_upload_panel.php';
+            ?>
             <div class="row">
                 <div class="col-12">
                     <div class="card border-primary">
@@ -59,8 +66,10 @@ require __DIR__ . '/../config/session.php';
                 </div>
             </div>
         </div>
-    </div>
-</div>
-<?php require_once __DIR__ . '/inc/assets.php'; schogms_coordinator_footer_scripts(); ?>
+<?php
+schogms_coordinator_shell_close();
+schogms_coordinator_footer_scripts(['sweetalert' => true]);
+require __DIR__ . '/inc/cor_cog_upload_script.php';
+?>
 </body>
 </html>

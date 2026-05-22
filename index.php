@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/config/schogms_helpers.php'; ?>
 <!DOCTYPE html>
 <html dir="ltr">
 
@@ -68,6 +69,8 @@
 </head>
 
 <body>
+<?php schogms_loading_screen_once(); ?>
+
 
     <div class="auth-wrapper">
         <div class="auth-box">

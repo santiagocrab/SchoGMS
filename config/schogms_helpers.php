@@ -78,3 +78,66 @@ if (!function_exists('schogms_status_badge')) {
         return '<span class="badge ' . $class . '">' . schogms_e($label) . '</span>';
     }
 }
+
+if (!function_exists('schogms_fix_enye_in_name')) {
+    /**
+     * Fix corrupted enye from imports (?) and mojibake; keeps ñ, uses Ñ only when name is all caps.
+     */
+    function schogms_fix_enye_in_name(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+
+        $value = str_replace(['Ã±', 'Ã', '±'], ['ñ', 'ñ', 'ñ'], $value);
+        $value = str_replace('?', 'ñ', $value);
+
+        // Masterlist-style ALL CAPS: no ASCII a–z except after stripping ñ
+        $asciiCheck = str_replace(['ñ', 'Ñ'], '', $value);
+        if (!preg_match('/[a-z]/', $asciiCheck)) {
+            $value = str_replace('ñ', 'Ñ', $value);
+        }
+
+        return $value;
+    }
+}
+
+if (!function_exists('schogms_assets_rel_from_request')) {
+    /** Relative path to assets/ from the current script URL. */
+    function schogms_assets_rel_from_request(): string
+    {
+        $script = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+
+        if (preg_match('#/(admin(?:-[^/]+)?)/#', $script)) {
+            return '../assets';
+        }
+        if (preg_match('#/users/[^/]+/#', $script)) {
+            return '../../assets';
+        }
+
+        return 'assets';
+    }
+}
+
+if (!function_exists('schogms_loading_screen_once')) {
+    /**
+     * SchoGMS branded page loader — safe to call multiple times (renders once per request).
+     */
+    function schogms_loading_screen_once(?string $assetsRel = null): void
+    {
+        static $rendered = false;
+        if ($rendered) {
+            return;
+        }
+        $rendered = true;
+
+        $base = rtrim($assetsRel ?? schogms_assets_rel_from_request(), '/');
+        require_once dirname(__DIR__) . '/inc/schogms_page_loader.php';
+        schogms_render_page_loader(
+            $base . '/images/logo.png',
+            $base . '/css/schogms-loader.css',
+            $base . '/js/schogms-loader.js'
+        );
+    }
+}

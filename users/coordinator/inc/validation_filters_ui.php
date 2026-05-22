@@ -42,6 +42,9 @@ function vf_selected_multi(array $get, string $key, string $value): bool
         <form method="get" action="<?php echo htmlspecialchars($vfPage); ?>" id="validationFilterForm">
             <input type="hidden" name="bulk" value="1">
             <input type="hidden" name="sheet_name" value="<?php echo htmlspecialchars($vfCampus); ?>">
+            <?php if ($vfPage === 'validate_remarks.php'): ?>
+            <input type="hidden" name="program" value="<?php echo htmlspecialchars($vfProgram); ?>">
+            <?php endif; ?>
 
             <div class="row">
                 <?php foreach ($multiKeys as $key => $label):
@@ -76,7 +79,10 @@ function vf_selected_multi(array $get, string $key, string $value): bool
 
             <div class="mt-2">
                 <button type="submit" class="btn btn-primary btn-sm">Apply filters</button>
-                <a href="<?php echo htmlspecialchars($vfPage . '?bulk=1&sheet_name=' . rawurlencode($vfCampus)); ?>"
+                <a href="<?php echo htmlspecialchars(
+                    $vfPage . '?bulk=1&sheet_name=' . rawurlencode($vfCampus)
+                    . ($vfPage === 'validate_remarks.php' ? '&program=' . rawurlencode($vfProgram) : '')
+                ); ?>"
                    class="btn btn-secondary btn-sm">Clear all</a>
             </div>
         </form>

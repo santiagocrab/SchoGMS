@@ -363,6 +363,8 @@ if (isset($_POST['export'])) {
 </head>
 
 <body>
+<?php schogms_loading_screen_once(); ?>
+
     <?php include 'loading-screen.php'; ?>
 
     <h2>Data Results For Remarks</h2>

@@ -20,6 +20,7 @@ if (!function_exists('schogms_registrar_footer_scripts')) {
     function schogms_registrar_footer_scripts(array $opts = []): void
     {
         $datatables = !empty($opts['datatables']);
+        $sweetalert = !empty($opts['sweetalert']);
         $chart = !empty($opts['chart']);
 
         echo '<script src="../../assets/libs/jquery/dist/jquery.min.js"></script>' . "\n";
@@ -31,6 +32,10 @@ if (!function_exists('schogms_registrar_footer_scripts')) {
         echo '<script src="../../dist/js/sidebarmenu.js"></script>' . "\n";
         echo '<script src="../../dist/js/custom.min.js"></script>' . "\n";
 
+        if ($sweetalert) {
+            echo '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">' . "\n";
+            echo '<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>' . "\n";
+        }
         if ($chart) {
             echo '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>' . "\n";
         }

@@ -1,0 +1,252 @@
+/* Registrar masterlist — filter toolbar & stats */
+
+.rml-hero {
+    background: linear-gradient(135deg, #0d47a1 0%, #1565c0 45%, #00838f 100%);
+    border-radius: 12px;
+    color: #fff;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 8px 24px rgba(13, 71, 161, 0.25);
+}
+
+.rml-hero h4 {
+    color: #fff;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+
+.rml-hero p {
+    color: rgba(255, 255, 255, 0.88);
+    margin-bottom: 0;
+    font-size: 0.9rem;
+}
+
+.rml-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.rml-stat {
+    background: #fff;
+    border: 1px solid #e8ecf1;
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.rml-stat-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
+    margin-bottom: 0.2rem;
+}
+
+.rml-stat-value {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+.rml-stat-value--accent {
+    color: #1565c0;
+}
+
+.rml-stat-value--success {
+    color: #2e7d32;
+}
+
+.rml-stat-value--warn {
+    color: #ed6c02;
+}
+
+.rml-filter-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+    position: sticky;
+    top: 64px;
+    z-index: 20;
+}
+
+.rml-filter-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.85rem 1.15rem;
+    border-bottom: 1px solid #eef2f6;
+    background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+    border-radius: 12px 12px 0 0;
+}
+
+.rml-filter-head h5 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.rml-filter-head h5 i,
+.rml-filter-head h5 svg {
+    margin-right: 0.35rem;
+    color: #1565c0;
+}
+
+.rml-filter-body {
+    padding: 1rem 1.15rem 0.5rem;
+}
+
+.rml-filter-grid label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #475569;
+    margin-bottom: 0.25rem;
+}
+
+.rml-filter-grid .form-control {
+    border-radius: 8px;
+    border-color: #cbd5e1;
+    font-size: 0.875rem;
+}
+
+.rml-filter-grid .form-control:focus {
+    border-color: #1565c0;
+    box-shadow: 0 0 0 0.15rem rgba(21, 101, 192, 0.15);
+}
+
+.rml-filter-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.15rem 1rem;
+    border-top: 1px solid #eef2f6;
+    background: #fafbfc;
+    border-radius: 0 0 12px 12px;
+}
+
+.rml-search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+}
+
+.rml-search-wrap .form-control {
+    padding-left: 2.25rem;
+    border-radius: 999px;
+}
+
+.rml-search-icon {
+    position: absolute;
+    left: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    pointer-events: none;
+    width: 16px;
+    height: 16px;
+}
+
+.rml-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.85rem;
+    min-height: 1.5rem;
+}
+
+.rml-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem 0.25rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #1e40af;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: background 0.15s ease;
+}
+
+.rml-chip:hover {
+    background: #dbeafe;
+    color: #1e3a8a;
+    text-decoration: none;
+}
+
+.rml-chip-remove {
+    display: inline-flex;
+    width: 16px;
+    height: 16px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(30, 64, 175, 0.12);
+    font-size: 0.65rem;
+    line-height: 1;
+}
+
+.rml-meta-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.65rem 1rem;
+    background: #f1f5f9;
+    border-radius: 8px;
+    margin-bottom: 0.85rem;
+    font-size: 0.875rem;
+}
+
+.rml-meta-bar strong {
+    color: #0f172a;
+}
+
+.rml-table-wrap {
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+
+.rml-table-wrap .table {
+    margin-bottom: 0;
+    font-size: 0.82rem;
+}
+
+.rml-table-wrap thead th {
+    background: #f8fafc;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #475569;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+.rml-doc-badge {
+    font-size: 0.68rem;
+    padding: 0.35em 0.55em;
+    margin: 1px;
+    font-weight: 600;
+}
+
+@media (max-width: 991px) {
+    .rml-filter-card {
+        position: static;
+    }
+}

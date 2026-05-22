@@ -20,6 +20,8 @@ $pageTitle = 'Documents Uploaded';
     <?php schogms_registrar_head(true); ?>
 </head>
 <body>
+<?php schogms_loading_screen_once(); ?>
+
 <?php schogms_registrar_shell_open($pageTitle); ?>
 <div class="container-fluid">
     <div class="row">
@@ -83,7 +85,7 @@ $pageTitle = 'Documents Uploaded';
                                         ?>
                                         <tr>
                                             <td><?= htmlspecialchars((string) ($doc['category'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
-                                            <td><?= htmlspecialchars(str_replace('?', 'Ñ', (string) ($doc['original_name'] ?? '')), ENT_QUOTES, 'UTF-8') ?></td>
+                                            <td><?= schogms_e(schogms_fix_enye_in_name((string) ($doc['original_name'] ?? ''))) ?></td>
                                             <td><?= htmlspecialchars((string) ($doc['campus'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                                             <td><?= htmlspecialchars((string) ($doc['uploaded_by'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                                             <td><?= htmlspecialchars((string) ($doc['uploaded_at'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>

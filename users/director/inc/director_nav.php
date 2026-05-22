@@ -126,6 +126,7 @@ if (!function_exists('schogms_director_render_sidebar')) {
 if (!function_exists('schogms_director_shell_open')) {
     function schogms_director_shell_open(?string $pageTitle = null): void
     {
+        schogms_loading_screen_once();
         ?>
         <div id="main-wrapper" data-theme="light" data-layout="vertical" data-navbarbg="skin6"
             data-sidebartype="full" data-sidebar-position="fixed" data-header-position="fixed" data-boxed-layout="full">

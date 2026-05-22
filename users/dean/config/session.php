@@ -2,6 +2,8 @@
 /**
  * Dean: MySQL `assigned_dean` (auth_type mysql_ad) or legacy session user_id.
  */
+require_once __DIR__ . '/../../../config/schogms_helpers.php';
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -44,6 +46,7 @@ if ($authType === 'mysql_ad' || isset($_SESSION['user_id'])) {
     }
     $course_program = $college_name;
     $program_chair = (string) $deanName;
+    $fullname = $program_chair;
     $email = (string) $em;
     $status = (string) $stat;
     $assigned_at = $at;

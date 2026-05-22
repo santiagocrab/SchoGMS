@@ -42,6 +42,8 @@ $default_semester = '1st Semester';
     </style>
 </head>
 <body>
+<?php schogms_loading_screen_once(); ?>
+
     <div class="container-fluid">
         <div class="row">
             <div class="col-12">

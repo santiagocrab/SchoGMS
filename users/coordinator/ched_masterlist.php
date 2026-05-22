@@ -22,6 +22,8 @@
 </head>
 
 <body>
+<?php schogms_loading_screen_once(); ?>
+
     <?php include 'loading-screen.php'; ?>
     <!-- ============================================================== -->
     <!-- Preloader - style you can find in spinners.css -->
@@ -344,6 +346,7 @@
                 if (result.isConfirmed) {
                     const formData = new FormData();
                     formData.append('file_group', fileGroup);
+                    formData.append('sheet_name', <?= json_encode((string) ($sheet_name ?? ''), JSON_THROW_ON_ERROR) ?>);
                     formData.append('excelFile', file);
 
                     // Display loading message

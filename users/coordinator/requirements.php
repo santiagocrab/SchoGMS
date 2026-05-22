@@ -31,6 +31,8 @@ usort($requirements, static function ($a, $b) {
     <?php require_once __DIR__ . '/inc/assets.php'; schogms_coordinator_head(true); ?>
 </head>
 <body>
+<?php schogms_loading_screen_once(); ?>
+
 <?php require_once __DIR__ . '/inc/coordinator_nav.php'; schogms_coordinator_shell_open('Requirements'); ?>
         <div class="container-fluid">
             <div class="page-breadcrumb"><nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="index.php">Dashboard</a></li><li class="breadcrumb-item active">Requirements</li></ol></nav></div>

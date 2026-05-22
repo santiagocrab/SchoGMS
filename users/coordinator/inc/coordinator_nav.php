@@ -141,7 +141,7 @@ if (!function_exists('schogms_coordinator_render_sidebar')) {
                             </a>
                         </li>
                         <li class="sidebar-item">
-                            <a class="<?= schogms_coordinator_nav_link_class('validate_remarks.php') ?>" href="validate_remarks.php">
+                            <a class="<?= schogms_coordinator_nav_link_class('validate_remarks.php') ?>" href="validate_remarks.php?program=tdp&amp;bulk=1">
                                 <i data-feather="edit-3" class="feather-icon"></i>
                                 <span class="hide-menu">Validate remarks</span>
                             </a>
@@ -208,6 +208,7 @@ if (!function_exists('schogms_coordinator_render_sidebar')) {
 if (!function_exists('schogms_coordinator_shell_open')) {
     function schogms_coordinator_shell_open(?string $pageTitle = null): void
     {
+        schogms_loading_screen_once();
         ?>
         <div id="main-wrapper" data-theme="light" data-layout="vertical" data-navbarbg="skin6"
             data-sidebartype="full" data-sidebar-position="fixed" data-header-position="fixed" data-boxed-layout="full">

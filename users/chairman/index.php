@@ -28,6 +28,8 @@ if ($r) {
     <?php require_once __DIR__ . '/inc/assets.php'; schogms_chairman_head(false); ?>
 </head>
 <body>
+<?php schogms_loading_screen_once(); ?>
+
 <?php require_once __DIR__ . '/inc/chairman_nav.php'; schogms_chairman_shell_open('Chairman dashboard'); ?>
         <div class="container-fluid">
             <div class="page-breadcrumb">

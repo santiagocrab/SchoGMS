@@ -37,6 +37,8 @@ try {
     <link href="../../assets/extra-libs/datatables.net-bs4/css/dataTables.bootstrap4.css" rel="stylesheet">
 </head>
 <body>
+<?php schogms_loading_screen_once(); ?>
+
 <div id="main-wrapper" data-theme="light" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
     data-sidebar-position="fixed" data-header-position="fixed" data-boxed-layout="full">
     <header class="topbar" data-navbarbg="skin6">

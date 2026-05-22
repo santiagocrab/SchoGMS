@@ -9,6 +9,8 @@
     <link href="../../dist/css/style.min.css" rel="stylesheet">
 </head>
 <body>
+<?php schogms_loading_screen_once(); ?>
+
     <div class="container-fluid mt-4">
         <div class="row">
             <div class="col-12">

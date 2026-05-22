@@ -1,1038 +1,497 @@
-<?php include 'config/session.php'; ?>
+<?php
+include 'config/session.php';
+require_once __DIR__ . '/inc/registrar_data.php';
+require_once __DIR__ . '/inc/registrar_nav.php';
+require_once __DIR__ . '/inc/registrar_masterlist_ui.php';
+require_once __DIR__ . '/../coordinator/inc/masterlist_rows.php';
+
+$campus = trim((string) ($sheet_name ?? ''));
+$category = trim((string) ($_GET['category'] ?? ''));
+$fileGroupFilter = trim((string) ($_GET['file_group'] ?? ''));
+$academicYearFilter = trim((string) ($_GET['academic_year'] ?? ''));
+$semesterFilter = trim((string) ($_GET['semester'] ?? ''));
+$searchTerm = trim((string) ($_GET['search'] ?? ''));
+$loadError = '';
+$registrarData = [];
+$totalRecords = 0;
+$totalPages = 1;
+$page = 1;
+$limit = (int) ($_GET['limit'] ?? 100);
+$categories = [];
+$fileGroups = [];
+$academicYears = [];
+$docIndex = [];
+$pageCor = 0;
+$pageCog = 0;
+$pageBoth = 0;
+$dashCounts = ['masterlist' => 0, 'cor' => 0, 'cog' => 0, 'file_groups' => 0];
+$startTime = microtime(true);
+
+try {
+    $conn = schogms_registrar_db();
+} catch (Throwable $e) {
+    $conn = null;
+    $loadError = 'Database connection unavailable.';
+}
+
+if ($loadError === '' && $campus === '') {
+    $loadError = 'No campus assigned to your account.';
+}
+
+if ($loadError === '' && $conn instanceof mysqli) {
+    $categories = schogms_registrar_masterlist_categories($campus, $conn);
+    $fileGroups = schogms_registrar_masterlist_file_groups($campus, $conn);
+    $academicYears = schogms_registrar_masterlist_academic_years($campus, $conn);
+    $docIndex = schogms_coordinator_document_index($conn, $campus);
+    $dashCounts = schogms_registrar_dashboard_counts($campus);
+
+    $ml = schogms_registrar_masterlist_fetch([
+        'category' => $category,
+        'file_group' => $fileGroupFilter,
+        'academic_year' => $academicYearFilter,
+        'semester' => $semesterFilter,
+        'search' => $searchTerm,
+        'page' => $_GET['page'] ?? 1,
+        'limit' => $limit,
+    ], $campus, $conn);
+
+    $registrarData = $ml['data'];
+    $totalRecords = $ml['total'];
+    $totalPages = $ml['pages'];
+    $page = $ml['page'];
+    $limit = $ml['limit'];
+
+    foreach ($registrarData as $row) {
+        $docs = schogms_coordinator_resolve_doc($docIndex, [
+            'lastname' => $row['last_name'] ?? '',
+            'firstname' => $row['first_name'] ?? '',
+            'middlename' => $row['middle_name'] ?? '',
+        ]);
+        if ($docs['has_cor']) {
+            $pageCor++;
+        }
+        if ($docs['has_cog']) {
+            $pageCog++;
+        }
+        if ($docs['has_cor'] && $docs['has_cog']) {
+            $pageBoth++;
+        }
+    }
+}
+
+$filterParams = [
+    'category' => $category,
+    'file_group' => $fileGroupFilter,
+    'academic_year' => $academicYearFilter,
+    'semester' => $semesterFilter,
+    'search' => $searchTerm,
+    'limit' => (string) $limit,
+];
+$activeChips = schogms_registrar_masterlist_active_chips($filterParams);
+$loadMs = $loadError === '' ? round((microtime(true) - $startTime) * 1000, 1) : 0;
+
+$extraColumns = [
+    'ext_name' => 'Ext. Name',
+    'id_number' => 'ID Number',
+    'gender' => 'Gender',
+    'student_type' => 'Student Type',
+    'year_level' => 'Year Level',
+    'attended' => 'Attended',
+    'course' => 'Course',
+    'curriculum' => 'Curriculum',
+    'scholarship' => 'Scholarship',
+    'gpa' => 'GPA',
+    'cgpa' => 'CGPA',
+    'pass_percentage' => '% Pass',
+    'grade_remarks' => 'Grade Remarks',
+    'enrolled' => 'Enrolled',
+    'lec_unit' => 'Lec. Unit',
+    'lab_unit' => 'Lab. Unit',
+    'cor_printed' => 'COR Printed',
+    'billing_profile' => 'Billing Profile',
+    'misc_fee_total' => 'Misc. Fee Total',
+    'misc_fee_paid' => 'Misc. Fee Paid',
+    'tuition_fee_total' => 'Tuition Fee Total',
+    'tuition_fee_paid' => 'Tuition Fee Paid',
+    'street' => 'Street',
+    'barangay' => 'Barangay',
+    'municipality_city' => 'Municipality/City',
+    'province' => 'Province',
+    'zip_code' => 'Zip Code',
+    'date_of_birth' => 'Date of Birth',
+    'place_of_birth' => 'Place of Birth',
+    'civil_status' => 'Civil Status',
+    'tribe' => 'Tribe',
+    'religion' => 'Religion',
+    'year_admitted' => 'Year Admitted',
+    'semester_admitted' => 'Semester Admitted',
+    'school_last_attended' => 'School Last Attended',
+    'year_last_attended' => 'Year Last Attended',
+    'semester_last_attended' => 'Semester Last Attended',
+    'high_school_graduated' => 'High School Graduated',
+    'exam_date' => 'Exam Date',
+    'exam_rating' => 'Exam Rating',
+    'ref_number' => 'Ref. Number',
+    'guardian' => 'Guardian',
+    'guardian_address' => 'Address',
+    'guardian_contact' => 'Contact Nos.',
+    'blood_type' => 'Blood Type',
+    'email_address' => 'Email Address',
+    'mobile_number' => 'Mobile Number',
+    'deped_number' => 'DEPED Number',
+    'scholarship_grant' => 'Scholarship Grant',
+    'scholarship_allowance' => 'Scholarship Allowance',
+    'documents_submitted' => 'Documents Submitted',
+    'lacking_documents' => 'Lacking Document(s)',
+];
+?>
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
-
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <!-- Tell the browser to be responsive to screen width -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <!-- Favicon icon -->
-    <link rel="icon" type="image/png" sizes="16x16" href="../../assets/images/logo.png">
-    <title> Scholarship and Grants Management System | SchoGMS </title>
-    <!-- Custom CSS -->
-
-    <!-- This page plugin CSS -->
-    <!-- <link href="../../assets/extra-libs/datatables.net-bs4/css/dataTables.bootstrap4.css" rel="stylesheet"> -->
-    <link href="../../assets/extra-libs/c3/c3.min.css" rel="stylesheet">
-    <link href="../../assets/libs/chartist/dist/chartist.min.css" rel="stylesheet">
-    <link href="../../assets/extra-libs/jvector/jquery-jvectormap-2.0.2.css" rel="stylesheet" />
-    <!-- Custom CSS -->
-    <link href="../../dist/css/style.min.css" rel="stylesheet">
-    <style>.preloader{display:none!important}#main-wrapper{opacity:1!important}</style>
-    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-<![endif]-->
+    <link rel="icon" type="image/png" href="../../assets/images/logo.png">
+    <title>Registrar masterlist — SchoGMS</title>
+    <?php require_once __DIR__ . '/inc/assets.php'; schogms_registrar_head(); ?>
+    <link href="../../assets/css/registrar-masterlist.css" rel="stylesheet">
 </head>
-
 <body>
-    <!-- ============================================================== -->
-    <!-- Preloader - style you can find in spinners.css -->
-    <!-- ============================================================== -->
-    <!-- <div class="preloader">
-        <div class="lds-ripple">
-            <div class="lds-pos"></div>
-            <div class="lds-pos"></div>
-        </div>
-    </div> -->
-    <!-- ============================================================== -->
-    <!-- Main wrapper - style you can find in pages.scss -->
-    <!-- ============================================================== -->
-    <div id="main-wrapper" data-theme="light" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
-        data-sidebar-position="fixed" data-header-position="fixed" data-boxed-layout="full">
-        <!-- ============================================================== -->
-        <!-- Topbar header - style you can find in pages.scss -->
-        <!-- ============================================================== -->
-        <header class="topbar" data-navbarbg="skin6">
-            <nav class="navbar top-navbar navbar-expand-md">
-                <div class="navbar-header" data-logobg="skin6">
-                    <!-- This is for the sidebar toggle which is visible on mobile only -->
-                    <a class="nav-toggler waves-effect waves-light d-block d-md-none" href="javascript:void(0)"><i
-                            class="ti-menu ti-close"></i></a>
-                    <!-- ============================================================== -->
-                    <!-- Logo -->
-                    <!-- ============================================================== -->
-                    <div class="navbar-brand">
-                        <!-- Logo icon -->
-                        <a href="index.php">
-                            <b class="logo-icon">
-                                <!-- Dark Logo icon -->
-                                <img src="../../assets/images/logo.png" style="height: auto; width: 200px;"
-                                    alt="homepage" class="dark-logo" />
-                                <!-- Light Logo icon -->
-                                <img src="../../assets/images/logo.png" alt="homepage" class="light-logo" />
-                            </b>
-                        </a>
-                    </div>
-                    <!-- ============================================================== -->
-                    <!-- End Logo -->
-                    <!-- ============================================================== -->
-                    <!-- ============================================================== -->
-                    <!-- Toggle which is visible on mobile only -->
-                    <!-- ============================================================== -->
-                    <a class="topbartoggler d-block d-md-none waves-effect waves-light" href="javascript:void(0)"
-                        data-toggle="collapse" data-target="#navbarSupportedContent"
-                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><i
-                            class="ti-more"></i></a>
-                </div>
-                <!-- ============================================================== -->
-                <!-- End Logo -->
-                <!-- ============================================================== -->
-                <div class="navbar-collapse collapse" id="navbarSupportedContent">
-                    <!-- ============================================================== -->
-                    <!-- toggle and nav items -->
-                    <!-- ============================================================== -->
-                    <ul class="navbar-nav float-left mr-auto ml-3 pl-1">
-                        <!-- Notification -->
-                        <h3 class="page-title text-truncate text-dark font-weight-medium mb-1">Scholarship and Grants
-                            Management System</h3>
+<?php schogms_loading_screen_once(); ?>
 
-                        <!-- End Notification -->
-                        <!-- ============================================================== -->
-                        <!-- create new -->
-                        <!-- ============================================================== -->
+<?php include __DIR__ . '/loading-screen.php'; ?>
+<?php schogms_registrar_shell_open('Registrar masterlist'); ?>
 
-                    </ul>
-                    <!-- ============================================================== -->
-                    <!-- Right side toggle and nav items -->
-                    <!-- ============================================================== -->
-                    <ul class="navbar-nav float-right">
-                        <!-- ============================================================== -->
-                        <!-- User profile and search -->
-                        <!-- ============================================================== -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="javascript:void(0)" data-toggle="dropdown"
-                                aria-haspopup="true" aria-expanded="false">
-                                <img src="../../assets/images/users/image.png" alt="user" class="rounded-circle"
-                                    width="40">
-                                <span class="ml-2 d-none d-lg-inline-block"><span>Hello,</span> <span
-                                        class="text-dark"><?= $fullname ?></span> <i data-feather="chevron-down"
-                                        class="svg-icon"></i></span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-right user-dd animated flipInY">
-                                <a class="dropdown-item" href="logout.php"><i data-feather="power"
-                                        class="svg-icon mr-2 ml-1"></i>
-                                    Logout</a>
-                            </div>
-                        </li>
-                        <!-- ============================================================== -->
-                        <!-- User profile and search -->
-                        <!-- ============================================================== -->
-                    </ul>
-                </div>
+<div class="page-breadcrumb">
+    <div class="row align-items-center">
+        <div class="col-md-7">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb m-0 p-0">
+                    <li class="breadcrumb-item"><a href="index.php">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Registrar masterlist</li>
+                </ol>
             </nav>
-        </header>
-        <!-- ============================================================== -->
-        <!-- End Topbar header -->
-        <!-- ============================================================== -->
-        <!-- ============================================================== -->
-        <!-- Left Sidebar - style you can find in sidebar.scss  -->
-        <!-- ============================================================== -->
-        <aside class="left-sidebar" data-sidebarbg="skin6">
-            <!-- Sidebar scroll-->
-            <div class="scroll-sidebar" data-sidebarbg="skin6">
-                <!-- Sidebar navigation-->
-                <nav class="sidebar-nav">
-                    <ul id="sidebarnav">
-                        <?php require __DIR__ . '/inc/registrar_sidebar_menu.php'; ?>
-                    </ul>
-                </nav>
-                <!-- End Sidebar navigation -->
+        </div>
+        <div class="col-md-5 text-md-right mt-2 mt-md-0">
+            <button type="button" class="btn btn-success btn-rounded" data-toggle="modal" data-target="#uploadModal">
+                <i data-feather="upload" class="feather-icon" style="width:16px;height:16px"></i> Upload masterlist
+            </button>
+            <a href="check_all_cor_status.php" class="btn btn-outline-info btn-rounded ml-1">Check COR status</a>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadModalLabel">Upload student masterlist</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
-            <!-- End Sidebar scroll-->
-        </aside>
-        <!-- ============================================================== -->
-        <!-- End Left Sidebar - style you can find in sidebar.scss  -->
-        <!-- ============================================================== -->
-        <!-- ============================================================== -->
-        <!-- Page wrapper  -->
-        <!-- ============================================================== -->
-        <div class="page-wrapper">
-            <!-- ============================================================== -->
-            <!-- Bread crumb and right sidebar toggle -->
-            <!-- ============================================================== -->
-            <div class="page-breadcrumb">
-                <div class="row">
-                    <div class="col-7 align-self-center">
-                        <!-- <h3 class="page-title text-truncate text-dark font-weight-medium mb-1">Good Coordinator!</h3> -->
+            <div class="modal-body">
+                <form id="uploadForm">
+                    <div class="form-group">
+                        <label for="session_campus">Campus</label>
+                        <input type="text" class="form-control" id="session_campus" name="session_campus"
+                               value="<?= htmlspecialchars($campus, ENT_QUOTES, 'UTF-8') ?>" readonly>
                     </div>
-                    <div class="col-5 align-self-center">
-                        <div class="customize-input float-right">
-                            <button type="button" class="btn waves-effect waves-light btn-rounded btn-success"
-                                data-toggle="modal" data-target="#uploadModal">
-                                Upload File
-                            </button>
+                    <div class="form-group">
+                        <label for="academic_year">Academic year</label>
+                        <select class="form-control" id="academic_year" name="academic_year" required>
+                            <?php foreach ($academicYears as $ay): ?>
+                                <option value="<?= htmlspecialchars($ay, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($ay, ENT_QUOTES, 'UTF-8') ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="semester">Semester</label>
+                        <select class="form-control" id="semester" name="semester" required>
+                            <option value="">Select semester</option>
+                            <option value="1st Semester">1st Semester</option>
+                            <option value="2nd Semester">2nd Semester</option>
+                            <option value="Summer">Summer</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="file_group">File group name</label>
+                        <input type="text" class="form-control" id="file_group" name="file_group"
+                               placeholder="e.g. Batch 1, 2024-2025 1st Semester" required>
+                        <small class="form-text text-muted">Used to group this upload with filters below.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="excelFile">Excel / CSV file</label>
+                        <input type="file" class="form-control" id="excelFile" name="excelFile" accept=".xls,.xlsx,.csv" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <?php if ($loadError !== ''): ?>
+        <div class="alert alert-warning"><?= htmlspecialchars($loadError, ENT_QUOTES, 'UTF-8') ?></div>
+    <?php else: ?>
+
+    <div class="rml-hero">
+        <h4>Registrar masterlist</h4>
+        <p>
+            Campus: <strong><?= htmlspecialchars($campus, ENT_QUOTES, 'UTF-8') ?></strong>
+            · Sorted A–Z by last name · Import encoding fixes: <code>?</code> is shown as proper <strong>ñ</strong> (or <strong>Ñ</strong> in ALL CAPS names)
+        </p>
+    </div>
+
+    <div class="rml-stat-grid">
+        <div class="rml-stat">
+            <div class="rml-stat-label">Total scholars</div>
+            <div class="rml-stat-value rml-stat-value--accent"><?= number_format($dashCounts['masterlist']) ?></div>
+        </div>
+        <div class="rml-stat">
+            <div class="rml-stat-label">Matching filters</div>
+            <div class="rml-stat-value"><?= number_format($totalRecords) ?></div>
+        </div>
+        <div class="rml-stat">
+            <div class="rml-stat-label">COR uploaded</div>
+            <div class="rml-stat-value rml-stat-value--success"><?= number_format($dashCounts['cor']) ?></div>
+        </div>
+        <div class="rml-stat">
+            <div class="rml-stat-label">COG uploaded</div>
+            <div class="rml-stat-value rml-stat-value--success"><?= number_format($dashCounts['cog']) ?></div>
+        </div>
+        <div class="rml-stat">
+            <div class="rml-stat-label">On this page</div>
+            <div class="rml-stat-value rml-stat-value--warn"><?= count($registrarData) ?></div>
+        </div>
+    </div>
+
+    <div class="rml-filter-card">
+        <div class="rml-filter-head">
+            <h5><i data-feather="filter" style="width:18px;height:18px"></i> Filters &amp; search</h5>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="rmlToggleAdvanced"
+                    aria-expanded="false" aria-controls="rmlAdvancedFilters">
+                More options
+            </button>
+        </div>
+        <form method="get" action="masterlist.php" id="registrarMasterlistFilterForm">
+            <input type="hidden" name="page" value="1">
+            <div class="rml-filter-body">
+                <div class="row rml-filter-grid">
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <label for="academicYearFilter">Academic year</label>
+                        <select id="academicYearFilter" name="academic_year" class="form-control form-control-sm">
+                            <option value="">All years</option>
+                            <?php foreach ($academicYears as $ay): ?>
+                                <option value="<?= htmlspecialchars($ay, ENT_QUOTES, 'UTF-8') ?>"
+                                    <?= $academicYearFilter === $ay ? 'selected' : '' ?>><?= htmlspecialchars($ay, ENT_QUOTES, 'UTF-8') ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <label for="semesterFilter">Semester</label>
+                        <select id="semesterFilter" name="semester" class="form-control form-control-sm">
+                            <option value="">All semesters</option>
+                            <?php foreach (['1st Semester', '2nd Semester', 'Summer'] as $sem): ?>
+                                <option value="<?= htmlspecialchars($sem, ENT_QUOTES, 'UTF-8') ?>"
+                                    <?= $semesterFilter === $sem ? 'selected' : '' ?>><?= htmlspecialchars($sem, ENT_QUOTES, 'UTF-8') ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <label for="fileGroupFilter">File group</label>
+                        <select id="fileGroupFilter" name="file_group" class="form-control form-control-sm">
+                            <option value="">All groups</option>
+                            <?php foreach ($fileGroups as $fg): ?>
+                                <option value="<?= htmlspecialchars($fg, ENT_QUOTES, 'UTF-8') ?>"
+                                    <?= $fileGroupFilter === $fg ? 'selected' : '' ?>><?= htmlspecialchars($fg, ENT_QUOTES, 'UTF-8') ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <label for="limitFilter">Rows per page</label>
+                        <select id="limitFilter" name="limit" class="form-control form-control-sm">
+                            <?php foreach ([25, 50, 100, 200, 500, 1000] as $lim): ?>
+                                <option value="<?= $lim ?>" <?= $limit === $lim ? 'selected' : '' ?>><?= $lim ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+                <div class="collapse" id="rmlAdvancedFilters">
+                    <div class="row rml-filter-grid pt-1">
+                        <div class="col-md-6 col-lg-6 mb-3">
+                            <label for="categoryFilter">Source file (upload batch)</label>
+                            <select id="categoryFilter" name="category" class="form-control form-control-sm">
+                                <option value="">All source files</option>
+                                <?php foreach ($categories as $cat): ?>
+                                    <option value="<?= htmlspecialchars($cat, ENT_QUOTES, 'UTF-8') ?>"
+                                        <?= $category === $cat ? 'selected' : '' ?>><?= htmlspecialchars($cat, ENT_QUOTES, 'UTF-8') ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel"
-                aria-hidden="true">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="uploadModalLabel">Upload Student Data</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <form id="uploadForm">
-                                <div class="mb-3">
-                                    <label for="session_campus" class="form-label">Campus</label>
-                                    <input type="text" class="form-control" id="session_campus" name="session_campus"
-                                        value="<?= $sheet_name; ?>" readonly style="background-color: #f8f9fa;">
-                                    <small class="form-text text-muted">Automatically set based on your session</small>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="academic_year" class="form-label">Academic Year</label>
-                                    <select class="form-control" id="academic_year" name="academic_year" required>
-                                        <option value="2026-2027">2026-2027</option>
-                                        <option value="2025-2026">2025-2026</option>
-                                        <option value="2024-2025">2024-2025</option>
-                                        <option value="2023-2024">2023-2024</option>
-                                        <option value="2022-2023" selected>2022-2023</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="semester" class="form-label">Semester</label>
-                                    <select class="form-control" id="semester" name="semester" required>
-                                        <option value="">Select Semester</option>
-                                        <option value="1st Semester">1st Semester</option>
-                                        <option value="2nd Semester">2nd Semester</option>
-                                        <option value="Summer">Summer</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="file_group" class="form-label">File Group Name</label>
-                                    <input type="text" class="form-control" id="file_group" name="file_group"
-                                        placeholder="Enter file group name (e.g., Batch 1, 2024-2025)" required>
-                                    <small class="form-text text-muted">Enter a descriptive name for this batch of student data</small>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="excelFile" class="form-label">Choose Excel File</label>
-                                    <input type="file" class="form-control" id="excelFile" name="excelFile"
-                                        accept=".xls,.xlsx, .csv" required>
-                                </div>
-                                
-                                <button type="submit" class="btn btn-primary">Upload</button>
-                            </form>
-                            <div id="message"></div>
-                        </div>
-                    </div>
+            <div class="rml-filter-actions">
+                <div class="rml-search-wrap">
+                    <i data-feather="search" class="rml-search-icon"></i>
+                    <input type="search" id="searchInput" name="search" class="form-control form-control-sm"
+                           placeholder="Search name, ID, course, scholarship…"
+                           value="<?= htmlspecialchars($searchTerm, ENT_QUOTES, 'UTF-8') ?>"
+                           autocomplete="off">
                 </div>
+                <button type="submit" class="btn btn-primary btn-sm btn-rounded px-4">Apply filters</button>
+                <a href="masterlist.php" class="btn btn-outline-secondary btn-sm btn-rounded">Clear all</a>
             </div>
-            <!-- Modal -->
-            <!-- ============================================================== -->
-            <!-- End Bread crumb and right sidebar toggle -->
-            <!-- ============================================================== -->
-            <!-- ============================================================== -->
-            <!-- Container fluid  -->
-            <!-- ============================================================== -->
-            <!-- Container fluid  -->
-            <!-- ============================================================== -->
-            <div class="container-fluid">
-                <!-- ============================================================== -->
-                <!-- Start Page Content -->
-                <!-- ============================================================== -->
-                <!-- basic table -->
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="table-responsive">
-                                        <?php
-                                        require_once __DIR__ . '/inc/registrar_data.php';
-                                        $startTime = microtime(true);
+        </form>
+    </div>
 
-                                        $category = isset($_GET['category']) ? (string) $_GET['category'] : '';
-                                        $academic_year_filter = isset($_GET['academic_year']) ? (string) $_GET['academic_year'] : '';
-                                        $semester_filter = isset($_GET['semester']) ? (string) $_GET['semester'] : '';
-                                        $search_term = isset($_GET['search']) ? (string) $_GET['search'] : '';
+    <?php if ($activeChips !== []): ?>
+        <div class="rml-chips" aria-label="Active filters">
+            <?php foreach ($activeChips as $chip): ?>
+                <a class="rml-chip" href="<?= htmlspecialchars($chip['href'], ENT_QUOTES, 'UTF-8') ?>"
+                   title="Remove this filter">
+                    <?= htmlspecialchars($chip['label'], ENT_QUOTES, 'UTF-8') ?>
+                    <span class="rml-chip-remove" aria-hidden="true">×</span>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
 
-                                        $categories = schogms_registrar_masterlist_categories($sheet_name ?? null);
-                                        $ml = schogms_registrar_masterlist_fetch([
-                                            'category' => $category,
-                                            'academic_year' => $academic_year_filter,
-                                            'semester' => $semester_filter,
-                                            'search' => $search_term,
-                                            'page' => $_GET['page'] ?? 1,
-                                            'limit' => $_GET['limit'] ?? 100,
-                                        ], $sheet_name ?? null);
-                                        $registrarData = $ml['data'];
-                                        $totalRecords = $ml['total'];
-                                        $totalPages = $ml['pages'];
-                                        $page = $ml['page'];
-                                        $limit = $ml['limit'];
-                                        ?>
+    <div class="rml-meta-bar">
+        <div>
+            <strong><?= number_format($totalRecords) ?></strong> record(s) match
+            <?php if ($totalRecords > 0): ?>
+                · page <strong><?= (int) $page ?></strong> of <strong><?= (int) $totalPages ?></strong>
+                · showing <strong><?= count($registrarData) ?></strong> row(s)
+                <?php if (count($registrarData) > 0): ?>
+                    · on page: <strong><?= $pageCor ?></strong> COR,
+                    <strong><?= $pageCog ?></strong> COG,
+                    <strong><?= $pageBoth ?></strong> both
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
+        <small class="text-muted"><i data-feather="zap" style="width:14px;height:14px"></i> Loaded in <?= $loadMs ?>ms</small>
+    </div>
 
-                                        <div class="table-responsive">
-                                            <form method="GET" action="" class="col-md-8">
-                                                <label for="categoryFilter">Select Category:</label>
-                                                <select id="categoryFilter" name="category" class="form-control">
-                                                    <option value="">All</option>
-                                                    <?php foreach ($categories as $cat): ?>
-                                                        <option value="<?php echo htmlspecialchars($cat); ?>"
-                                                            <?php echo ($category == $cat) ? 'selected' : ''; ?>>
-                                                            <?php echo htmlspecialchars($cat); ?>
-                                                        </option>
-                                                    <?php endforeach; ?>
-                                                </select>
+    <?php schogms_registrar_masterlist_render_pagination($page, $totalPages, $filterParams); ?>
 
-                                                <label for="academicYearFilter" class="mt-2">Academic Year:</label>
-                                                <select id="academicYearFilter" name="academic_year" class="form-control">
-                                                    <option value="">All</option>
-                                                    <option value="2026-2027" <?php echo ($academic_year_filter == '2026-2027') ? 'selected' : ''; ?>>2026-2027</option>
-                                                    <option value="2025-2026" <?php echo ($academic_year_filter == '2025-2026') ? 'selected' : ''; ?>>2025-2026</option>
-                                                    <option value="2024-2025" <?php echo ($academic_year_filter == '2024-2025') ? 'selected' : ''; ?>>2024-2025</option>
-                                                    <option value="2023-2024" <?php echo ($academic_year_filter == '2023-2024') ? 'selected' : ''; ?>>2023-2024</option>
-                                                    <option value="2022-2023" <?php echo ($academic_year_filter == '2022-2023') ? 'selected' : ''; ?>>2022-2023</option>
-                                                </select>
-                                                
-                                                <label for="semesterFilter" class="mt-2">Semester:</label>
-                                                <select id="semesterFilter" name="semester" class="form-control">
-                                                    <option value="">All</option>
-                                                    <option value="1st Semester" <?php echo ($semester_filter == '1st Semester') ? 'selected' : ''; ?>>1st Semester</option>
-                                                    <option value="2nd Semester" <?php echo ($semester_filter == '2nd Semester') ? 'selected' : ''; ?>>2nd Semester</option>
-                                                    <option value="Summer" <?php echo ($semester_filter == 'Summer') ? 'selected' : ''; ?>>Summer</option>
-                                                </select>
-                                                
-                                                <label for="limitFilter" class="mt-2">Records per page:</label>
-                                                <select id="limitFilter" name="limit" class="form-control">
-                                                    <option value="10" <?php echo ($limit == 10) ? 'selected' : ''; ?>>10 records</option>
-                                                    <option value="25" <?php echo ($limit == 25) ? 'selected' : ''; ?>>25 records</option>
-                                                    <option value="50" <?php echo ($limit == 50) ? 'selected' : ''; ?>>50 records</option>
-                                                    <option value="100" <?php echo ($limit == 100) ? 'selected' : ''; ?>>100 records</option>
-                                                    <option value="200" <?php echo ($limit == 200) ? 'selected' : ''; ?>>200 records</option>
-                                                    <option value="500" <?php echo ($limit == 500) ? 'selected' : ''; ?>>500 records</option>
-                                                </select>
-                                                
-                                                <br>
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <div>
-                                                <button type="submit"
-                                                    class="btn waves-effect waves-light btn-rounded btn-success">Apply
-                                                    Filter</button>
-                                                        <a href="masterlist.php" class="btn waves-effect waves-light btn-rounded btn-secondary">Clear Filter</a>
-                                                <a href="check_all_cor_status.php" class="btn waves-effect waves-light btn-rounded btn-info">Check COR Status</a>
-                                                    </div>
-                                                    
-                                                    <!-- Search functionality - Far right position -->
-                                                    <div class="d-flex align-items-center">
-                                                        <label for="searchInput" class="mr-2 mb-0 text-primary font-weight-bold">Search:</label>
-                                                        <input type="text" id="searchInput" class="form-control" 
-                                                               placeholder="Search name or content..." style="width: 280px;"
-                                                               value="<?= htmlspecialchars($search_term) ?>">
-                                                    </div>
-                                                </div>
-                                                <br><br>
-                                            </form>
-                                            
-                                            <!-- Record Count Display -->
-                                            <div class="alert alert-info">
-                                                <strong>📊 Records Found:</strong> 
-                                                <span id="recordCount">
-                                                <?php
-                                                if (isset($totalRecords)) {
-                                                    echo number_format($totalRecords) . " total records";
-                                                    if (isset($registrarData) && !empty($registrarData)) {
-                                                        echo " | Showing " . count($registrarData) . " records on this page";
-                                                    }
-                                                } else {
-                                                    echo "Loading...";
-                                                }
-                                                ?>
-                                                </span>
-                                            </div>
-                                            
-                                            <!-- Sorting and Record Info -->
-            <div class="alert alert-info mb-3">
-                <i class="fa fa-sort-alpha-asc"></i> <strong>Sorted Alphabetically by Last Name (A to Z)</strong> | 
-                <strong>Total Records:</strong> <?= $totalRecords ?> | 
-                <strong>Showing:</strong> <?= count($registrarData) ?> of <?= $totalRecords ?> records | 
-                <strong>Page:</strong> <?= $page ?> of <?= $totalPages ?>
-                <br><small><i class="fa fa-language"></i> <strong>Character Encoding Fixed:</strong> Question marks (?) in names are automatically converted to ñ for proper COR matching</small>
-            </div>
-                                            
-                                            <table id="masterlist_table" class="table table-striped table-bordered no-wrap">
-                                                <thead>
-                                                    <tr>
-                                                        <th hidden>File Name</th>
-                                                        <th>COR & COG</th>
-                                                        <th>LASTNAME</th>
-                                                        <th>FIRSTNAME</th>
-                                                        <th>Ext. Name</th>
-                                                        <th>MIDDLENAME</th>
-                                                        <th>ID Number</th>
-                                                        <th>Gender</th>
-                                                        <th>Student Type</th>
-                                                        <th>Year Level</th>
-                                                        <th>Attended</th>
-                                                        <th>Course</th>
-                                                        <th>Curriculum</th>
-                                                        <th>Scholarship</th>
-                                                        <th>GPA</th>
-                                                        <th>CGPA</th>
-                                                        <th>% Pass</th>
-                                                        <th>Grade Remarks</th>
-                                                        <th>Enrolled</th>
-                                                        <th>Lec. Unit</th>
-                                                        <th>Lab. Unit</th>
-                                                        <th>COR Printed</th>
-                                                        <th>Billing Profile</th>
-                                                        <th>Misc. Fee Total</th>
-                                                        <th>Misc. Fee Paid</th>
-                                                        <th>Tuition Fee Total</th>
-                                                        <th>Tuition Fee Paid</th>
-                                                        <th>Street</th>
-                                                        <th>Barangay</th>
-                                                        <th>Municipality/City</th>
-                                                        <th>Province</th>
-                                                        <th>Zip Code</th>
-                                                        <th>Date of Birth</th>
-                                                        <th>Place of Birth</th>
-                                                        <th>Civil Status</th>
-                                                        <th>Tribe</th>
-                                                        <th>Religion</th>
-                                                        <th>Year Admitted</th>
-                                                        <th>Semester Admitted</th>
-                                                        <th>School Last Attended</th>
-                                                        <th>Year Last Attended</th>
-                                                        <th>Semester Last Attended</th>
-                                                        <th>High School Graduated</th>
-                                                        <th>Exam Date</th>
-                                                        <th>Exam Rating</th>
-                                                        <th>Ref. Number</th>
-                                                        <th>Guardian</th>
-                                                        <th>Address</th>
-                                                        <th>Contact Nos.</th>
-                                                        <th>Blood Type</th>
-                                                        <th>Email Address</th>
-                                                        <th>Mobile Number</th>
-                                                        <th>DEPED Number</th>
-                                                        <th>Scholarship Grant</th>
-                                                        <th>Scholarship Allowance</th>
-                                                        <th>Documents Submitted</th>
-                                                        <th>Lacking Document(s)</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php 
-                                                    // Debug: Show data count
-                                                    echo "<!-- Debug: registrarData count: " . count($registrarData) . " -->";
-                                                    echo "<!-- Debug: totalRecords: " . $totalRecords . " -->";
-                                                    echo "<!-- Debug: totalPages: " . $totalPages . " -->";
-                                                    
-                                                    if (empty($registrarData)) {
-                                                        echo "<tr><td colspan='50' class='text-center text-muted'>No data found. Debug info: Total records in DB: " . $totalRecords . "</td></tr>";
-                                                    }
-                                                    
-                                                    foreach ($registrarData as $row): ?>
-                                                        <tr>
-                                                            <td hidden><?php echo htmlspecialchars($row['filename'] ?? ''); ?>
-                                                            </td>
-                                                            <td>
-                                                                <?php
-                                                                // Enhanced COR/COG detection with exact name matching
-                                                                // Fix character encoding issues - convert ? back to ñ
-                                                                $lastName = strtoupper(trim($row['last_name'] ?? ''));
-                                                                $firstName = strtoupper(trim($row['first_name'] ?? ''));
-                                                                $middleName = strtoupper(trim($row['middle_name'] ?? ''));
-                                                                
-                                                                // Fix corrupted character encoding: convert ? back to ñ
-                                                                $lastName = str_replace('?', 'Ñ', $lastName);
-                                                                $firstName = str_replace('?', 'Ñ', $firstName);
-                                                                $middleName = str_replace('?', 'Ñ', $middleName);
-                                                                
-                                                                // Normalize for matching (convert ñ to N for COR filename matching)
-                                                                $lastNameForMatching = str_replace(['Ñ', 'ñ'], ['N', 'N'], $lastName);
-                                                                $firstNameForMatching = str_replace(['Ñ', 'ñ'], ['N', 'N'], $firstName);
-                                                                $middleNameForMatching = str_replace(['Ñ', 'ñ'], ['N', 'N'], $middleName);
-                                                                
-                                                                $hasCOR = false;
-                                                                $hasCOG = false;
-                                                                $corFile = '';
-                                                                $cogFile = '';
-                                                                
-                                                                // Check COR files in multiple directories
-                                                                $corDirs = [
-                                                                    'uploads/COR/',
-                                                                    'uploads/documents/ISULAN/2024-2025/1st Semester/COR/',
-                                                                    'uploads/documents/ISULAN/2024-2025/2nd Semester/COR/',
-                                                                    'uploads/documents/ISULAN/2023-2024/1st Semester/COR/',
-                                                                    'uploads/documents/ISULAN/2023-2024/2nd Semester/COR/'
-                                                                ];
-                                                                
-                                                                foreach ($corDirs as $corDir) {
-                                                                    if (is_dir($corDir)) {
-                                                                        $corFiles = scandir($corDir);
-                                                                        foreach ($corFiles as $file) {
-                                                                            if ($file != '.' && $file != '..' && is_file($corDir . $file)) {
-                                                                                $fileName = pathinfo($file, PATHINFO_FILENAME);
-                                                                                $fileNameUpper = strtoupper($fileName);
-                                                                                
-                                                                                // Normalize special characters in filename for better matching
-                                                                                // Convert ? to N to match names with ñ
-                                                                                $fileNameUpper = str_replace(['?', ''], ['N', 'N'], $fileNameUpper);
-                                                                                
-                                                                                // Multiple matching strategies for better accuracy
-                                                                                $matchFound = false;
-                                                                                
-                                                                                // Strategy 1: Exact last name match
-                                                                                if (strpos($fileNameUpper, $lastNameForMatching) !== false) {
-                                                                                    $matchFound = true;
-                                                                                }
-                                                                                
-                                                                                // Strategy 2: Last name + first name match
-                                                                                if (!$matchFound && strpos($fileNameUpper, $lastName) !== false && strpos($fileNameUpper, $firstName) !== false) {
-                                                                                    $matchFound = true;
-                                                                                }
-                                                                                
-                                                                                // Strategy 3: Full name match (LASTNAME, FIRSTNAME)
-                                                                                if (!$matchFound) {
-                                                                                    $fullNamePattern = $lastNameForMatching . ', ' . $firstNameForMatching;
-                                                                                    if (strpos($fileNameUpper, $fullNamePattern) !== false) {
-                                                                                        $matchFound = true;
-                                                                                    }
-                                                                                }
-                                                                                
-                                                                                // Strategy 4: Check if filename starts with last name
-                                                                                if (!$matchFound && strpos($fileNameUpper, $lastName) === 0) {
-                                                                                    $matchFound = true;
-                                                                                }
-                                                                                
-                                                                                if ($matchFound) {
-                                                                            $hasCOR = true;
-                                                                                    $corFile = $corDir . $file;
-                                                                                    break 2;
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                                
-                                                                // Check COG files in multiple directories
-                                                                $cogDirs = [
-                                                                    'uploads/COG/',
-                                                                    'uploads/documents/ISULAN/2024-2025/1st Semester/COG/',
-                                                                    'uploads/documents/ISULAN/2024-2025/2nd Semester/COG/',
-                                                                    'uploads/documents/ISULAN/2023-2024/1st Semester/COG/',
-                                                                    'uploads/documents/ISULAN/2023-2024/2nd Semester/COG/'
-                                                                ];
-                                                                
-                                                                foreach ($cogDirs as $cogDir) {
-                                                                    if (is_dir($cogDir)) {
-                                                                        $cogFiles = scandir($cogDir);
-                                                                        foreach ($cogFiles as $file) {
-                                                                            if ($file != '.' && $file != '..' && is_file($cogDir . $file)) {
-                                                                                $fileName = pathinfo($file, PATHINFO_FILENAME);
-                                                                                $fileNameUpper = strtoupper($fileName);
-                                                                                
-                                                                                // Normalize special characters in filename for better matching
-                                                                                // Convert ? to N to match names with ñ
-                                                                                $fileNameUpper = str_replace(['?', ''], ['N', 'N'], $fileNameUpper);
-                                                                                
-                                                                                // Multiple matching strategies for better accuracy
-                                                                                $matchFound = false;
-                                                                                
-                                                                                // Strategy 1: Exact last name match
-                                                                                if (strpos($fileNameUpper, $lastNameForMatching) !== false) {
-                                                                                    $matchFound = true;
-                                                                                }
-                                                                                
-                                                                                // Strategy 2: Last name + first name match
-                                                                                if (!$matchFound && strpos($fileNameUpper, $lastName) !== false && strpos($fileNameUpper, $firstName) !== false) {
-                                                                                    $matchFound = true;
-                                                                                }
-                                                                                
-                                                                                // Strategy 3: Full name match (LASTNAME, FIRSTNAME)
-                                                                                if (!$matchFound) {
-                                                                                    $fullNamePattern = $lastNameForMatching . ', ' . $firstNameForMatching;
-                                                                                    if (strpos($fileNameUpper, $fullNamePattern) !== false) {
-                                                                                        $matchFound = true;
-                                                                                    }
-                                                                                }
-                                                                                
-                                                                                // Strategy 4: Check if filename starts with last name
-                                                                                if (!$matchFound && strpos($fileNameUpper, $lastName) === 0) {
-                                                                                    $matchFound = true;
-                                                                                }
-                                                                                
-                                                                                if ($matchFound) {
-                                                                            $hasCOG = true;
-                                                                                    $cogFile = $cogDir . $file;
-                                                                                    break 2;
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-
-                                                                // Display COR/COG with direct document viewing
-                                                                if ($hasCOR && $hasCOG) {
-                                                                    echo '<a href="view_document.php?file=' . urlencode($corFile) . '&type=COR" target="_blank" class="badge badge-primary" style="font-size: 11px; padding: 6px 10px; margin: 1px; color: white; background-color: #007bff;" title="Click to view COR document">📄 COR</a> ';
-                                                                    echo '<a href="view_document.php?file=' . urlencode($cogFile) . '&type=COG" target="_blank" class="badge badge-primary" style="font-size: 11px; padding: 6px 10px; margin: 1px; color: white; background-color: #007bff;" title="Click to view COG document">📊 COG</a>';
-                                                                } elseif ($hasCOR) {
-                                                                    echo '<a href="view_document.php?file=' . urlencode($corFile) . '&type=COR" target="_blank" class="badge badge-primary" style="font-size: 11px; padding: 6px 10px; margin: 1px; color: white; background-color: #007bff;" title="Click to view COR document">📄 COR</a>';
-                                                                    echo '<span class="badge badge-secondary" style="font-size: 10px; padding: 4px 8px; margin: 1px; background-color: #6c757d;" title="No COG document found">No COG</span>';
-                                                                } elseif ($hasCOG) {
-                                                                    echo '<span class="badge badge-secondary" style="font-size: 10px; padding: 4px 8px; margin: 1px; background-color: #6c757d;" title="No COR document found">No COR</span> ';
-                                                                    echo '<a href="view_document.php?file=' . urlencode($cogFile) . '&type=COG" target="_blank" class="badge badge-primary" style="font-size: 11px; padding: 6px 10px; margin: 1px; color: white; background-color: #007bff;" title="Click to view COG document">📊 COG</a>';
-                                                                } else {
-                                                                    echo '<span class="badge badge-danger" style="font-size: 10px; padding: 4px 8px; margin: 1px; background-color: #dc3545;" title="No COR or COG documents found for this student">❌ No COR/COG</span>';
-                                                                }
-                                                                ?>
-                                                            </td>
-                                                            <td><?php 
-                                                                $lastName = $row['last_name'] ?? '';
-                                                                // Debug: show original name
-                                                                if (strpos($lastName, '?') !== false) {
-                                                                    echo '<span style="color: red;">BEFORE: ' . htmlspecialchars($lastName) . '</span><br>';
-                                                                }
-                                                                // Force fix: replace ? with Ñ (uppercase enye)
-                                                                $lastName = str_replace('?', 'Ñ', $lastName);
-                                                                // Also handle other possible encodings
-                                                                $lastName = str_replace(['Ã±', 'Ã', '±'], ['Ñ', 'Ñ', 'Ñ'], $lastName);
-                                                                echo htmlspecialchars($lastName); 
-                                                            ?></td>
-                                                            <td><?php 
-                                                                $firstName = $row['first_name'] ?? '';
-                                                                // Simple direct fix: replace ? with Ñ (uppercase enye)
-                                                                $firstName = str_replace('?', 'Ñ', $firstName);
-                                                                echo htmlspecialchars($firstName); 
-                                                            ?></td>
-                                                            <td><?php echo htmlspecialchars($row['ext_name'] ?? ''); ?></td>
-                                                            <td><?php 
-                                                                $middleName = $row['middle_name'] ?? '';
-                                                                // Simple direct fix: replace ? with Ñ (uppercase enye)
-                                                                $middleName = str_replace('?', 'Ñ', $middleName);
-                                                                echo htmlspecialchars($middleName); 
-                                                            ?></td>
-                                                            <td><?php echo htmlspecialchars($row['id_number'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['gender'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['student_type'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['year_level'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['attended'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['course'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['curriculum'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['scholarship'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['gpa'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['cgpa'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['pass_percentage'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['grade_remarks'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['enrolled'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['lec_unit'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['lab_unit'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['cor_printed'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['billing_profile'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['misc_fee_total'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['misc_fee_paid'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['tuition_fee_total'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['tuition_fee_paid'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['street'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['barangay'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['municipality_city'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['province'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['zip_code'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['date_of_birth'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['place_of_birth'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['civil_status'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['tribe'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['religion'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['year_admitted'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['semester_admitted'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['school_last_attended'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['year_last_attended'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['semester_last_attended'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['high_school_graduated'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['exam_date'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['exam_rating'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['ref_number'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['guardian'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['guardian_address'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['guardian_contact'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['blood_type'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($row['email_address'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['mobile_number'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['deped_number'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['scholarship_grant'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['scholarship_allowance'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['documents_submitted'] ?? ''); ?>
-                                                            </td>
-                                                            <td><?php echo htmlspecialchars($row['lacking_documents'] ?? ''); ?>
-                                                            </td>
-                                                        </tr>
-                                                    <?php endforeach; ?>
-                                                </tbody>
-                                            </table>
-
-                                            <?php
-                                            // Display pagination info
-                                            echo "<div class='row mt-3'>";
-                                            echo "<div class='col-md-6'>";
-                                            $endTime = microtime(true);
-                                            $loadTime = round(($endTime - $startTime) * 1000, 2);
-                                            // Calculate the correct range for display
-                                            $startRecord = (($page - 1) * $limit) + 1;
-                                            $endRecord = min($page * $limit, $totalRecords);
-                                            $actualCount = count($registrarData);
-                                            
-                                            if ($totalRecords > 0) {
-                                                echo "<p>Showing {$startRecord} to {$endRecord} of {$totalRecords} records</p>";
-                                            } else {
-                                                echo "<p>No records found</p>";
-                                            }
-                                            echo "<small class='text-success'><i class='fa fa-bolt'></i> Loaded in {$loadTime}ms</small>";
-                                            echo "</div>";
-                                            echo "<div class='col-md-6'>";
-                                            
-                                            // Pagination controls
-                                            if ($totalPages > 1) {
-                                                echo "<nav aria-label='Page navigation'>";
-                                                echo "<ul class='pagination justify-content-end'>";
-                                                
-                                                // Previous button
-                                                if ($page > 1) {
-                                                    $prevPage = $page - 1;
-                                                    $prevUrl = "?page={$prevPage}&limit={$limit}";
-                                                    if ($category) $prevUrl .= "&category=" . urlencode($category);
-                                                    if ($academic_year_filter) $prevUrl .= "&academic_year=" . urlencode($academic_year_filter);
-                                                    if ($semester_filter) $prevUrl .= "&semester=" . urlencode($semester_filter);
-                                                    echo "<li class='page-item'><a class='page-link' href='{$prevUrl}'>Previous</a></li>";
-                                                }
-                                                
-                                                // Page numbers
-                                                $startPage = max(1, $page - 2);
-                                                $endPage = min($totalPages, $page + 2);
-                                                
-                                                for ($i = $startPage; $i <= $endPage; $i++) {
-                                                    $pageUrl = "?page={$i}&limit={$limit}";
-                                                    if ($category) $pageUrl .= "&category=" . urlencode($category);
-                                                    if ($academic_year_filter) $pageUrl .= "&academic_year=" . urlencode($academic_year_filter);
-                                                    if ($semester_filter) $pageUrl .= "&semester=" . urlencode($semester_filter);
-                                                    
-                                                    $activeClass = ($i == $page) ? 'active' : '';
-                                                    echo "<li class='page-item {$activeClass}'><a class='page-link' href='{$pageUrl}'>{$i}</a></li>";
-                                                }
-                                                
-                                                // Next button
-                                                if ($page < $totalPages) {
-                                                    $nextPage = $page + 1;
-                                                    $nextUrl = "?page={$nextPage}&limit={$limit}";
-                                                    if ($category) $nextUrl .= "&category=" . urlencode($category);
-                                                    if ($academic_year_filter) $nextUrl .= "&academic_year=" . urlencode($academic_year_filter);
-                                                    if ($semester_filter) $nextUrl .= "&semester=" . urlencode($semester_filter);
-                                                    echo "<li class='page-item'><a class='page-link' href='{$nextUrl}'>Next</a></li>";
-                                                }
-                                                
-                                                echo "</ul>";
-                                                echo "</nav>";
-                                            }
-                                            
-                                            echo "</div>";
-                                            echo "</div>";
-                                            ?>
-
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                            </div>
-                        </div>
-                        <!-- ============================================================== -->
-                        <!-- End PAge Content -->
-                        <!-- ============================================================== -->
-                    </div>
-                    <!-- ============================================================== -->
-                    <!-- End Container fluid  -->
-                    <!-- ============================================================== -->
-                    <!-- ============================================================== -->
-                    <!-- footer -->
-                    <!-- ============================================================== -->
-                    <footer class="footer text-center text-muted">
-                        All Rights Reserved 2026. Scholarship and Grants Management System <a href="">(SchoGMS)</a>.
-                    </footer>
-                    <!-- ============================================================== -->
-                    <!-- End footer -->
-                    <!-- ============================================================== -->
-                </div>
-                <!-- ============================================================== -->
-                <!-- End Page wrapper  -->
-                <!-- ============================================================== -->
-            </div>
-            <!-- ============================================================== -->
-            <!-- End Wrapper -->
-            <!-- ============================================================== -->
-            <!-- End Wrapper -->
-            <!-- ============================================================== -->
-            <!-- All Jquery -->
-            <!-- ============================================================== -->
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-            <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-            <script>
-                // Toast notification function
-                function showToast(message, type = 'info') {
-                    Toastify({
-                        text: message,
-                        duration: 3000,
-                        gravity: "top",
-                        position: "right",
-                        backgroundColor: type === 'error' ? "#dc3545" : type === 'success' ? "#28a745" : "#17a2b8",
-                        stopOnFocus: true
-                    }).showToast();
-                }
-
-                document.getElementById('uploadForm').addEventListener('submit', function (event) {
-                    event.preventDefault();
-
-                    const CampuSession = document.getElementById('session_campus');
-                    const fileGroupInput = document.getElementById('file_group');
-                    const academicYearInput = document.getElementById('academic_year');
-                    const semesterInput = document.getElementById('semester');
-                    const fileInput = document.getElementById('excelFile');
-                    const file = fileInput.files[0];
-
-                    if (!file) {
-                        showToast("Please select a file!", "error");
-                        return;
-                    }
-
-                    const fileGroup = fileGroupInput.value.trim();
-                    if (!fileGroup) {
-                        showToast("Please enter a file group name!", "error");
-                        return;
-                    }
-
-                    const academicYear = academicYearInput.value.trim();
-                    if (!academicYear) {
-                        showToast("Please select an academic year!", "error");
-                        return;
-                    }
-
-                    const semester = semesterInput.value.trim();
-                    if (!semester) {
-                        showToast("Please select a semester!", "error");
-                        return;
-                    }
-
-                    // Validate file type (Accepts CSV, XLS, XLSX)
-                    const allowedTypes = [
-                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-                        'application/vnd.ms-excel', // .xls
-                        'text/csv' // .csv
-                    ];
-
-                    const fileExtension = file.name.split('.').pop().toLowerCase();
-                    const allowedExtensions = ['xls', 'xlsx', 'csv'];
-
-                    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
-                        showToast("Please upload a valid Excel or CSV file.", "error");
-                        console.error("Invalid file type:", file.type);
-                        return;
-                    }
-
-                    // Show SweetAlert confirmation before proceeding
-                    Swal.fire({
-                        title: "Are you sure?",
-                        text: "Do you want to upload and process this file?",
-                        icon: "question",
-                        showCancelButton: true,
-                        confirmButtonText: "Yes, upload it!",
-                        cancelButtonText: "Cancel",
-                        reverseButtons: true
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            const formData = new FormData();
-                            formData.append('session_campus', CampuSession.value.trim());
-                            formData.append('file_group', fileGroup);
-                            formData.append('academic_year', academicYear);
-                            formData.append('semester', semester);
-                            formData.append('excelFile', file);
-
-                            // Display loading message
-                            Swal.fire({
-                                title: "Uploading...",
-                                text: "Please wait while the file is being uploaded and processed.",
-                                icon: "info",
-                                allowOutsideClick: false,
-                                showConfirmButton: false,
-                                willOpen: () => {
-                                    Swal.showLoading();
-                                }
-                            });
-
-                            // Send file via Fetch API
-                            fetch('submit_master_list.php', {
-                                method: 'POST',
-                                body: formData
-                            })
-                                .then(response => response.json())
-                                .then(data => {
-                                    if (data.success) {
-                                        let message = data.message || "File processed successfully!";
-                                        if (data.stats) {
-                                            message += `\n\nStatistics:\n`;
-                                            message += `• Records inserted: ${data.stats.inserted}\n`;
-                                            message += `• Duplicates skipped: ${data.stats.duplicates}\n`;
-                                            message += `• Errors: ${data.stats.errors}`;
-                                        }
-                                        
-                                        Swal.fire({
-                                            title: "Success!",
-                                            text: message,
-                                            icon: "success",
-                                            timer: 5000
-                                        });
-                                        setTimeout(() => {
-                                            location.reload();
-                                        }, 2000);
-                                    } else {
-                                        Swal.fire({
-                                            title: "Error!",
-                                            text: data.error || "An error occurred during file processing.",
-                                            icon: "error"
-                                        });
-                                        console.error("Server error:", data.error);
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0 rml-table-wrap">
+            <div class="table-responsive" style="max-height: 70vh;">
+                <table id="masterlist_table" class="table table-striped table-bordered table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>COR &amp; COG</th>
+                            <th>Full name</th>
+                            <?php foreach ($extraColumns as $label): ?>
+                                <th><?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?></th>
+                            <?php endforeach; ?>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($registrarData)): ?>
+                            <tr>
+                                <td colspan="<?= 2 + count($extraColumns) ?>" class="text-center text-muted py-5">
+                                    No records match your filters.
+                                    <a href="masterlist.php">Clear filters</a> or upload a new masterlist file.
+                                </td>
+                            </tr>
+                        <?php else:
+                            foreach ($registrarData as $row):
+                                $ln = schogms_registrar_fix_enye((string) ($row['last_name'] ?? ''));
+                                $fn = schogms_registrar_fix_enye((string) ($row['first_name'] ?? ''));
+                                $mn = schogms_registrar_fix_enye((string) ($row['middle_name'] ?? ''));
+                                $fullName = trim($ln . ', ' . $fn . ' ' . $mn);
+                                $docs = schogms_coordinator_resolve_doc($docIndex, [
+                                    'lastname' => $row['last_name'] ?? '',
+                                    'firstname' => $row['first_name'] ?? '',
+                                    'middlename' => $row['middle_name'] ?? '',
+                                ]);
+                        ?>
+                            <tr>
+                                <td class="text-nowrap"><?php schogms_registrar_masterlist_render_cor_cog($docs); ?></td>
+                                <td class="text-nowrap font-weight-medium"><?= htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8') ?></td>
+                                <?php foreach (array_keys($extraColumns) as $colKey):
+                                    $cell = (string) ($row[$colKey] ?? '');
+                                    if (in_array($colKey, ['last_name', 'first_name', 'middle_name'], true)) {
+                                        $cell = schogms_registrar_fix_enye($cell);
                                     }
-                                })
-                                .catch(error => {
-                                    Swal.fire({
-                                        title: "Upload Failed!",
-                                        text: "An error occurred while uploading the file.",
-                                        icon: "error"
-                                    });
-                                    console.error("Fetch error:", error);
-                                });
-                        }
-                    });
+                                ?>
+                                    <td><?= htmlspecialchars($cell, ENT_QUOTES, 'UTF-8') ?></td>
+                                <?php endforeach; ?>
+                            </tr>
+                        <?php endforeach; endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <?php schogms_registrar_masterlist_render_pagination($page, $totalPages, $filterParams); ?>
+
+    <?php endif; ?>
+</div>
+
+<footer class="footer text-center text-muted">
+    All Rights Reserved 2026. Scholarship and Grants Management System (SchoGMS).
+</footer>
+
+<?php
+schogms_registrar_shell_close();
+schogms_registrar_footer_scripts(['sweetalert' => true]);
+?>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script src="../../assets/js/registrar-masterlist.js"></script>
+<script>
+(function () {
+    function showToast(message, type) {
+        if (typeof Toastify === 'undefined') return;
+        Toastify({
+            text: message,
+            duration: 3200,
+            gravity: 'top',
+            position: 'right',
+            backgroundColor: type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#17a2b8'
+        }).showToast();
+    }
+
+    var uploadForm = document.getElementById('uploadForm');
+    if (!uploadForm) return;
+
+    uploadForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var file = document.getElementById('excelFile').files[0];
+        if (!file) { showToast('Please select a file.', 'error'); return; }
+        if (!document.getElementById('file_group').value.trim()) { showToast('Enter a file group name.', 'error'); return; }
+        if (!document.getElementById('semester').value.trim()) { showToast('Select a semester.', 'error'); return; }
+
+        Swal.fire({
+            title: 'Upload masterlist?',
+            text: 'This will import student records for your campus.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, upload',
+            cancelButtonText: 'Cancel'
+        }).then(function (result) {
+            if (!result.isConfirmed) return;
+            var fd = new FormData(uploadForm);
+            Swal.fire({ title: 'Uploading…', allowOutsideClick: false, didOpen: function () { Swal.showLoading(); } });
+            fetch('submit_master_list.php', { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        Swal.fire({ title: 'Success', text: data.message || 'Import complete.', icon: 'success', timer: 3500 });
+                        setTimeout(function () { location.reload(); }, 1800);
+                    } else {
+                        Swal.fire({ title: 'Error', text: data.error || 'Upload failed.', icon: 'error' });
+                    }
+                })
+                .catch(function () {
+                    Swal.fire({ title: 'Error', text: 'Network or server error.', icon: 'error' });
                 });
-
-
-            </script>
-
-
-
-
-            <script src="../../assets/libs/jquery/dist/jquery.min.js"></script>
-            <script src="../../assets/libs/popper.js/dist/umd/popper.min.js"></script>
-            <script src="../../assets/libs/bootstrap/dist/js/bootstrap.min.js"></script>
-            <!-- apps -->
-
-            <!-- apps -->
-            <script src="../../dist/js/app-style-switcher.js"></script>
-            <script src="../../dist/js/feather.min.js"></script>
-            <script src="../../assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js"></script>
-            <script src="../../dist/js/sidebarmenu.js"></script>
-            <!--Custom JavaScript -->
-            <script src="../../dist/js/custom.min.js"></script>
-            <!--This page JavaScript -->
-            <script src="../../assets/extra-libs/c3/d3.min.js"></script>
-            <script src="../../assets/extra-libs/c3/c3.min.js"></script>
-            <script src="../../assets/libs/chartist/dist/chartist.min.js"></script>
-            <script src="../../assets/libs/chartist-plugin-tooltips/dist/chartist-plugin-tooltip.min.js"></script>
-            <script src="../../assets/extra-libs/jvector/jquery-jvectormap-2.0.2.min.js"></script>
-            <script src="../../assets/extra-libs/jvector/jquery-jvectormap-world-mill-en.js"></script>
-            <script src="../../dist/js/pages/dashboards/dashboard1.min.js"></script>
-
-            <!--This page plugins -->
-            <!-- <script src="../../assets/extra-libs/datatables.net/js/jquery.dataTables.min.js"></script> -->
-            <!-- Simple table without DataTables -->
-            <script>
-                $(document).ready(function() {
-                    // Reset to page 1 when limit changes
-                    $('#limitFilter').on('change', function() {
-                        var form = $(this).closest('form');
-                        var pageInput = $('<input>').attr({
-                            type: 'hidden',
-                            name: 'page',
-                            value: '1'
-                        });
-                        form.append(pageInput);
-                        form.submit();
-                    });
-                    
-                    // Real-time table search functionality (like DataTables)
-                    $('#searchInput').on('input', function() {
-                        var searchTerm = $(this).val().toLowerCase();
-                        var table = $('#masterlist_table');
-                        var rows = table.find('tbody tr');
-                        var visibleCount = 0;
-                        
-                        rows.each(function() {
-                            var row = $(this);
-                            var text = row.text().toLowerCase();
-                            
-                            if (text.indexOf(searchTerm) === -1) {
-                                row.hide();
-                            } else {
-                                row.show();
-                                visibleCount++;
-                            }
-                        });
-                        
-                        // Update the record count display
-                        var totalRecords = <?= $totalRecords ?>;
-                        if (searchTerm === '') {
-                            $('#recordCount').text('Records Found: ' + totalRecords + ' total records | Showing ' + visibleCount + ' records on this page');
-                        } else {
-                            $('#recordCount').text('Records Found: ' + visibleCount + ' records matching "' + searchTerm + '" | Showing ' + visibleCount + ' records on this page');
-                        }
-                    });
-                    
-                    // Clear search when Clear Filter is clicked
-                    $('a[href="masterlist.php"]').on('click', function() {
-                        $('#searchInput').val('');
-                        // Show all rows again
-                        $('#masterlist_table tbody tr').show();
-                        // Reset record count
-                        var totalRecords = <?= $totalRecords ?>;
-                        $('#recordCount').text(totalRecords + ' total records | Showing ' + $('#masterlist_table tbody tr:visible').length + ' records on this page');
-                    });
-                });
-            </script>
-
-
+        });
+    });
+})();
+</script>
 </body>
-
 </html>

@@ -178,6 +178,8 @@ $rowsToInsertInSheet3 = [];
 </head>
 
 <body>
+<?php schogms_loading_screen_once(); ?>
+
 
     <h2>Form 2 Annex Data Results</h2>
 

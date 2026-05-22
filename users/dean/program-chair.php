@@ -34,6 +34,8 @@ schogms_ensure_campus_access_tables($conn);
 </head>
 
 <body>
+<?php schogms_loading_screen_once(); ?>
+
     <!-- ============================================================== -->
     <!-- Preloader - style you can find in spinners.css -->
     <!-- ============================================================== -->

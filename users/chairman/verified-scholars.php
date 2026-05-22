@@ -25,6 +25,8 @@ $billingCampuses = schogms_chairman_billing_campuses($conn);
     <style>.preloader{display:none!important}</style>
 </head>
 <body>
+<?php schogms_loading_screen_once(); ?>
+
 <?php require_once __DIR__ . '/inc/chairman_nav.php'; schogms_chairman_shell_open('Verified scholars'); ?>
         <div class="container-fluid">
             <div class="page-breadcrumb">

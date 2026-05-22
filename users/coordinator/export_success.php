@@ -15,6 +15,8 @@ unset($_SESSION['sheet_name']);
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
+<?php schogms_loading_screen_once(); ?>
+
 <?php if ($success): ?>
 <script>
     Swal.fire({

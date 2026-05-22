@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../config/schogms_helpers.php';
 session_start();
 
 // If the user is not logged in, redirect to the logout page

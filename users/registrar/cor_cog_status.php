@@ -34,6 +34,8 @@ $campus = $user['campus'] ?? 'ISULAN';
     </style>
 </head>
 <body>
+<?php schogms_loading_screen_once(); ?>
+
     <!-- Header -->
     <div class="header">
         <div class="container-fluid">
