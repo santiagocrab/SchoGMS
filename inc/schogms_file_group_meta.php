@@ -196,6 +196,15 @@ if (!function_exists('schogms_file_group_meta_register')) {
             $stmt->execute();
             $stmt->close();
         }
+
+        if ($status === 'pending' && $hasUploader) {
+            require_once __DIR__ . '/schogms_notifications.php';
+            schogms_notify_file_group_submitted($conn, $program, $campus, $fileGroup, [
+                'role' => $upRole,
+                'name' => $upName,
+                'id' => $upId,
+            ]);
+        }
     }
 }
 
@@ -427,6 +436,11 @@ if (!function_exists('schogms_file_group_meta_set_status')) {
         $stmt->bind_param('ssssss', $status, $notes, $reviewerName, $program, $campus, $fileGroup);
         $ok = $stmt->execute();
         $stmt->close();
+
+        if ($ok && in_array($status, ['approved', 'denied'], true)) {
+            require_once __DIR__ . '/schogms_notifications.php';
+            schogms_notify_file_group_reviewed($conn, $program, $campus, $fileGroup, $status, $reviewerName);
+        }
 
         return $ok;
     }

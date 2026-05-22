@@ -45,5 +45,9 @@ if (!function_exists('schogms_registrar_footer_scripts')) {
             echo '<script>$(function(){if(!$.fn.DataTable)return;var o={pageLength:25,lengthMenu:[[10,25,50,100,-1],[10,25,50,100,"All"]],deferRender:true,processing:true,stateSave:false,order:[]};$("#zero_config, #reqTable, #documentsTable").each(function(){if(!$.fn.dataTable.isDataTable(this))$(this).DataTable(o);});});</script>' . "\n";
         }
         echo '<script>if(typeof feather!=="undefined"){feather.replace();}</script>' . "\n";
+        if (!function_exists('schogms_notifications_footer_script')) {
+            require_once __DIR__ . '/../../../inc/schogms_notifications_ui.php';
+        }
+        schogms_notifications_footer_script();
     }
 }

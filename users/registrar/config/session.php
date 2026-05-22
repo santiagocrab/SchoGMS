@@ -66,3 +66,7 @@ if ($authType === 'mysql') {
         exit;
     }
 }
+
+if (!isset($conn) || !($conn instanceof mysqli)) {
+    require_once __DIR__ . '/conn.php';
+}

@@ -33,9 +33,12 @@ if (!function_exists('schogms_registrar_nav_link_class')) {
 if (!function_exists('schogms_registrar_render_topbar')) {
     function schogms_registrar_render_topbar(?string $pageTitle = null): void
     {
-        global $fullname;
+        global $fullname, $conn, $user_id, $role;
         $title = $pageTitle ?? 'Scholarship and Grants Management System';
         $user = htmlspecialchars((string) ($fullname ?? 'Registrar'), ENT_QUOTES, 'UTF-8');
+        if (!function_exists('schogms_notifications_render_bell')) {
+            require_once __DIR__ . '/../../../inc/schogms_notifications_ui.php';
+        }
         ?>
         <header class="topbar" data-navbarbg="skin6">
             <nav class="navbar top-navbar navbar-expand-md">
@@ -59,6 +62,11 @@ if (!function_exists('schogms_registrar_render_topbar')) {
                         </li>
                     </ul>
                     <ul class="navbar-nav float-right">
+                        <?php
+                        if (isset($conn) && $conn instanceof mysqli) {
+                            schogms_notifications_render_bell($conn, (int) ($user_id ?? 0), (string) ($role ?? 'registrar'));
+                        }
+                        ?>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="javascript:void(0)" data-toggle="dropdown"
                                 aria-haspopup="true" aria-expanded="false">

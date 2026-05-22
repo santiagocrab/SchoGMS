@@ -326,3 +326,105 @@ BODY;
         return schogms_email_layout($roleTitle, $body, 'Your SchoGMS assignment and login credentials.');
     }
 }
+
+if (!function_exists('schogms_email_file_group_pending_chairman')) {
+    function schogms_email_file_group_pending_chairman(array $d): string
+    {
+        $name = schogms_email_escape($d['name'] ?? 'Chairman');
+        $program = schogms_email_escape($d['program'] ?? 'TDP');
+        $campus = schogms_email_escape($d['campus'] ?? '');
+        $fileGroup = schogms_email_escape($d['file_group'] ?? '');
+        $uploader = schogms_email_escape($d['uploader'] ?? '');
+        $link = (string) ($d['link'] ?? schogms_app_base_url() . '/users/chairman/file_groups.php?status=pending');
+
+        $body = <<<BODY
+<p style="margin:0 0 16px;font-size:17px;color:#1a2332;">Hello <strong>{$name}</strong>,</p>
+<p style="margin:0 0 16px;font-size:16px;color:#334155;line-height:1.65;">
+A new file group was uploaded and is <strong>waiting for your approval</strong>. Please sign in to SchoGMS and review it on the <strong>File groups</strong> page.
+</p>
+BODY;
+        $body .= schogms_email_info_box('Program', $program, 'default');
+        $body .= schogms_email_info_box('Campus', $campus, 'default');
+        $body .= schogms_email_info_box('File group', $fileGroup, 'default');
+        $body .= schogms_email_info_box('Uploaded by', $uploader, 'default');
+        $body .= schogms_email_button($link, 'Review file groups', '#5f76e8');
+
+        return schogms_email_layout('New upload awaiting review', $body, 'New file group uploaded — please check SchoGMS.');
+    }
+}
+
+if (!function_exists('schogms_email_file_group_waiting')) {
+    function schogms_email_file_group_waiting(array $d): string
+    {
+        $name = schogms_email_escape($d['name'] ?? 'User');
+        $program = schogms_email_escape($d['program'] ?? 'TDP');
+        $campus = schogms_email_escape($d['campus'] ?? '');
+        $fileGroup = schogms_email_escape($d['file_group'] ?? '');
+        $link = (string) ($d['link'] ?? schogms_app_base_url() . '/index.php');
+
+        $body = <<<BODY
+<p style="margin:0 0 16px;font-size:17px;color:#1a2332;">Hello <strong>{$name}</strong>,</p>
+<p style="margin:0 0 16px;font-size:16px;color:#334155;line-height:1.65;">
+Your file group was submitted successfully. It is now <strong>waiting for chairman approval</strong>. You will receive another notification when it is approved or denied.
+</p>
+BODY;
+        $body .= schogms_email_info_box('Program', $program, 'default');
+        $body .= schogms_email_info_box('Campus', $campus, 'default');
+        $body .= schogms_email_info_box('File group', $fileGroup, 'default');
+        $body .= schogms_email_button($link, 'Open SchoGMS', '#5f76e8');
+
+        return schogms_email_layout('File group submitted', $body, 'Your upload is waiting for chairman approval.');
+    }
+}
+
+if (!function_exists('schogms_email_file_group_approved')) {
+    function schogms_email_file_group_approved(array $d): string
+    {
+        $name = schogms_email_escape($d['name'] ?? 'User');
+        $program = schogms_email_escape($d['program'] ?? 'TDP');
+        $campus = schogms_email_escape($d['campus'] ?? '');
+        $fileGroup = schogms_email_escape($d['file_group'] ?? '');
+        $reviewer = schogms_email_escape($d['reviewer'] ?? 'Chairman');
+        $link = (string) ($d['link'] ?? schogms_app_base_url() . '/index.php');
+
+        $body = <<<BODY
+<p style="margin:0 0 16px;font-size:17px;color:#1a2332;">Hello <strong>{$name}</strong>,</p>
+<p style="margin:0 0 16px;font-size:16px;color:#334155;line-height:1.65;">
+<strong>Good news!</strong> The chairman approved your file group. You can check the scholars and batch details in SchoGMS.
+</p>
+BODY;
+        $body .= schogms_email_info_box('Program', $program, 'default');
+        $body .= schogms_email_info_box('Campus', $campus, 'default');
+        $body .= schogms_email_info_box('File group', $fileGroup, 'default');
+        $body .= schogms_email_info_box('Reviewed by', $reviewer, 'default');
+        $body .= schogms_email_button($link, 'View in SchoGMS', '#198754');
+
+        return schogms_email_layout('File group approved', $body, 'Your file group was approved — open SchoGMS to view it.');
+    }
+}
+
+if (!function_exists('schogms_email_file_group_denied')) {
+    function schogms_email_file_group_denied(array $d): string
+    {
+        $name = schogms_email_escape($d['name'] ?? 'User');
+        $program = schogms_email_escape($d['program'] ?? 'TDP');
+        $campus = schogms_email_escape($d['campus'] ?? '');
+        $fileGroup = schogms_email_escape($d['file_group'] ?? '');
+        $reviewer = schogms_email_escape($d['reviewer'] ?? 'Chairman');
+        $link = (string) ($d['link'] ?? schogms_app_base_url() . '/index.php');
+
+        $body = <<<BODY
+<p style="margin:0 0 16px;font-size:17px;color:#1a2332;">Hello <strong>{$name}</strong>,</p>
+<p style="margin:0 0 16px;font-size:16px;color:#334155;line-height:1.65;">
+Your file group was <strong>denied</strong> by the chairman. Please sign in to SchoGMS for details and next steps.
+</p>
+BODY;
+        $body .= schogms_email_info_box('Program', $program, 'default');
+        $body .= schogms_email_info_box('Campus', $campus, 'default');
+        $body .= schogms_email_info_box('File group', $fileGroup, 'default');
+        $body .= schogms_email_info_box('Reviewed by', $reviewer, 'default');
+        $body .= schogms_email_button($link, 'Open SchoGMS', '#dc3545');
+
+        return schogms_email_layout('File group denied', $body, 'Your file group was denied — check SchoGMS.');
+    }
+}
