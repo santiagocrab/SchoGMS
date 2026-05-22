@@ -355,13 +355,18 @@ if (!function_exists('schogms_registrar_program_list_fetch')) {
      *   error: string
      * }
      */
-    function schogms_registrar_program_list_fetch(string $program, ?string $campus = null, ?mysqli $db = null): array
-    {
+    function schogms_registrar_program_list_fetch(
+        string $program,
+        ?string $campus = null,
+        ?mysqli $db = null,
+        bool $allCampuses = false
+    ): array {
         $empty = [
             'batches' => [],
             'file_groups' => [],
             'programs' => [],
-            'totals' => ['file_groups' => 0, 'files' => 0, 'scholars' => 0, 'programs' => 0],
+            'totals' => ['file_groups' => 0, 'files' => 0, 'scholars' => 0, 'programs' => 0, 'campuses' => 0],
+            'all_campuses' => $allCampuses,
             'error' => '',
         ];
 
@@ -374,7 +379,7 @@ if (!function_exists('schogms_registrar_program_list_fetch')) {
 
         $db = $db instanceof mysqli ? $db : schogms_registrar_db();
         $campus = trim((string) $campus);
-        if ($campus === '') {
+        if (!$allCampuses && $campus === '') {
             $empty['error'] = 'No campus assigned to your account.';
 
             return $empty;
@@ -382,18 +387,24 @@ if (!function_exists('schogms_registrar_program_list_fetch')) {
 
         $table = $meta['table'];
         $campusCol = $meta['campus_column'];
-        $campusEsc = $db->real_escape_string($campus);
-        $where = "{$campusCol} = '{$campusEsc}'";
+        $where = '1=1';
+        if (!$allCampuses) {
+            $where = "{$campusCol} = '" . $db->real_escape_string($campus) . "'";
+        }
         $progConcat = "GROUP_CONCAT(DISTINCT NULLIF(TRIM(course_program_enrolled), '') ORDER BY course_program_enrolled SEPARATOR '|||')";
+        $campusExpr = $allCampuses ? $campusCol : "MAX({$campusCol})";
+        $campusSelect = "{$campusExpr} AS campus";
+        $batchGroupBy = $allCampuses ? "{$campusCol}, file_group, filename" : 'file_group, filename';
+        $batchOrder = $allCampuses ? 'campus ASC, file_group ASC, filename ASC' : 'file_group ASC, filename ASC';
 
         $batches = [];
-        $batchSql = "SELECT file_group, filename, COUNT(*) AS total_entries,
+        $batchSql = "SELECT {$campusSelect}, file_group, filename, COUNT(*) AS total_entries,
                 COUNT(DISTINCT NULLIF(TRIM(course_program_enrolled), '')) AS program_count,
                 {$progConcat} AS programs_raw
             FROM {$table}
             WHERE {$where}
-            GROUP BY file_group, filename
-            ORDER BY file_group ASC, filename ASC
+            GROUP BY {$batchGroupBy}
+            ORDER BY {$batchOrder}
             LIMIT 500";
         $batchRes = $db->query($batchSql);
         if (!$batchRes) {
@@ -408,16 +419,18 @@ if (!function_exists('schogms_registrar_program_list_fetch')) {
         }
 
         $fileGroups = [];
-        $fgSql = "SELECT file_group,
+        $fgGroupBy = $allCampuses ? "{$campusCol}, file_group" : 'file_group';
+        $fgOrder = $allCampuses ? 'campus ASC, file_group ASC' : 'file_group ASC';
+        $fgSql = "SELECT {$campusSelect}, file_group,
                 COUNT(DISTINCT filename) AS file_count,
                 COUNT(*) AS total_entries,
                 COUNT(DISTINCT NULLIF(TRIM(course_program_enrolled), '')) AS program_count,
                 {$progConcat} AS programs_raw
             FROM {$table}
             WHERE {$where}
-            GROUP BY file_group
-            ORDER BY file_group ASC
-            LIMIT 200";
+            GROUP BY {$fgGroupBy}
+            ORDER BY {$fgOrder}
+            LIMIT 500";
         if ($fgRes = $db->query($fgSql)) {
             while ($row = $fgRes->fetch_assoc()) {
                 $row['programs'] = schogms_registrar_program_list_parse_names($row['programs_raw'] ?? '');
@@ -427,12 +440,16 @@ if (!function_exists('schogms_registrar_program_list_fetch')) {
         }
 
         $programs = [];
-        $progSql = "SELECT TRIM(course_program_enrolled) AS program_name, COUNT(*) AS scholar_count
+        $progGroupBy = $allCampuses
+            ? "{$campusCol}, TRIM(course_program_enrolled)"
+            : 'TRIM(course_program_enrolled)';
+        $progOrder = $allCampuses ? 'campus ASC, program_name ASC' : 'program_name ASC';
+        $progSql = "SELECT {$campusSelect}, TRIM(course_program_enrolled) AS program_name, COUNT(*) AS scholar_count
             FROM {$table}
             WHERE {$where} AND TRIM(course_program_enrolled) <> ''
-            GROUP BY TRIM(course_program_enrolled)
-            ORDER BY program_name ASC
-            LIMIT 500";
+            GROUP BY {$progGroupBy}
+            ORDER BY {$progOrder}
+            LIMIT 1000";
         if ($progRes = $db->query($progSql)) {
             while ($row = $progRes->fetch_assoc()) {
                 $programs[] = $row;
@@ -447,11 +464,20 @@ if (!function_exists('schogms_registrar_program_list_fetch')) {
         $empty['batches'] = $batches;
         $empty['file_groups'] = $fileGroups;
         $empty['programs'] = $programs;
+        $campusSet = [];
+        foreach ($batches as $b) {
+            $c = trim((string) ($b['campus'] ?? ''));
+            if ($c !== '') {
+                $campusSet[$c] = true;
+            }
+        }
+
         $empty['totals'] = [
             'file_groups' => count($fileGroups),
             'files' => count($batches),
             'scholars' => $scholars,
             'programs' => count($programs),
+            'campuses' => count($campusSet),
         ];
 
         return $empty;

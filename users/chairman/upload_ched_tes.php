@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/config/session.php';
 require_once __DIR__ . '/../../inc/campus_access.php';
+require_once __DIR__ . '/../../inc/schogms_upload_format.php';
 
 $campuses = schogms_campus_catalog_names();
 $recentUploads = [];
@@ -71,12 +72,13 @@ if ($res) {
                 </div>
             <?php endif; ?>
 
+            <?php schogms_upload_format_render_guide('ched_tes', '../../'); ?>
+
             <div class="row">
-                <div class="col-lg-8">
+                <div class="col-lg-12">
                     <div class="card">
                         <div class="card-body">
                             <h4 class="card-title">Upload CHED TES masterlist</h4>
-                            <p class="text-muted small">Excel layout: <strong>row 1</strong> is the header; data starts on <strong>row 2</strong> (columns A–M).</p>
 
                             <form action="submit_ched_tes_upload.php" method="post" enctype="multipart/form-data" id="uploadForm">
                                 <div class="row">
@@ -146,18 +148,6 @@ if ($res) {
                                 <button type="reset" class="btn btn-secondary ml-2">Reset</button>
                             </form>
                         </div>
-                    </div>
-                </div>
-                <div class="col-lg-4">
-                    <div class="alert alert-info">
-                        <h6 class="font-weight-bold">Column layout (row 2+)</h6>
-                        <ul class="small mb-0 pl-3">
-                            <li>A SEQ, B APP NO</li>
-                            <li>C–F Names, G SEX</li>
-                            <li>H Course, I Year level</li>
-                            <li>J Street, K Town/City, L Contact</li>
-                            <li>M Batch no.</li>
-                        </ul>
                     </div>
                 </div>
             </div>

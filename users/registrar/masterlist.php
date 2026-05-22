@@ -4,6 +4,7 @@ require_once __DIR__ . '/inc/registrar_data.php';
 require_once __DIR__ . '/inc/registrar_nav.php';
 require_once __DIR__ . '/inc/registrar_masterlist_ui.php';
 require_once __DIR__ . '/../coordinator/inc/masterlist_rows.php';
+require_once __DIR__ . '/../../inc/schogms_upload_format.php';
 
 $campus = trim((string) ($sheet_name ?? ''));
 $category = trim((string) ($_GET['category'] ?? ''));
@@ -188,6 +189,7 @@ $extraColumns = [
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
+                <?php schogms_upload_format_modal_hint('registrar_masterlist', '../../'); ?>
                 <form id="uploadForm">
                     <div class="form-group">
                         <label for="session_campus">Campus</label>

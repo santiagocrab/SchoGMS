@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/config/session.php';
 require_once __DIR__ . '/../../inc/campus_access.php';
+require_once __DIR__ . '/../../inc/schogms_upload_format.php';
 
 $campuses = schogms_campus_catalog_names();
 $recentUploads = [];
@@ -71,12 +72,13 @@ if ($res) {
                 </div>
             <?php endif; ?>
 
+            <?php schogms_upload_format_render_guide('ched_tdp', '../../'); ?>
+
             <div class="row">
-                <div class="col-lg-8">
+                <div class="col-lg-12">
                     <div class="card">
                         <div class="card-body">
                             <h4 class="card-title">Upload CHED TDP masterlist</h4>
-                            <p class="text-muted small">Uses the same Excel layout as coordinators: data starts on <strong>row 3</strong> (columns A–N).</p>
 
                             <form action="submit_ched_tdp_upload.php" method="post" enctype="multipart/form-data" id="uploadForm">
                                 <div class="row">
@@ -146,17 +148,6 @@ if ($res) {
                                 <button type="reset" class="btn btn-secondary ml-2">Reset</button>
                             </form>
                         </div>
-                    </div>
-                </div>
-                <div class="col-lg-4">
-                    <div class="alert alert-info">
-                        <h6 class="font-weight-bold">Column layout (row 3+)</h6>
-                        <ul class="small mb-0 pl-3">
-                            <li>A SEQ, B APP NO, C AWARD NO</li>
-                            <li>D–G Names, H SEX, I Birthdate</li>
-                            <li>J Course, K Year, L Units</li>
-                            <li>M Enrollment status, N Remarks</li>
-                        </ul>
                     </div>
                 </div>
             </div>

@@ -1,4 +1,7 @@
-<?php include 'config/session.php'; ?>
+<?php
+include 'config/session.php';
+require_once __DIR__ . '/../../inc/schogms_upload_format.php';
+?>
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
 
@@ -79,6 +82,7 @@
                             </button>
                         </div>
                         <div class="modal-body">
+                            <?php schogms_upload_format_modal_hint('registrar_masterlist', '../../'); ?>
                             <form id="uploadForm">
                                 <div class="mb-3">
                                     <label for="file-group" class="form-label">File Group</label>

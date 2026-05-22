@@ -85,8 +85,8 @@ try {
                         </div>
                         <?php schogms_registrar_render_program_list_stats($tdp['totals']); ?>
                         <?php schogms_registrar_render_program_list_programs_table($tdp['programs'], 'tdpProgramsTable'); ?>
-                        <?php schogms_registrar_render_program_list_file_groups_table($tdp['file_groups'], 'tdpFileGroupsTable'); ?>
-                        <?php schogms_registrar_render_program_list_batches_table($tdp['batches'], 'tdpBatchesTable'); ?>
+                        <?php schogms_registrar_render_program_list_file_groups_table($tdp['file_groups'], 'tdpFileGroupsTable', 'tdp'); ?>
+                        <?php schogms_registrar_render_program_list_batches_table($tdp['batches'], 'tdpBatchesTable', 'tdp'); ?>
                     <?php endif; ?>
                     <p class="small text-muted mb-0 mt-2">
                         Open full scholar rows on <a href="ched_masterlist.php">CHED TDP masterlist</a>.
@@ -109,8 +109,8 @@ try {
                         </div>
                         <?php schogms_registrar_render_program_list_stats($tes['totals']); ?>
                         <?php schogms_registrar_render_program_list_programs_table($tes['programs'], 'tesProgramsTable'); ?>
-                        <?php schogms_registrar_render_program_list_file_groups_table($tes['file_groups'], 'tesFileGroupsTable'); ?>
-                        <?php schogms_registrar_render_program_list_batches_table($tes['batches'], 'tesBatchesTable'); ?>
+                        <?php schogms_registrar_render_program_list_file_groups_table($tes['file_groups'], 'tesFileGroupsTable', 'tes'); ?>
+                        <?php schogms_registrar_render_program_list_batches_table($tes['batches'], 'tesBatchesTable', 'tes'); ?>
                     <?php endif; ?>
                 </div>
             </div>
