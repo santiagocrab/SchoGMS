@@ -3,6 +3,7 @@ include 'config/session.php';
 require_once __DIR__ . '/../registrar/inc/registrar_data.php';
 require_once __DIR__ . '/inc/chairman_nav.php';
 require_once __DIR__ . '/../../inc/schogms_file_group_view.php';
+require_once __DIR__ . '/../../inc/schogms_file_group_meta.php';
 
 $p = schogms_file_group_view_params();
 $program = $p['program'] === 'tes' ? 'tes' : 'tdp';
@@ -15,6 +16,7 @@ if (!isset($conn) || !($conn instanceof mysqli)) {
     require 'config/conn.php';
 }
 $data = schogms_file_group_view_fetch($program, $fileGroup, $campus, $filename !== '' ? $filename : null, $conn);
+$batchMeta = schogms_file_group_meta_fetch_batch($conn, $program, $campus, $fileGroup);
 
 $label = (string) ($data['meta']['label'] ?? strtoupper($program));
 ?>
@@ -34,6 +36,7 @@ $label = (string) ($data['meta']['label'] ?? strtoupper($program));
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb m-0 p-0">
             <li class="breadcrumb-item"><a href="index.php">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="file_groups.php?program=<?= htmlspecialchars($program, ENT_QUOTES, 'UTF-8') ?>">File groups</a></li>
             <li class="breadcrumb-item"><a href="program_list.php">Program list</a></li>
             <li class="breadcrumb-item active"><?= htmlspecialchars($fileGroup, ENT_QUOTES, 'UTF-8') ?></li>
         </ol>
@@ -51,6 +54,10 @@ $label = (string) ($data['meta']['label'] ?? strtoupper($program));
                 <p class="text-muted small mb-2">
                     Campus: <strong><?= htmlspecialchars((string) ($sum['campus'] ?? ''), ENT_QUOTES, 'UTF-8') ?></strong>
                     <?php if ($filename !== ''): ?> · File: <strong><?= htmlspecialchars($filename, ENT_QUOTES, 'UTF-8') ?></strong><?php endif; ?>
+                    · Uploaded by: <strong><?= htmlspecialchars(schogms_file_group_meta_uploader_display($batchMeta), ENT_QUOTES, 'UTF-8') ?></strong>
+                    <?php $upAt = trim((string) ($batchMeta['uploaded_at'] ?? '')); if ($upAt !== ''): ?>
+                        <span class="text-muted">(<?= htmlspecialchars($upAt, ENT_QUOTES, 'UTF-8') ?>)</span>
+                    <?php endif; ?>
                 </p>
                 <p class="mb-0"><?= htmlspecialchars(schogms_file_group_summary_text($sum), ENT_QUOTES, 'UTF-8') ?></p>
                 <?php if (!empty($sum['programs_summary'])): ?>

@@ -1,9 +1,10 @@
 <?php
 require __DIR__ . '/config/session.php';
+require_once __DIR__ . '/../../inc/schogms_file_group_meta.php';
 
 $totalTdp = 0;
 $totalTes = 0;
-$pendingAnnex = 0;
+$pendingFileGroups = 0;
 
 $r = $conn->query('SELECT COUNT(*) AS n FROM ched_masterlist');
 if ($r) {
@@ -13,9 +14,10 @@ $r = $conn->query('SELECT COUNT(*) AS n FROM ched_masterlist_tes');
 if ($r) {
     $totalTes = (int) ($r->fetch_assoc()['n'] ?? 0);
 }
-$r = $conn->query("SELECT COUNT(*) AS n FROM file_submissions WHERE status = 'Pending'");
+schogms_file_group_meta_ensure_table($conn);
+$r = $conn->query("SELECT COUNT(*) AS n FROM schogms_file_group_batches WHERE status = 'pending'");
 if ($r) {
-    $pendingAnnex = (int) ($r->fetch_assoc()['n'] ?? 0);
+    $pendingFileGroups = (int) ($r->fetch_assoc()['n'] ?? 0);
 }
 ?>
 <!DOCTYPE html>
@@ -55,10 +57,10 @@ if ($r) {
                 </div>
                 <div class="card border-right">
                     <div class="card-body">
-                        <h2 class="text-dark mb-1 font-weight-medium"><?= number_format($pendingAnnex) ?></h2>
-                        <h6 class="text-muted font-weight-normal mb-0">Annex 7 pending review</h6>
-                        <?php if ($pendingAnnex > 0): ?>
-                            <a href="anex-form2.php" class="btn btn-sm btn-primary mt-2">Review now</a>
+                        <h2 class="text-dark mb-1 font-weight-medium"><?= number_format($pendingFileGroups) ?></h2>
+                        <h6 class="text-muted font-weight-normal mb-0">File groups pending review</h6>
+                        <?php if ($pendingFileGroups > 0): ?>
+                            <a href="file_groups.php?status=pending" class="btn btn-sm btn-primary mt-2">Review now</a>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -67,8 +69,8 @@ if ($r) {
             <div class="card mt-3">
                 <div class="card-body">
                     <h4 class="card-title">Quick links</h4>
-                    <p class="text-muted small mb-3">System-wide oversight: approve coordinator Annex 7 submissions and browse masterlists.</p>
-                    <a href="anex-form2.php" class="btn btn-primary mr-2 mb-2">Annex 7 review</a>
+                    <p class="text-muted small mb-3">System-wide oversight: approve coordinator file group uploads and browse masterlists.</p>
+                    <a href="file_groups.php?status=pending" class="btn btn-primary mr-2 mb-2">Review file groups</a>
                     <a href="ched_masterlist.php" class="btn btn-outline-primary mr-2 mb-2">TDP masterlist</a>
                     <a href="ched_masterlist_tes.php" class="btn btn-outline-primary mb-2">TES masterlist</a>
                 </div>

@@ -156,6 +156,9 @@ try {
     $stmt->close();
     unlink($targetFilePath);
 
+    require_once __DIR__ . '/../../inc/schogms_file_group_meta.php';
+    schogms_file_group_meta_register($conn, 'tdp', $campusSheet, $file_group, 'pending', schogms_file_group_meta_uploader_from_session());
+
     echo json_encode([
         'success' => true,
         'message' => "Uploaded {$inserted} record(s) for campus {$campusSheet}.",

@@ -6,6 +6,7 @@ include 'config/session.php';
 require_once __DIR__ . '/inc/registrar_data.php';
 require_once __DIR__ . '/inc/registrar_nav.php';
 require_once __DIR__ . '/../../inc/schogms_file_group_view.php';
+require_once __DIR__ . '/../../inc/schogms_file_group_meta.php';
 
 $p = schogms_file_group_view_params();
 $program = $p['program'] === 'tes' ? 'tes' : 'tdp';
@@ -14,9 +15,11 @@ $filename = $p['filename'];
 $campus = $p['campus'] !== '' ? $p['campus'] : trim((string) ($sheet_name ?? ''));
 
 $data = ['meta' => [], 'summary' => [], 'rows' => [], 'error' => ''];
+$batchMeta = schogms_file_group_meta_default_row();
 try {
     $db = schogms_registrar_db();
     $data = schogms_file_group_view_fetch($program, $fileGroup, $campus, $filename !== '' ? $filename : null, $db);
+    $batchMeta = schogms_file_group_meta_fetch_batch($db, $program, $campus, $fileGroup);
 } catch (Throwable $e) {
     $data['error'] = 'Database unavailable.';
     schogms_log_error('file_group_view: ' . $e->getMessage());
@@ -60,6 +63,10 @@ $pageTitle = $label . ' file group';
                     Campus: <strong><?= schogms_e((string) ($sum['campus'] ?? '')) ?></strong>
                     <?php if ($filename !== ''): ?>
                         · File: <strong><?= schogms_e($filename) ?></strong>
+                    <?php endif; ?>
+                    · Uploaded by: <strong><?= schogms_e(schogms_file_group_meta_uploader_display($batchMeta)) ?></strong>
+                    <?php $upAt = trim((string) ($batchMeta['uploaded_at'] ?? '')); if ($upAt !== ''): ?>
+                        <span class="text-muted">(<?= schogms_e($upAt) ?>)</span>
                     <?php endif; ?>
                 </p>
                 <p class="mb-0"><?= schogms_e(schogms_file_group_summary_text($sum)) ?></p>

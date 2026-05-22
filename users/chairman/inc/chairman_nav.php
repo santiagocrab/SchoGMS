@@ -102,11 +102,11 @@ if (!function_exists('schogms_chairman_render_sidebar')) {
                         </li>
 
                         <li class="list-divider"></li>
-                        <li class="nav-small-cap"><span class="hide-menu">Annex 7</span></li>
+                        <li class="nav-small-cap"><span class="hide-menu">Review</span></li>
                         <li class="sidebar-item">
-                            <a class="<?= schogms_chairman_nav_link_class('anex-form2.php') ?>" href="anex-form2.php">
+                            <a class="<?= schogms_chairman_nav_link_class('file_groups.php', ['file_group_view.php', 'file_group_action.php', 'anex-form2.php']) ?>" href="file_groups.php">
                                 <i data-feather="check-square" class="feather-icon"></i>
-                                <span class="hide-menu">Review submissions</span>
+                                <span class="hide-menu">File groups</span>
                             </a>
                         </li>
 

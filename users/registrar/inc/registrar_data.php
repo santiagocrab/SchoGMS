@@ -390,12 +390,16 @@ if (!function_exists('schogms_registrar_program_list_fetch')) {
         $where = '1=1';
         if (!$allCampuses) {
             $where = "{$campusCol} = '" . $db->real_escape_string($campus) . "'";
+        } elseif ($campus !== '') {
+            $where = "TRIM({$campusCol}) = '" . $db->real_escape_string($campus) . "'";
         }
+
+        $groupAcrossCampuses = $allCampuses && $campus === '';
         $progConcat = "GROUP_CONCAT(DISTINCT NULLIF(TRIM(course_program_enrolled), '') ORDER BY course_program_enrolled SEPARATOR '|||')";
-        $campusExpr = $allCampuses ? $campusCol : "MAX({$campusCol})";
+        $campusExpr = $groupAcrossCampuses ? $campusCol : "MAX({$campusCol})";
         $campusSelect = "{$campusExpr} AS campus";
-        $batchGroupBy = $allCampuses ? "{$campusCol}, file_group, filename" : 'file_group, filename';
-        $batchOrder = $allCampuses ? 'campus ASC, file_group ASC, filename ASC' : 'file_group ASC, filename ASC';
+        $batchGroupBy = $groupAcrossCampuses ? "{$campusCol}, file_group, filename" : 'file_group, filename';
+        $batchOrder = $groupAcrossCampuses ? 'campus ASC, file_group ASC, filename ASC' : 'file_group ASC, filename ASC';
 
         $batches = [];
         $batchSql = "SELECT {$campusSelect}, file_group, filename, COUNT(*) AS total_entries,
@@ -419,8 +423,8 @@ if (!function_exists('schogms_registrar_program_list_fetch')) {
         }
 
         $fileGroups = [];
-        $fgGroupBy = $allCampuses ? "{$campusCol}, file_group" : 'file_group';
-        $fgOrder = $allCampuses ? 'campus ASC, file_group ASC' : 'file_group ASC';
+        $fgGroupBy = $groupAcrossCampuses ? "{$campusCol}, file_group" : 'file_group';
+        $fgOrder = $groupAcrossCampuses ? 'campus ASC, file_group ASC' : 'file_group ASC';
         $fgSql = "SELECT {$campusSelect}, file_group,
                 COUNT(DISTINCT filename) AS file_count,
                 COUNT(*) AS total_entries,
@@ -440,10 +444,10 @@ if (!function_exists('schogms_registrar_program_list_fetch')) {
         }
 
         $programs = [];
-        $progGroupBy = $allCampuses
+        $progGroupBy = $groupAcrossCampuses
             ? "{$campusCol}, TRIM(course_program_enrolled)"
             : 'TRIM(course_program_enrolled)';
-        $progOrder = $allCampuses ? 'campus ASC, program_name ASC' : 'program_name ASC';
+        $progOrder = $groupAcrossCampuses ? 'campus ASC, program_name ASC' : 'program_name ASC';
         $progSql = "SELECT {$campusSelect}, TRIM(course_program_enrolled) AS program_name, COUNT(*) AS scholar_count
             FROM {$table}
             WHERE {$where} AND TRIM(course_program_enrolled) <> ''
@@ -479,8 +483,66 @@ if (!function_exists('schogms_registrar_program_list_fetch')) {
             'programs' => count($programs),
             'campuses' => count($campusSet),
         ];
+        $empty['filter_campus'] = $campus;
+        $empty['show_campus_column'] = $groupAcrossCampuses;
 
         return $empty;
+    }
+}
+
+if (!function_exists('schogms_registrar_program_list_campus_counts')) {
+    /**
+     * Scholar counts per campus for program-list tabs.
+     *
+     * @return array{all: int, campuses: array<string, int>}
+     */
+    function schogms_registrar_program_list_campus_counts(mysqli $db, string $program): array
+    {
+        $meta = schogms_registrar_program_list_table($program);
+        if ($meta === null) {
+            return ['all' => 0, 'campuses' => []];
+        }
+        $table = $meta['table'];
+        $campusCol = $meta['campus_column'];
+        $campuses = [];
+        $all = 0;
+        $sql = "SELECT TRIM({$campusCol}) AS campus, COUNT(*) AS scholar_count
+                FROM {$table}
+                WHERE TRIM({$campusCol}) <> ''
+                GROUP BY TRIM({$campusCol})
+                ORDER BY campus ASC";
+        $res = $db->query($sql);
+        if ($res) {
+            while ($row = $res->fetch_assoc()) {
+                $c = (string) ($row['campus'] ?? '');
+                if ($c === '') {
+                    continue;
+                }
+                $n = (int) ($row['scholar_count'] ?? 0);
+                $campuses[$c] = $n;
+                $all += $n;
+            }
+        }
+
+        return ['all' => $all, 'campuses' => $campuses];
+    }
+}
+
+if (!function_exists('schogms_registrar_program_list_campus_names')) {
+    /** @return list<string> Sorted campus names that appear in TDP or TES masterlists. */
+    function schogms_registrar_program_list_campus_names(mysqli $db): array
+    {
+        $set = [];
+        foreach (['tdp', 'tes'] as $prog) {
+            $counts = schogms_registrar_program_list_campus_counts($db, $prog);
+            foreach (array_keys($counts['campuses']) as $name) {
+                $set[$name] = true;
+            }
+        }
+        $names = array_keys($set);
+        sort($names, SORT_NATURAL | SORT_FLAG_CASE);
+
+        return $names;
     }
 }
 

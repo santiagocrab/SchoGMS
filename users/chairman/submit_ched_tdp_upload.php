@@ -137,6 +137,9 @@ try {
     $stmt->close();
     $conn->commit();
 
+    require_once __DIR__ . '/../../inc/schogms_file_group_meta.php';
+    schogms_file_group_meta_register($conn, 'tdp', $campus, $fileGroupFull, 'approved', schogms_file_group_meta_uploader_from_session());
+
     @unlink($targetFilePath);
 
     $msg = "Uploaded {$inserted} scholar record(s) for {$campus}.";

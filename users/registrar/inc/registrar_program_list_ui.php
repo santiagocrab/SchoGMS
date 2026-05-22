@@ -104,11 +104,15 @@ if (!function_exists('schogms_registrar_render_program_list_file_groups_table'))
         string $tableId,
         string $program = 'tdp',
         string $viewScript = 'file_group_view.php',
-        bool $showCampusColumn = false
+        bool $showCampusColumn = false,
+        bool $showUploaderColumn = false
     ): void {
         require_once __DIR__ . '/../../../inc/schogms_file_group_view.php';
+        if ($showUploaderColumn) {
+            require_once __DIR__ . '/../../../inc/schogms_file_group_meta.php';
+        }
         $program = strtolower(trim($program));
-        $colspan = $showCampusColumn ? 8 : 7;
+        $colspan = 7 + ($showCampusColumn ? 1 : 0) + ($showUploaderColumn ? 1 : 0);
         ?>
         <h6 class="font-weight-bold text-secondary mb-2">File group summary</h6>
         <p class="small text-muted mb-2">
@@ -121,6 +125,7 @@ if (!function_exists('schogms_registrar_render_program_list_file_groups_table'))
                     <tr>
                         <?php if ($showCampusColumn): ?><th>Campus</th><?php endif; ?>
                         <th>File group</th>
+                        <?php if ($showUploaderColumn): ?><th>Uploaded by</th><?php endif; ?>
                         <th>Batch identification (summary)</th>
                         <th class="text-right">Files</th>
                         <th class="text-right">Scholars</th>
@@ -145,6 +150,14 @@ if (!function_exists('schogms_registrar_render_program_list_file_groups_table'))
                                 <td class="font-weight-medium"><?= schogms_e($campusRow) ?></td>
                             <?php endif; ?>
                             <td class="font-weight-medium"><?= schogms_e($fg) ?></td>
+                            <?php if ($showUploaderColumn): ?>
+                                <td class="small">
+                                    <?= schogms_e(schogms_file_group_meta_uploader_display($row)) ?>
+                                    <?php $upAt = trim((string) ($row['uploaded_at'] ?? '')); if ($upAt !== ''): ?>
+                                        <br><span class="text-muted"><?= schogms_e($upAt) ?></span>
+                                    <?php endif; ?>
+                                </td>
+                            <?php endif; ?>
                             <td class="small text-muted" style="max-width:320px;"><?= schogms_e(schogms_file_group_batch_summary_text($row)) ?></td>
                             <td class="text-right"><?= number_format((int) ($row['file_count'] ?? 0)) ?></td>
                             <td class="text-right"><?= number_format((int) ($row['total_entries'] ?? 0)) ?></td>

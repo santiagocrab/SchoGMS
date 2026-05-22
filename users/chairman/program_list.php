@@ -1,24 +1,45 @@
 <?php
 /**
- * Program list — CHED TDP and TES summaries (chairman: all campuses).
+ * Program list — CHED TDP and TES summaries (chairman: all campuses, filterable).
  */
 include 'config/session.php';
 require_once __DIR__ . '/../registrar/inc/registrar_data.php';
+require_once __DIR__ . '/../../inc/schogms_file_group_meta.php';
 require_once __DIR__ . '/inc/chairman_nav.php';
 require_once __DIR__ . '/../registrar/inc/registrar_program_list_ui.php';
 
-$chairmanAllCampuses = true;
-$tdp = ['batches' => [], 'file_groups' => [], 'programs' => [], 'totals' => ['file_groups' => 0, 'files' => 0, 'scholars' => 0, 'programs' => 0], 'error' => ''];
-$tes = $tdp;
+$activeProgram = strtolower(trim((string) ($_GET['program'] ?? 'tdp'))) === 'tes' ? 'tes' : 'tdp';
+$campusFilter = trim((string) ($_GET['campus'] ?? ''));
 
-if (isset($conn) && $conn instanceof mysqli) {
-    $tdp = schogms_registrar_program_list_fetch('tdp', null, $conn, true);
-    $tes = schogms_registrar_program_list_fetch('tes', null, $conn, true);
-} else {
+if (!isset($conn) || !($conn instanceof mysqli)) {
     require 'config/conn.php';
-    $tdp = schogms_registrar_program_list_fetch('tdp', null, $conn, true);
-    $tes = schogms_registrar_program_list_fetch('tes', null, $conn, true);
 }
+
+$campusNames = schogms_registrar_program_list_campus_names($conn);
+$tdpCounts = schogms_registrar_program_list_campus_counts($conn, 'tdp');
+$tesCounts = schogms_registrar_program_list_campus_counts($conn, 'tes');
+$activeCounts = $activeProgram === 'tes' ? $tesCounts : $tdpCounts;
+
+if ($campusFilter !== '' && !isset($activeCounts['campuses'][$campusFilter])) {
+    foreach ($campusNames as $name) {
+        if (strcasecmp($name, $campusFilter) === 0) {
+            $campusFilter = $name;
+            break;
+        }
+    }
+}
+
+$fetchCampus = $campusFilter !== '' ? $campusFilter : null;
+$tdp = schogms_registrar_program_list_fetch('tdp', $fetchCampus, $conn, true);
+$tes = schogms_registrar_program_list_fetch('tes', $fetchCampus, $conn, true);
+$tdp['file_groups'] = schogms_file_group_meta_attach_uploaders($conn, 'tdp', $tdp['file_groups']);
+$tes['file_groups'] = schogms_file_group_meta_attach_uploaders($conn, 'tes', $tes['file_groups']);
+$data = $activeProgram === 'tes' ? $tes : $tdp;
+$showCampusColumn = (bool) ($data['show_campus_column'] ?? ($campusFilter === ''));
+
+$tabBase = 'program_list.php';
+$programLabel = strtoupper($activeProgram);
+$heroCampus = $campusFilter !== '' ? $campusFilter : 'All campuses';
 ?>
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
@@ -41,6 +62,9 @@ if (isset($conn) && $conn instanceof mysqli) {
         .pl-programs-cell { max-width: 280px; }
         .pl-summary-table { font-size: 0.82rem; }
         .pl-section-note { border-left: 3px solid #1565c0; padding-left: 0.75rem; margin-bottom: 1rem; font-size: 0.85rem; color: #475569; }
+        .pl-program-tabs .nav-link { font-weight: 600; }
+        .pl-campus-tabs .nav-link { font-size: 0.82rem; padding: 0.4rem 0.75rem; }
+        .pl-campus-tabs .badge { font-size: 0.68rem; margin-left: 0.2rem; vertical-align: middle; }
     </style>
 </head>
 <body>
@@ -60,46 +84,105 @@ if (isset($conn) && $conn instanceof mysqli) {
     <div class="pl-hero">
         <h4>CHED program list</h4>
         <p>
-            You can see uploads from <strong>all campuses</strong>. The <strong>Campus</strong> column shows which campus uploaded each batch.
-            Use <strong>View</strong> to open scholars for that campus and file group.
+            Viewing <strong><?= htmlspecialchars($programLabel, ENT_QUOTES, 'UTF-8') ?></strong>
+            for <strong><?= htmlspecialchars($heroCampus, ENT_QUOTES, 'UTF-8') ?></strong>.
+            Use the tabs below to switch program and campus. <strong>View</strong> opens scholars for a file group.
         </p>
     </div>
 
+    <ul class="nav nav-tabs pl-program-tabs mb-3" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link <?= $activeProgram === 'tdp' ? 'active' : '' ?>"
+               href="<?= htmlspecialchars($tabBase . '?program=tdp' . ($campusFilter !== '' ? '&campus=' . rawurlencode($campusFilter) : ''), ENT_QUOTES, 'UTF-8') ?>">
+                CHED TDP
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <?= $activeProgram === 'tes' ? 'active' : '' ?>"
+               href="<?= htmlspecialchars($tabBase . '?program=tes' . ($campusFilter !== '' ? '&campus=' . rawurlencode($campusFilter) : ''), ENT_QUOTES, 'UTF-8') ?>">
+                CHED TES
+            </a>
+        </li>
+    </ul>
+
+    <ul class="nav nav-pills pl-campus-tabs mb-3 flex-wrap">
+        <?php
+        $allHref = $tabBase . '?program=' . rawurlencode($activeProgram);
+        $allCount = (int) ($activeCounts['all'] ?? 0);
+        ?>
+        <li class="nav-item">
+            <a class="nav-link <?= $campusFilter === '' ? 'active' : '' ?>"
+               href="<?= htmlspecialchars($allHref, ENT_QUOTES, 'UTF-8') ?>">
+                All campuses
+                <span class="badge badge-secondary"><?= number_format($allCount) ?></span>
+            </a>
+        </li>
+        <?php foreach ($campusNames as $campusName):
+            $n = (int) ($activeCounts['campuses'][$campusName] ?? 0);
+            if ($n === 0) {
+                continue;
+            }
+            $href = $tabBase . '?program=' . rawurlencode($activeProgram) . '&campus=' . rawurlencode($campusName);
+            ?>
+        <li class="nav-item">
+            <a class="nav-link <?= strcasecmp($campusFilter, $campusName) === 0 ? 'active' : '' ?>"
+               href="<?= htmlspecialchars($href, ENT_QUOTES, 'UTF-8') ?>">
+                <?= htmlspecialchars($campusName, ENT_QUOTES, 'UTF-8') ?>
+                <span class="badge badge-light text-dark border"><?= number_format($n) ?></span>
+            </a>
+        </li>
+        <?php endforeach; ?>
+    </ul>
+
     <div class="row">
-        <div class="col-12 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h4 class="card-title text-primary mb-1">CHED TDP</h4>
-                    <?php if ($tdp['error'] !== ''): ?>
-                        <div class="alert alert-warning"><?= htmlspecialchars($tdp['error'], ENT_QUOTES, 'UTF-8') ?></div>
-                    <?php else: ?>
-                        <div class="pl-section-note">TDP masterlist batches — all campuses.</div>
-                        <?php schogms_registrar_render_program_list_stats($tdp['totals'], true); ?>
-                        <?php schogms_registrar_render_program_list_programs_table($tdp['programs'], 'tdpProgramsTable', true); ?>
-                        <?php schogms_registrar_render_program_list_file_groups_table($tdp['file_groups'], 'tdpFileGroupsTable', 'tdp', 'file_group_view.php', true); ?>
-                        <?php schogms_registrar_render_program_list_batches_table($tdp['batches'], 'tdpBatchesTable', 'tdp', 'file_group_view.php', true); ?>
-                    <?php endif; ?>
-                    <p class="small text-muted mb-0 mt-2">
-                        <a href="ched_masterlist.php">TDP masterlist</a> · <a href="upload_ched_tdp.php">Upload TDP</a>
-                    </p>
-                </div>
-            </div>
-        </div>
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h4 class="card-title text-success mb-1">CHED TES</h4>
-                    <?php if ($tes['error'] !== ''): ?>
-                        <div class="alert alert-warning"><?= htmlspecialchars($tes['error'], ENT_QUOTES, 'UTF-8') ?></div>
+                    <h4 class="card-title text-<?= $activeProgram === 'tes' ? 'success' : 'primary' ?> mb-1">
+                        CHED <?= htmlspecialchars($programLabel, ENT_QUOTES, 'UTF-8') ?>
+                        <?php if ($campusFilter !== ''): ?>
+                            <span class="text-muted font-weight-normal">— <?= htmlspecialchars($campusFilter, ENT_QUOTES, 'UTF-8') ?></span>
+                        <?php endif; ?>
+                    </h4>
+                    <?php if ($data['error'] !== ''): ?>
+                        <div class="alert alert-warning"><?= htmlspecialchars($data['error'], ENT_QUOTES, 'UTF-8') ?></div>
                     <?php else: ?>
-                        <div class="pl-section-note" style="border-left-color:#2e7d32">TES masterlist batches — all campuses.</div>
-                        <?php schogms_registrar_render_program_list_stats($tes['totals'], true); ?>
-                        <?php schogms_registrar_render_program_list_programs_table($tes['programs'], 'tesProgramsTable', true); ?>
-                        <?php schogms_registrar_render_program_list_file_groups_table($tes['file_groups'], 'tesFileGroupsTable', 'tes', 'file_group_view.php', true); ?>
-                        <?php schogms_registrar_render_program_list_batches_table($tes['batches'], 'tesBatchesTable', 'tes', 'file_group_view.php', true); ?>
+                        <div class="pl-section-note" style="<?= $activeProgram === 'tes' ? 'border-left-color:#2e7d32' : '' ?>">
+                            <?= $activeProgram === 'tes' ? 'TES' : 'TDP' ?> masterlist batches
+                            <?= $campusFilter !== '' ? 'for this campus.' : 'across all campuses (Campus column identifies the uploader).' ?>
+                        </div>
+                        <?php schogms_registrar_render_program_list_stats($data['totals'], $showCampusColumn); ?>
+                        <?php
+                        $prefix = $activeProgram;
+                        schogms_registrar_render_program_list_programs_table(
+                            $data['programs'],
+                            $prefix . 'ProgramsTable',
+                            $showCampusColumn
+                        );
+                        schogms_registrar_render_program_list_file_groups_table(
+                            $data['file_groups'],
+                            $prefix . 'FileGroupsTable',
+                            $activeProgram,
+                            'file_group_view.php',
+                            $showCampusColumn,
+                            true
+                        );
+                        schogms_registrar_render_program_list_batches_table(
+                            $data['batches'],
+                            $prefix . 'BatchesTable',
+                            $activeProgram,
+                            'file_group_view.php',
+                            $showCampusColumn
+                        );
+                        ?>
                     <?php endif; ?>
                     <p class="small text-muted mb-0 mt-2">
-                        <a href="ched_masterlist_tes.php">TES masterlist</a> · <a href="upload_ched_tes.php">Upload TES</a>
+                        <a href="file_groups.php?program=<?= rawurlencode($activeProgram) ?><?= $campusFilter !== '' ? '&amp;campus=' . rawurlencode($campusFilter) : '' ?>">Review file groups</a> ·
+                        <?php if ($activeProgram === 'tdp'): ?>
+                            <a href="ched_masterlist.php">TDP masterlist</a> · <a href="upload_ched_tdp.php">Upload TDP</a>
+                        <?php else: ?>
+                            <a href="ched_masterlist_tes.php">TES masterlist</a> · <a href="upload_ched_tes.php">Upload TES</a>
+                        <?php endif; ?>
                     </p>
                 </div>
             </div>
@@ -116,8 +199,8 @@ schogms_chairman_footer_scripts(['datatables' => true]);
 (function () {
     if (typeof $ === 'undefined' || !$.fn.DataTable) return;
     var opts = { pageLength: 25, lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'All']], order: [], deferRender: true };
-    ['#tdpProgramsTable', '#tdpFileGroupsTable', '#tdpBatchesTable', '#tesProgramsTable', '#tesFileGroupsTable', '#tesBatchesTable'].forEach(function (sel) {
-        var $t = $(sel);
+    ['<?= $activeProgram ?>ProgramsTable', '<?= $activeProgram ?>FileGroupsTable', '<?= $activeProgram ?>BatchesTable'].forEach(function (id) {
+        var $t = $('#' + id);
         if (!$t.length || $t.find('tbody tr.pl-empty-row').length) return;
         if (!$.fn.dataTable.isDataTable($t[0])) $t.DataTable(opts);
     });
