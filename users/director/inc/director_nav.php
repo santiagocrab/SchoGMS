@@ -95,10 +95,24 @@ if (!function_exists('schogms_director_sidebar_menu_items')) {
                             </a>
                         </li>
                         <li class="list-divider"></li>
+                        <li class="nav-small-cap"><span class="hide-menu">Scholars</span></li>
+                        <li class="sidebar-item">
+                            <a class="<?= schogms_director_nav_link_class('tdp.php') ?>" href="tdp.php">
+                                <i data-feather="users" class="feather-icon"></i>
+                                <span class="hide-menu">TDP scholars</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a class="<?= schogms_director_nav_link_class('tes.php') ?>" href="tes.php">
+                                <i data-feather="user-check" class="feather-icon"></i>
+                                <span class="hide-menu">TES scholars</span>
+                            </a>
+                        </li>
+                        <li class="list-divider"></li>
                         <li class="nav-small-cap"><span class="hide-menu">Campus</span></li>
                         <li class="sidebar-item">
                             <a class="<?= schogms_director_nav_link_class('dean.php') ?>" href="dean.php">
-                                <i data-feather="users" class="feather-icon"></i>
+                                <i data-feather="briefcase" class="feather-icon"></i>
                                 <span class="hide-menu">College dean</span>
                             </a>
                         </li>

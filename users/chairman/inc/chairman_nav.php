@@ -137,6 +137,12 @@ if (!function_exists('schogms_chairman_render_sidebar')) {
                             </a>
                         </li>
                         <li class="sidebar-item">
+                            <a class="<?= schogms_chairman_nav_link_class('upload_ched_tes.php') ?>" href="upload_ched_tes.php">
+                                <i data-feather="upload-cloud" class="feather-icon"></i>
+                                <span class="hide-menu">Upload TES</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
                             <a class="<?= schogms_chairman_nav_link_class('program_list.php') ?>" href="program_list.php">
                                 <i data-feather="folder" class="feather-icon"></i>
                                 <span class="hide-menu">Program list</span>

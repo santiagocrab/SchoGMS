@@ -21,6 +21,7 @@
     <link href="../../assets/extra-libs/jvector/jquery-jvectormap-2.0.2.css" rel="stylesheet" />
     <!-- Custom CSS -->
     <link href="../../dist/css/style.min.css" rel="stylesheet">
+    <style>.preloader{display:none!important}#main-wrapper{opacity:1!important}</style>
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -187,17 +188,16 @@
             <!-- ============================================================== -->
             <div class="container-fluid">
             <?php
-// Include database connection and session files
-include 'config/conn.php';
-include 'config/session.php';
+$totalCourses = $totalFileGroups = $totalFilenames = 0;
 
-// Ensure `campus` (sheet_name) and `file_group` are set from session
-$campus = isset($_SESSION['campus']) ? $conn->real_escape_string($_SESSION['campus']) : '';
-$file_group = isset($_SESSION['course_program']) ? $conn->real_escape_string($_SESSION['course_program']) : '';
+// Session + mysqli are loaded at the top of this page.
+$campus = isset($_SESSION['campus']) ? $conn->real_escape_string((string) $_SESSION['campus']) : '';
+$file_group = isset($_SESSION['course_program']) ? $conn->real_escape_string((string) $_SESSION['course_program']) : '';
 
-if (empty($campus) || empty($file_group)) {
-    echo "<div class='alert alert-danger'>Campus or File Group not found in session.</div>";
-    exit();
+if ($campus === '' || $file_group === '') {
+    echo '<div class="alert alert-danger">Campus or program is not set for this program chair account. '
+        . 'Ask your dean to assign a campus and course program, or sign in with your assigned program chair credentials.</div>';
+    exit;
 }
 $totalQuery = "
     SELECT COUNT(DISTINCT id) AS total_students

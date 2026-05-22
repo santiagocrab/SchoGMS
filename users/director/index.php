@@ -216,38 +216,40 @@
 
                 <div class="card-group">
                     <!-- Total Records Card -->
-                    <div class="card border-right">
+                    <a href="tdp.php" class="card border-right text-decoration-none" style="color:inherit;">
                         <div class="card-body">
                             <div class="d-flex d-lg-flex d-md-block align-items-center">
                                 <div>
                                     <div class="d-inline-flex align-items-center">
                                         <h2 class="text-dark mb-1 font-weight-medium"><?= $totalRecords; ?></h2>
                                     </div>
-                                    <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">Total TDP Records
+                                    <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">Total TDP scholars
                                     </h6>
+                                    <p class="text-primary small mb-0 mt-1">View full list &rarr;</p>
                                 </div>
                                 <div class="ml-auto mt-md-3 mt-lg-0">
                                     <span class="opacity-7 text-muted"><i data-feather="database"></i></span>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="card border-right">
+                    </a>
+                    <a href="tes.php" class="card border-right text-decoration-none" style="color:inherit;">
                         <div class="card-body">
                             <div class="d-flex d-lg-flex d-md-block align-items-center">
                                 <div>
                                     <div class="d-inline-flex align-items-center">
                                         <h2 class="text-dark mb-1 font-weight-medium"><?= $totalRecordsTes; ?></h2>
                                     </div>
-                                    <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">Total TES Records
+                                    <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">Total TES scholars
                                     </h6>
+                                    <p class="text-primary small mb-0 mt-1">View full list &rarr;</p>
                                 </div>
                                 <div class="ml-auto mt-md-3 mt-lg-0">
                                     <span class="opacity-7 text-muted"><i data-feather="database"></i></span>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </a>
 
                     <!-- Total Courses Card -->
                     <!-- <div class="card border-right">
