@@ -1,4 +1,7 @@
-<?php include 'config/session.php'; ?>
+<?php
+include 'config/session.php';
+require_once __DIR__ . '/../../inc/campus_access.php';
+?>
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
 
@@ -143,16 +146,7 @@
                 <!-- Sidebar navigation-->
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="index.php"
-                                aria-expanded="false"><i data-feather="home" class="feather-icon"></i><span
-                                    class="hide-menu">Dashboard</span></a></li>
-                                    <li class="list-divider"></li>
-                                    <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="tdp.php"
-                                aria-expanded="false"><i data-feather="users" class="feather-icon"></i><span
-                                    class="hide-menu">TDP</span></a></li>
-                                    <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="tes.php"
-                                aria-expanded="false"><i data-feather="users" class="feather-icon"></i><span
-                                    class="hide-menu">TES</span></a></li>
+                        <?php require __DIR__ . "/inc/program_chair_sidebar_menu.php"; ?>
                     </ul>
                 </nav>
                 <!-- End Sidebar navigation -->
@@ -207,9 +201,10 @@ $selectedCourse = isset($_SESSION['course_program']) ? $conn->real_escape_string
 
 // Validate inputs
 if (empty($campus) || empty($selectedCourse)) {
-    echo "<p class='alert alert-danger'>Campus or Course Program not found.</p>";
+    echo "<p class='alert alert-danger'>Campus or course not found on your program chair account.</p>";
     exit();
 }
+$chairCollege = trim((string) ($_SESSION['college_name'] ?? ''));
 
 // Query to count students in the selected course
 $countQuery = "

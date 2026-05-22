@@ -1,147 +1,114 @@
 <?php
-// Start session
 session_start();
 require 'config/conn.php';
-require '../vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../../config/mail.php';
+require_once __DIR__ . '/../../inc/campus_access.php';
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+$response = ['success' => false];
 
-// SMTP Configuration
-$smtp_host = 'smtp.hostinger.com';
-$smtp_username = 'server-email@cloudhost.host';
-$smtp_password = 'Schogms_2025';
-$smtp_port = 465;
-$smtp_secure = PHPMailer::ENCRYPTION_SMTPS;
-
-$response = ["success" => false];
-
-// Enable error logging
 error_reporting(E_ALL);
 ini_set('log_errors', '1');
 ini_set('error_log', __DIR__ . '/error_log.txt');
 
-$logFile = __DIR__ . '/error_log.txt'; // Path to error log file
-
 function logError($message)
 {
-    global $logFile;
-    $timestamp = date('Y-m-d H:i:s');
-    error_log("[$timestamp] $message" . PHP_EOL, 3, $logFile);
+    error_log('[' . date('Y-m-d H:i:s') . '] ' . $message . PHP_EOL, 3, __DIR__ . '/error_log.txt');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Retrieve form data
-    $userName = trim($_POST['program_chair_name']);
-    $userEmail = trim($_POST['usermail']);
-    $course = trim($_POST['course_program_enrolled']);
-    $campus = trim($_POST['session_campus']);
+    $userName = trim($_POST['program_chair_name'] ?? '');
+    $userEmail = trim($_POST['usermail'] ?? '');
+    $course = trim($_POST['course_program_enrolled'] ?? '');
+    $campus = trim($_POST['session_campus'] ?? '');
+    $collegeName = trim($_POST['college_name'] ?? $_SESSION['college_name'] ?? $_SESSION['course_program'] ?? '');
 
-    // Default password
-    $defaultPassword = "schogms123";
+    if ($campus === '' || $collegeName === '') {
+        $response['message'] = 'Campus or college not set for your dean account.';
+        echo json_encode($response);
+        exit;
+    }
+
+    $catalogCourses = schogms_get_course_names_for_college($conn, $campus, $collegeName);
+    $courseValid = false;
+    foreach ($catalogCourses as $catalogCourse) {
+        if ($catalogCourse === $course || schogms_course_enrolled_matches($course, $catalogCourse)) {
+            $course = $catalogCourse;
+            $courseValid = true;
+            break;
+        }
+    }
+    if (!$courseValid) {
+        $response['message'] = 'Invalid course for this college.';
+        echo json_encode($response);
+        exit;
+    }
+
+    $defaultPassword = schogms_default_user_password();
     $hashedPassword = password_hash($defaultPassword, PASSWORD_DEFAULT);
 
-    // Check if a chair is already assigned for this course at this campus
-    $checkQuery = "SELECT id FROM assigned_program_chairs WHERE course_program = ? AND campus = ?";
-    $stmt = $conn->prepare($checkQuery);
-    $stmt->bind_param("ss", $course, $campus);
+    $stmt = $conn->prepare(
+        'SELECT id FROM assigned_program_chairs
+         WHERE UPPER(TRIM(campus)) = UPPER(TRIM(?))
+           AND course_program = ?
+           AND (
+             (college_name IS NOT NULL AND college_name = ?)
+             OR (COALESCE(college_name, "") = "")
+           )
+         LIMIT 1'
+    );
+    $stmt->bind_param('sss', $campus, $course, $collegeName);
     $stmt->execute();
     $stmt->store_result();
 
     if ($stmt->num_rows > 0) {
-        // Auto-assign only if no one is assigned yet
-        $response["message"] = "A chair is already assigned for this course.";
+        $response['message'] = 'A program chair is already assigned for this course.';
         echo json_encode($response);
         exit;
     }
     $stmt->close();
 
-    // Insert the new program chair assignment
-    $query = "INSERT INTO assigned_program_chairs (campus, course_program, program_chair, email, password, status) 
-              VALUES (?, ?, ?, ?, ?, 'pending')";
+    $query = 'INSERT INTO assigned_program_chairs (campus, college_name, course_program, program_chair, email, password, status)
+              VALUES (?, ?, ?, ?, ?, ?, ?)';
+    $status = 'pending';
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("sssss", $campus, $course, $userName, $userEmail, $hashedPassword);
+    $stmt->bind_param('sssssss', $campus, $collegeName, $course, $userName, $userEmail, $hashedPassword, $status);
 
     if ($stmt->execute()) {
-        // Send email notification
-        $mail = new PHPMailer(true);
-        try {
-            // SMTP Configuration
-            $mail->isSMTP();
-            $mail->Host = $smtp_host;
-            $mail->SMTPAuth = true;
-            $mail->Username = $smtp_username;
-            $mail->Password = $smtp_password;
-            $mail->SMTPSecure = $smtp_secure;
-            $mail->Port = $smtp_port;
+        $base = schogms_app_base_url();
+        $confirmUrl = $base . '/login-chairman-confirm.php?username=' . urlencode($userName)
+            . '&campus=' . urlencode($campus) . '&email=' . urlencode($userEmail);
 
-            // Recipients
-            $mail->setFrom($smtp_username, 'SchoGMS Notification');
-            $mail->addAddress($userEmail);
-            $mail->addReplyTo($smtp_username, 'SchoGMS Support');
-
-            // Email Content
-            $mail->isHTML(true);
-            $mail->Subject = 'You Have Been Assigned as Program Chair';
-            $mail->Body = "
-                <html>
-                    <head>
-                        <style>
-                            body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
-                            .email-container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
-                            .header { text-align: center; padding: 10px; background: #5f76e8; color: white; border-radius: 5px; }
-                            .message { padding: 15px; font-size: 16px; line-height: 1.6; color: #333333; text-align: center; }
-                            .footer { text-align: center; font-size: 14px; color: #777777; margin-top: 20px; }
-                        </style>
-                    </head>
-                    <body>
-                        <div class='email-container'>
-                            <div class='header'>
-                                <h2>Program Chair Assignment</h2>
-                            </div>
-                            <div class='message'>
-                                <p>Dear $userEmail,</p>
-                                <p>You have been assigned as the Program Chair for:</p>
-                                <p><strong>Course:</strong> $course</p>
-                                <p><strong>Campus:</strong> $campus</p>
-                                <p>Your default login credentials are:</p>
-                                <p><strong>Username:</strong> $userName</p>
-                                <p><strong>Password:</strong> schogms123</p>
-                                <p>
-                                    <a href='https://schogms.cloudhost.host/SchoGMS/login-chairman-confirm.php?username=" . urlencode($userName) . "&campus=". urlencode($campus)."&email=". urlencode($userEmail). "' 
-                                    style='color: #5f76e8; text-decoration: none; font-weight: bold;'>Click here to confirm & log in</a>
-                                </p>
-                                <p>This Message Re-direct on your dashboard account if you email found.</p>
-                            </div>
-                            <div class='footer'>
-                                <p>Best regards,</p>
-                                <p>SchoGMS Support Team</p>
-                            </div>
-                        </div>
-                    </body>
-                </html>
-            ";
-
-
-            $mail->send();
-            $response['email_sent'] = true;
-        } catch (Exception $e) {
-            $response['email_sent'] = false;
-            $response['error'] = "Mailer Error: " . $mail->ErrorInfo;
+        $html = schogms_email_role_assignment([
+            'role_title' => 'Program Chair Assignment',
+            'name' => $userName,
+            'email' => $userEmail,
+            'course' => $course,
+            'campus' => $campus,
+            'password' => $defaultPassword,
+            'confirm_url' => $confirmUrl,
+        ]);
+        $sent = schogms_send_mail(
+            $userEmail,
+            'Program Chair Assignment — SchoGMS Login Details',
+            $html,
+            $userName,
+            'SchoGMS'
+        );
+        $response['email_sent'] = $sent['ok'];
+        if (!$sent['ok']) {
+            $response['error'] = $sent['error'] ?? 'Mail send failed';
         }
-
-        $response["success"] = true;
-        $response["message"] = "Program Chair assigned successfully! Email notification sent.";
+        $response['success'] = true;
+        $response['message'] = $sent['ok']
+            ? 'Program chair assigned successfully! Email sent.'
+            : 'Program chair assigned but email could not be sent.';
     } else {
-        logError("Error inserting program chair: " . $conn->error);
-        $response["message"] = "Error assigning program chair: " . $conn->error;
+        logError('Error inserting program chair: ' . $conn->error);
+        $response['message'] = 'Error assigning program chair: ' . $conn->error;
     }
 
     $stmt->close();
-    $conn->close();
 }
 
-// Return JSON response
-header('Content-Type: application/json');
 echo json_encode($response);
-?>

@@ -117,7 +117,8 @@
             'chairman' => 'users/chairman/index.php',
             'director' => 'users/director/index.php',
             'dean' => 'users/dean/index.php',
-            'program-head' => 'users/program-head/index.php'
+            'program-head' => 'users/program-chair/index.php',
+            'program-chair' => 'users/program-chair/index.php',
         ];
         
         $dashboardStatus = [];

@@ -1,4 +1,13 @@
-<?php include 'config/session.php'; ?>
+<?php
+include 'config/session.php';
+require_once __DIR__ . '/inc/registrar_data.php';
+$dashCounts = schogms_registrar_dashboard_counts($sheet_name ?? null);
+$totalRecords = $dashCounts['masterlist'];
+$totalCourses = $dashCounts['courses'];
+$totalFileGroups = $dashCounts['file_groups'];
+$corCount = $dashCounts['cor'];
+$cogCount = $dashCounts['cog'];
+?>
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
 <head>
@@ -7,6 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Registrar Dashboard - SchoGMS</title>
     <link href="../../dist/css/style.min.css" rel="stylesheet">
+    <style>.preloader{display:none!important}#main-wrapper{opacity:1!important}</style>
     <link href="../../assets/extra-libs/c3/c3.min.css" rel="stylesheet">
     <link href="../../assets/libs/chartist/dist/chartist.min.css" rel="stylesheet">
 </head>
@@ -65,32 +75,7 @@
             <div class="scroll-sidebar" data-sidebarbg="skin6">
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
-                        <li class="sidebar-item">
-                            <a class="sidebar-link sidebar-link" href="index.php" aria-expanded="false">
-                                <i data-feather="home" class="feather-icon"></i>
-                                <span class="hide-menu">Dashboard</span>
-                            </a>
-                        </li>
-                        <li class="list-divider"></li>
-                        <li class="nav-small-cap"><span class="hide-menu">Registrar</span></li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link" href="masterlist.php" aria-expanded="false">
-                                <i data-feather="users" class="feather-icon"></i>
-                                <span class="hide-menu">Registrar Masterlist</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link" href="cor-cog.php" aria-expanded="false">
-                                <i data-feather="book-open" class="feather-icon"></i>
-                                <span class="hide-menu">COR & COG</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link" href="documents_uploaded.php" aria-expanded="false">
-                                <i data-feather="folder" class="feather-icon"></i>
-                                <span class="hide-menu">Document uploaded</span>
-                            </a>
-                        </li>
+                        <?php require __DIR__ . '/inc/registrar_sidebar_menu.php'; ?>
                     </ul>
                 </nav>
             </div>
@@ -99,44 +84,6 @@
         <!-- Main Content -->
         <div class="page-wrapper">
             <div class="container-fluid">
-                <?php
-                // Simple statistics - using file system counts for now
-                $totalRecords = 0;
-                $totalCourses = 0;
-                $totalFileGroups = 0;
-                $corCount = 0;
-                $cogCount = 0;
-                
-                try {
-                    // Count COR files from file system
-                    $corDir = 'uploads/COR/';
-                    if (is_dir($corDir)) {
-                        $corFiles = scandir($corDir);
-                        $corCount = count($corFiles) - 2; // Subtract . and ..
-                    }
-                    
-                    // Count COG files from file system
-                    $cogDir = 'uploads/COG/';
-                    if (is_dir($cogDir)) {
-                        $cogFiles = scandir($cogDir);
-                        $cogCount = count($cogFiles) - 2; // Subtract . and ..
-                    }
-                    
-                    // Set some default values for display
-                    $totalRecords = $corCount + $cogCount;
-                    $totalCourses = 20; // Estimated
-                    $totalFileGroups = 3; // COR, COG, etc.
-                    
-                } catch (Exception $e) {
-                    // Fallback values
-                    $totalRecords = 3213;
-                    $totalCourses = 20;
-                    $totalFileGroups = 3;
-                    $corCount = 3211;
-                    $cogCount = 2588;
-                }
-                ?>
-
                 <div class="card-group">
                     <!-- Total Records Card -->
                     <div class="card border-right">
@@ -274,7 +221,10 @@
     <script src="../../assets/libs/popper.js/dist/umd/popper.min.js"></script>
     <script src="../../assets/libs/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="../../dist/js/feather.min.js"></script>
+    <script src="../../assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js"></script>
+    <script src="../../dist/js/sidebarmenu.js"></script>
     <script src="../../dist/js/custom.min.js"></script>
+    <script>if(typeof feather!=="undefined"){feather.replace();}</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script>

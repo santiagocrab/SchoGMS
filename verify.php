@@ -60,13 +60,15 @@
             <div class="text-center mb-3">
                 <img src="assets/images/logo.png" style="width: 300px;" alt="Homepage">
             </div>
-            <p class="text-center text-dark">Enter your email and verification code.</p>
+            <p class="text-center text-dark">Enter your email and the 6-digit verification code from your welcome email.</p>
+            <p class="text-center text-muted small">Registrar, coordinator, and director accounts must verify before login.</p>
 
             <!-- Login Form -->
             <form id="verifyForm">
                 <div class="form-group">
                     <label class="text-dark" for="user_email">Email</label>
-                    <input class="form-control" id="user_email" type="email" name="user_email" placeholder="Enter your email" required>
+                    <input class="form-control" id="user_email" type="email" name="user_email" placeholder="Enter your email" required
+                        value="<?= htmlspecialchars(trim((string) ($_GET['email'] ?? '')), ENT_QUOTES, 'UTF-8') ?>">
                 </div>
                 <div class="form-group">
                     <label class="text-dark" for="verification_code">Verification Code</label>
@@ -97,13 +99,21 @@
                     data: { user_email: email, verification_code: code },
                     dataType: "json",
                     success: function (response) {
-                        if (response.success) {
+                        if (response.success && response.redirect) {
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Verified!',
-                                text: 'You have been successfully verified.',
+                                text: 'Redirecting to your dashboard…',
                                 timer: 2000,
                                 showConfirmButton: false
+                            }).then(() => {
+                                window.location.href = response.redirect;
+                            });
+                        } else if (response.already_verified && response.redirect) {
+                            Swal.fire({
+                                icon: 'info',
+                                title: 'Already verified',
+                                text: response.error || 'You can log in now.'
                             }).then(() => {
                                 window.location.href = response.redirect;
                             });
@@ -115,12 +125,17 @@
                             });
                         }
                     },
-                    error: function () {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'Something went wrong. Please try again.'
-                        });
+                    error: function (xhr) {
+                        let msg = 'Something went wrong. Please try again.';
+                        if (xhr.responseText) {
+                            try {
+                                const j = JSON.parse(xhr.responseText);
+                                if (j.error) msg = j.error;
+                            } catch (e) {
+                                if (xhr.responseText.length < 300) msg = xhr.responseText;
+                            }
+                        }
+                        Swal.fire({ icon: 'error', title: 'Error', text: msg });
                     }
                 });
             });

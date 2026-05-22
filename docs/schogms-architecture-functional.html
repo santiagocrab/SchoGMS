@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SchoGMS — System Architecture & Functional Design</title>
+  <style>
+    :root {
+      --bg: #f0f4f8;
+      --paper: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #cbd5e1;
+      --accent: #1d4ed8;
+      --layer1: #eff6ff;
+      --layer2: #f0fdf4;
+      --layer3: #fefce8;
+      --layer4: #faf5ff;
+      --fn-auth: #3b5998;
+      --fn-admin: #5b21b6;
+      --fn-master: #047857;
+      --fn-doc: #b45309;
+      --fn-val: #0e7490;
+      --fn-annex: #9d174d;
+      --fn-hier: #4338ca;
+      --fn-report: #334155;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 36px 20px 56px; }
+    header { text-align: center; margin-bottom: 40px; }
+    header h1 { margin: 0 0 10px; font-size: 1.75rem; font-weight: 700; color: var(--accent); }
+    header p { margin: 0 auto; max-width: 640px; color: var(--muted); font-size: 1.02rem; }
+    .toc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 36px;
+    }
+    .toc a {
+      padding: 8px 16px;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .toc a:hover { background: var(--layer1); }
+    section { margin-bottom: 48px; }
+    .section-head {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 12px 12px 0 0;
+      padding: 18px 22px;
+      border-bottom: 3px solid var(--accent);
+    }
+    .section-head h2 { margin: 0 0 6px; font-size: 1.35rem; }
+    .section-head p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+    .diagram-body {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 12px 12px;
+      padding: 24px 22px 28px;
+    }
+
+    /* Architecture layers */
+    .arch-stack { display: flex; flex-direction: column; gap: 12px; }
+    .layer {
+      border-radius: 10px;
+      padding: 16px 18px;
+      border: 2px solid var(--border);
+    }
+    .layer-title {
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      color: var(--muted);
+    }
+    .layer-1 { background: var(--layer1); border-color: #93c5fd; }
+    .layer-2 { background: var(--layer2); border-color: #86efac; }
+    .layer-3 { background: var(--layer3); border-color: #fde047; }
+    .layer-4 { background: var(--layer4); border-color: #c4b5fd; }
+    .layer-ext { background: #f8fafc; border-style: dashed; }
+
+    .box-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .arch-box {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-align: center;
+      min-width: 120px;
+    }
+    .arch-box small {
+      display: block;
+      font-weight: 500;
+      color: var(--muted);
+      font-size: 0.72rem;
+      margin-top: 4px;
+    }
+    .arrow-down {
+      text-align: center;
+      color: var(--muted);
+      font-size: 1.4rem;
+      line-height: 1;
+      padding: 4px 0;
+    }
+    .arrow-label {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-style: italic;
+      margin: -4px 0 4px;
+    }
+
+    /* Functional design grid */
+    .fn-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .fn-card {
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .fn-card-head {
+      color: #fff;
+      padding: 12px 14px;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .fn-card-body {
+      background: var(--paper);
+      padding: 12px 14px;
+      font-size: 0.84rem;
+    }
+    .fn-card-body ul { margin: 0; padding-left: 18px; }
+    .fn-card-body li { margin-bottom: 6px; color: var(--text); }
+    .fn-card-body li span { color: var(--muted); font-size: 0.78rem; }
+
+    .fn-auth .fn-card-head { background: var(--fn-auth); }
+    .fn-admin .fn-card-head { background: var(--fn-admin); }
+    .fn-master .fn-card-head { background: var(--fn-master); }
+    .fn-doc .fn-card-head { background: var(--fn-doc); }
+    .fn-val .fn-card-head { background: var(--fn-val); }
+    .fn-annex .fn-card-head { background: var(--fn-annex); }
+    .fn-hier .fn-card-head { background: var(--fn-hier); }
+    .fn-report .fn-card-head { background: var(--fn-report); }
+
+    .flow-center {
+      margin: 24px 0;
+      padding: 20px;
+      background: #f8fafc;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+    }
+    .flow-center h3 {
+      margin: 0 0 16px;
+      text-align: center;
+      font-size: 1rem;
+      color: var(--accent);
+    }
+    .flow-steps {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .flow-step {
+      background: var(--paper);
+      border: 2px solid var(--accent);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-align: center;
+      max-width: 140px;
+    }
+    .flow-arrow { color: var(--accent); font-weight: bold; font-size: 1.1rem; }
+
+    .roles-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+    .role-pill {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      color: var(--text);
+    }
+
+    .legend-arch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 20px;
+      font-size: 0.85rem;
+    }
+    .legend-arch dt { font-weight: 700; color: var(--text); }
+    .legend-arch dd { margin: 0 0 10px; color: var(--muted); }
+
+    .caption {
+      margin-top: 28px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--muted);
+      font-style: italic;
+      line-height: 1.6;
+    }
+    .note {
+      margin-top: 20px;
+      padding: 14px 16px;
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
+      border-radius: 8px;
+      font-size: 0.88rem;
+    }
+
+    @media print {
+      body { background: #fff; }
+      .wrap { max-width: 100%; }
+      section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>SchoGMS System Architecture &amp; Functional Design</h1>
+      <p>Scholarship and Grants Management System — Sultan Kudarat State University. Based on the implemented PHP/MySQL application (admin portal, seven staff roles, fourteen database tables).</p>
+    </header>
+
+    <nav class="toc" aria-label="Sections">
+      <a href="#architecture">1. System Architecture</a>
+      <a href="#functional">2. Functional Design</a>
+      <a href="#flow">3. How Functions Connect</a>
+    </nav>
+
+    <!-- ARCHITECTURE -->
+    <section id="architecture">
+      <div class="section-head">
+        <h2>1. System Architecture</h2>
+        <p>How the system is built in layers — from the browser down to the database and email service.</p>
+      </div>
+      <div class="diagram-body">
+        <div class="arch-stack">
+          <div class="layer layer-1">
+            <div class="layer-title">Layer 1 — Presentation (what users see)</div>
+            <div class="box-row">
+              <div class="arch-box">Web Browser<small>Chrome, Edge, Firefox</small></div>
+            </div>
+            <div class="arrow-down">↓</div>
+            <div class="box-row">
+              <div class="arch-box">Public Pages<small>index.php, verify.php</small></div>
+              <div class="arch-box">Admin Portal<small>admin/dashboard, user-management</small></div>
+              <div class="arch-box">Coordinator<small>users/coordinator/</small></div>
+              <div class="arch-box">Chairman<small>users/chairman/</small></div>
+              <div class="arch-box">Registrar<small>users/registrar/</small></div>
+              <div class="arch-box">Director<small>users/director/</small></div>
+              <div class="arch-box">Dean<small>users/dean/</small></div>
+              <div class="arch-box">Program Chair<small>users/program-chair/</small></div>
+            </div>
+          </div>
+
+          <p class="arrow-label">HTTP requests ↓ responses</p>
+
+          <div class="layer layer-2">
+            <div class="layer-title">Layer 2 — Application (business logic)</div>
+            <div class="box-row">
+              <div class="arch-box">Authentication<small>login.php, mysql_auth, 2FA verify</small></div>
+              <div class="arch-box">Session &amp; Access<small>role session, campus_access</small></div>
+              <div class="arch-box">Masterlist Import<small>process_excel, CHED TDP/TES</small></div>
+              <div class="arch-box">Document Handler<small>COR/COG upload, view</small></div>
+              <div class="arch-box">Validation Engine<small>validate.php, bulk TDP check</small></div>
+              <div class="arch-box">Annex 7 Workflow<small>submit, approve, reject</small></div>
+              <div class="arch-box">Email Service<small>config/mail.php, templates</small></div>
+            </div>
+          </div>
+
+          <p class="arrow-label">SQL queries &amp; file read/write ↓</p>
+
+          <div class="layer layer-3">
+            <div class="layer-title">Layer 3 — Data (where information is stored)</div>
+            <div class="box-row">
+              <div class="arch-box">MySQL Database<small>users, masterlists, documents, submissions</small></div>
+              <div class="arch-box">File Storage<small>uploads/, annex7, COR, COG, Excel</small></div>
+            </div>
+          </div>
+
+          <p class="arrow-label">Outbound email ↓</p>
+
+          <div class="layer layer-ext">
+            <div class="layer-title">External — Email server (SMTP)</div>
+            <div class="box-row">
+              <div class="arch-box">Verification codes<small>new account 2FA</small></div>
+              <div class="arch-box">Approval notices<small>Annex 7 approved</small></div>
+              <div class="arch-box">Role assignment mail<small>director, dean, chair</small></div>
+            </div>
+          </div>
+        </div>
+
+        <dl class="legend-arch">
+          <dt>Three-tier model</dt>
+          <dd>Browser talks to PHP on Apache (XAMPP/LAMP). PHP reads and writes MySQL and disk files. Email goes through SMTP.</dd>
+          <dt>Role portals</dt>
+          <dd>Each staff role has its own folder under <code>users/</code> with a dashboard and sidebar menu.</dd>
+        </dl>
+      </div>
+    </section>
+
+    <!-- FUNCTIONAL DESIGN -->
+    <section id="functional">
+      <div class="section-head">
+        <h2>2. Functional Design</h2>
+        <p>Eight main functions of SchoGMS — what each one does and which files/tables support it.</p>
+      </div>
+      <div class="diagram-body">
+        <div class="fn-grid">
+          <div class="fn-card fn-auth">
+            <div class="fn-card-head">A. Authentication &amp; Security</div>
+            <div class="fn-card-body">
+              <ul>
+                <li>Staff login (email or username) <span>login.php</span></li>
+                <li>Email verification — 6-digit code (2FA) <span>verify.php, verify_code.php</span></li>
+                <li>Account status: pending, active, restricted <span>users table</span></li>
+                <li>Failed verify logging <span>verification_attempts</span></li>
+                <li>Dean / program chair separate login tables <span>assigned_dean, assigned_program_chairs</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="fn-card fn-admin">
+            <div class="fn-card-head">B. User &amp; Campus Administration</div>
+            <div class="fn-card-body">
+              <ul>
+                <li>Create and manage staff accounts <span>admin/user-management.php</span></li>
+                <li>Assign role and campus <span>users, campuses</span></li>
+                <li>Admin dashboard statistics <span>admin/dashboard.php</span></li>
+                <li>Send welcome / verification email on create <span>inc/admin_user_create.php</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="fn-card fn-master">
+            <div class="fn-card-head">C. CHED Beneficiary Masterlists</div>
+            <div class="fn-card-body">
+              <ul>
+                <li>Import TDP roster from Excel <span>ched_masterlist</span></li>
+                <li>Import TES roster from Excel <span>ched_masterlist_tes</span></li>
+                <li>Campus-scoped lists (chairman: all; coordinator: one campus) <span>sheet_name / campus</span></li>
+                <li>Upload log and error counts <span>ched_upload_log</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="fn-card fn-doc">
+            <div class="fn-card-head">D. Registrar Data &amp; Documents</div>
+            <div class="fn-card-body">
+              <ul>
+                <li>Registrar masterlist import/view <span>registrar_master_list</span></li>
+                <li>Upload COR (Certificate of Registration) <span>document_uploads</span></li>
+                <li>Upload COG (Certificate of Grades) <span>category COR / COG</span></li>
+                <li>Preview documents in browser <span>view_document.php</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="fn-card fn-val">
+            <div class="fn-card-head">E. Validation &amp; Compliance</div>
+            <div class="fn-card-body">
+              <ul>
+                <li>Compare CHED vs registrar records <span>validate.php</span></li>
+                <li>Check COR/COG presence by student name <span>document_uploads join</span></li>
+                <li>Set validation status: Validated / Failed <span>validation_status</span></li>
+                <li>Export validation remarks (Excel) <span>validated_remarks.php</span></li>
+                <li>Bulk auto-validate TDP <span>auto_validate_tdp.php</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="fn-card fn-annex">
+            <div class="fn-card-head">F. Annex 7 — Submit, Review, Approve</div>
+            <div class="fn-card-body">
+              <ul>
+                <li>Coordinator uploads Annex 7 Excel <span>submit_form.php, upload_file.php</span></li>
+                <li>Status: Pending → Approved / Rejected <span>file_submissions</span></li>
+                <li>Chairman preview and decision <span>anex-form2.php, update_status.php</span></li>
+                <li>Email to coordinator on approval <span>SMTP notification</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="fn-card fn-hier">
+            <div class="fn-card-head">G. Campus Hierarchy (Assignments)</div>
+            <div class="fn-card-body">
+              <ul>
+                <li>Coordinator assigns campus directors <span>coordinator/directors.php</span></li>
+                <li>Director assigns college deans <span>director → assigned_dean</span></li>
+                <li>Dean assigns program chairs <span>dean → assigned_program_chairs</span></li>
+                <li>College/course catalog <span>schogms_colleges, schogms_courses</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="fn-card fn-report">
+            <div class="fn-card-head">H. Reporting &amp; Dashboards</div>
+            <div class="fn-card-body">
+              <ul>
+                <li>Role dashboards with counts and charts <span>index.php per role</span></li>
+                <li>Verified scholars / billing import (optional) <span>verified-scholars.php</span></li>
+                <li>DataTables lists and filters <span>masterlist pages</span></li>
+                <li>CSV/Excel exports <span>masterlist_exports, PhpSpreadsheet</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="roles-bar" aria-label="Who uses the system">
+          <span class="role-pill">Administrator</span>
+          <span class="role-pill">Chairman</span>
+          <span class="role-pill">Coordinator</span>
+          <span class="role-pill">Registrar</span>
+          <span class="role-pill">Director</span>
+          <span class="role-pill">Dean</span>
+          <span class="role-pill">Program Chair</span>
+        </div>
+
+        <div class="note">
+          <strong>Not in current build:</strong> Student or guardian login, online scholarship application form, in-app notification center, or live admin audit log UI (logs page uses sample data).
+        </div>
+      </div>
+    </section>
+
+    <!-- FLOW -->
+    <section id="flow">
+      <div class="section-head">
+        <h2>3. How the Functions Work Together</h2>
+        <p>One line through the system — from setup to approved campus report.</p>
+      </div>
+      <div class="diagram-body">
+        <div class="flow-center">
+          <h3>Scholarship operations pipeline</h3>
+          <div class="flow-steps">
+            <div class="flow-step">B Admin &amp;<br>2FA</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step">C Masterlists<br>TDP / TES</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step">D COR &amp;<br>COG</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step">E Validate<br>records</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step">F Annex 7<br>submit</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step">F Chairman<br>approve</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step">H Reports &amp;<br>dashboard</div>
+          </div>
+        </div>
+        <p style="text-align:center;color:var(--muted);font-size:0.9rem;max-width:560px;margin:0 auto;">
+          Functions <strong>G</strong> (hierarchy) runs in parallel: directors, deans, and program chairs are assigned and monitor TDP/TES at their scope while coordinators execute the main pipeline.
+        </p>
+      </div>
+    </section>
+
+    <p class="caption">
+      Figure X. System architecture and functional design of the SchoGMS showing layered structure (presentation, application, data, email), eight functional modules (A–H), and the integrated scholarship operations pipeline.<br>
+      Export: Print this page to PDF (Chrome → Print → Save as PDF) for your thesis.
+    </p>
+  </div>
+</body>
+</html>

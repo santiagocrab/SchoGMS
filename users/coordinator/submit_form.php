@@ -12,15 +12,8 @@
     <!-- Favicon icon -->
     <link rel="icon" type="image/png" sizes="16x16" href="../../assets/images/logo.png">
     <title> Scholarship and Grants Management System | SchoGMS </title>
-    <!-- Custom CSS -->
-
-    <!-- This page plugin CSS -->
-    <link href="../../assets/extra-libs/datatables.net-bs4/css/dataTables.bootstrap4.css" rel="stylesheet">
-    <link href="../../assets/extra-libs/c3/c3.min.css" rel="stylesheet">
-    <link href="../../assets/libs/chartist/dist/chartist.min.css" rel="stylesheet">
-    <link href="../../assets/extra-libs/jvector/jquery-jvectormap-2.0.2.css" rel="stylesheet" />
-    <!-- Custom CSS -->
-    <link href="../../dist/css/style.min.css" rel="stylesheet">
+    <!-- Custom CSS -->    <?php require_once __DIR__ . '/inc/assets.php'; schogms_coordinator_head(true); ?>
+    <style>.preloader{display:none!important}.format-sample-table{font-size:13px}.format-sample-table th{background:#f8f9fa;white-space:nowrap}</style>
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -71,132 +64,8 @@
     <!-- ============================================================== -->
     <!-- Main wrapper - style you can find in pages.scss -->
     <!-- ============================================================== -->
-    <div id="main-wrapper" data-theme="light" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
-        data-sidebar-position="fixed" data-header-position="fixed" data-boxed-layout="full">
-        <!-- ============================================================== -->
-        <!-- Topbar header - style you can find in pages.scss -->
-        <!-- ============================================================== -->
-        <header class="topbar" data-navbarbg="skin6">
-            <nav class="navbar top-navbar navbar-expand-md">
-                <div class="navbar-header" data-logobg="skin6">
-                    <!-- This is for the sidebar toggle which is visible on mobile only -->
-                    <a class="nav-toggler waves-effect waves-light d-block d-md-none" href="javascript:void(0)"><i
-                            class="ti-menu ti-close"></i></a>
-                    <!-- ============================================================== -->
-                    <!-- Logo -->
-                    <!-- ============================================================== -->
-                    <div class="navbar-brand">
-                        <!-- Logo icon -->
-                        <a href="index.php">
-                            <b class="logo-icon">
-                                <!-- Dark Logo icon -->
-                                <img src="../../assets/images/logo.png" style="height: auto; width: 200px;"
-                                    alt="homepage" class="dark-logo" />
-                                <!-- Light Logo icon -->
-                                <img src="../../assets/images/logo.png" alt="homepage" class="light-logo" />
-                            </b>
-                        </a>
-                    </div>
-                    <!-- ============================================================== -->
-                    <!-- End Logo -->
-                    <!-- ============================================================== -->
-                    <!-- ============================================================== -->
-                    <!-- Toggle which is visible on mobile only -->
-                    <!-- ============================================================== -->
-                    <a class="topbartoggler d-block d-md-none waves-effect waves-light" href="javascript:void(0)"
-                        data-toggle="collapse" data-target="#navbarSupportedContent"
-                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><i
-                            class="ti-more"></i></a>
-                </div>
-                <!-- ============================================================== -->
-                <!-- End Logo -->
-                <!-- ============================================================== -->
-                <div class="navbar-collapse collapse" id="navbarSupportedContent">
-                    <!-- ============================================================== -->
-                    <!-- toggle and nav items -->
-                    <!-- ============================================================== -->
-                    <ul class="navbar-nav float-left mr-auto ml-3 pl-1">
-                        <!-- Notification -->
-                        <h3 class="page-title text-truncate text-dark font-weight-medium mb-1">Scholarship and Grants
-                            Management System</h3>
+    <?php require_once __DIR__ . '/inc/coordinator_nav.php'; schogms_coordinator_shell_open('Submit Form'); ?>
 
-                        <!-- End Notification -->
-                        <!-- ============================================================== -->
-                        <!-- create new -->
-                        <!-- ============================================================== -->
-
-                    </ul>
-                    <!-- ============================================================== -->
-                    <!-- Right side toggle and nav items -->
-                    <!-- ============================================================== -->
-                    <ul class="navbar-nav float-right">
-                        <!-- ============================================================== -->
-                        <!-- User profile and search -->
-                        <!-- ============================================================== -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="javascript:void(0)" data-toggle="dropdown"
-                                aria-haspopup="true" aria-expanded="false">
-                                <img src="../../assets/images/users/image.png" alt="user" class="rounded-circle"
-                                    width="40">
-                                <span class="ml-2 d-none d-lg-inline-block"><span>Hello,</span> <span
-                                        class="text-dark"><?= $fullname ?></span> <i data-feather="chevron-down"
-                                        class="svg-icon"></i></span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-right user-dd animated flipInY">
-                                <a class="dropdown-item" href="change_password.php"><i data-feather="key"
-                                        class="svg-icon mr-2 ml-1"></i>
-                                    Change Password</a>
-                                <a class="dropdown-item" href="logout.php"><i data-feather="power"
-                                        class="svg-icon mr-2 ml-1"></i>
-                                    Logout</a>
-                            </div>
-                        </li>
-                        <!-- ============================================================== -->
-                        <!-- User profile and search -->
-                        <!-- ============================================================== -->
-                    </ul>
-                </div>
-            </nav>
-        </header>
-        <!-- ============================================================== -->
-        <!-- End Topbar header -->
-        <!-- ============================================================== -->
-        <!-- ============================================================== -->
-        <!-- Left Sidebar - style you can find in sidebar.scss  -->
-        <!-- ============================================================== -->
-        <aside class="left-sidebar" data-sidebarbg="skin6">
-            <!-- Sidebar scroll-->
-            <div class="scroll-sidebar" data-sidebarbg="skin6">
-                <!-- Sidebar navigation-->
-                <nav class="sidebar-nav">
-                <ul id="sidebarnav">
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="index.php"
-                                aria-expanded="false"><i data-feather="home" class="feather-icon"></i><span
-                                    class="hide-menu">Dashboard</span></a></li>
-                        <li class="list-divider"></li>
-                        <li class="nav-small-cap"><span class="hide-menu">Applications</span></li>
-                         <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="ched_masterlist.php"
-                                aria-expanded="false"><i data-feather="folder" class="feather-icon"></i><span
-                                    class="hide-menu">CHED TDP Masterlist</span></a></li>
-                                    <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="ched_masterlist_tes.php"
-                                aria-expanded="false"><i data-feather="folder" class="feather-icon"></i><span
-                                    class="hide-menu">CHED TES Masterlist</span></a></li>
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="submit_form.php"
-                                aria-expanded="false"><i data-feather="folder" class="feather-icon"></i><span
-                                    class="hide-menu">Submit Form</span></a></li>
-                    </ul>
-                </nav>
-                <!-- End Sidebar navigation -->
-            </div>
-            <!-- End Sidebar scroll-->
-        </aside>
-        <!-- ============================================================== -->
-        <!-- End Left Sidebar - style you can find in sidebar.scss  -->
-        <!-- ============================================================== -->
-        <!-- ============================================================== -->
-        <!-- Page wrapper  -->
-        <!-- ============================================================== -->
-        <div class="page-wrapper">
             <!-- ============================================================== -->
             <!-- Bread crumb and right sidebar toggle -->
             <!-- ============================================================== -->
@@ -228,7 +97,7 @@
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="uploadModalLabel">Upload Student Data</h5>
+                            <h5 class="modal-title" id="uploadModalLabel">Upload Annex 7 Form (Excel / CSV)</h5>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
@@ -251,9 +120,10 @@
                                         value="<?= $sheet_name ?>" readonly>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="excelFile" class="form-label">Choose Excel File</label>
+                                    <label for="excelFile" class="form-label">Choose Excel or CSV file</label>
                                     <input type="file" class="form-control" id="excelFile" name="excelFile"
                                         accept=".xls,.xlsx,.csv">
+                                    <small class="form-text text-muted">Use the same column layout as the sample format below (data from row 3 onward).</small>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Upload</button>
                             </form>
@@ -311,8 +181,18 @@
                                 <div class="row">
                                     <div class="table-responsive">
                                         <?php
-                                        include '../config/conn.php';
-                                        $result = $conn->query("SELECT * FROM file_submissions where campus = '$sheet_name' ORDER BY uploaded_at DESC");
+                                        $submissions = [];
+                                        $campusFilter = trim((string) ($sheet_name ?? ''));
+                                        if ($campusFilter !== '') {
+                                            $stmt = $conn->prepare('SELECT id, file_name, uploaded_at, status FROM file_submissions WHERE campus = ? ORDER BY uploaded_at DESC');
+                                            $stmt->bind_param('s', $campusFilter);
+                                            $stmt->execute();
+                                            $result = $stmt->get_result();
+                                            while ($result && ($row = $result->fetch_assoc())) {
+                                                $submissions[] = $row;
+                                            }
+                                            $stmt->close();
+                                        }
                                         ?>
                                         <table id="zero_config" class="table table-striped table-bordered no-wrap">
                                             <thead>
@@ -323,36 +203,30 @@
                                                     <th>Status</th>
                                                 </tr>
                                             </thead>
-                                            <?php while ($row = $result->fetch_assoc()): ?>
+                                            <?php if (count($submissions) === 0): ?>
+                                                <tr><td colspan="4" class="text-center text-muted">No forms submitted yet for this campus.</td></tr>
+                                            <?php else: ?>
+                                            <?php foreach ($submissions as $row): ?>
                                                 <tr>
-                                                    <td><?= $row['id']; ?></td>
-                                                    <td><?= $row['file_name']; ?></td>
-                                                    <td><?= $row['uploaded_at']; ?></td>
+                                                    <td><?= (int) $row['id']; ?></td>
+                                                    <td><?= htmlspecialchars((string) $row['file_name']); ?></td>
+                                                    <td><?= htmlspecialchars((string) $row['uploaded_at']); ?></td>
                                                     <td>
                                                         <?php
-                                                        $status = $row['status'];
-                                                        $badgeClass = '';
-
-                                                        switch ($status) {
-                                                            case 'Pending':
-                                                                $badgeClass = 'badge-pending';
-                                                                break;
-                                                            case 'Approved':
-                                                                $badgeClass = 'badge-approved';
-                                                                break;
-                                                            case 'Rejected':
-                                                                $badgeClass = 'badge-rejected';
-                                                                break;
-                                                            // In case of any unexpected status
-                                                        }
+                                                        $status = (string) ($row['status'] ?? '');
+                                                        $badgeClass = match ($status) {
+                                                            'Pending' => 'badge-pending',
+                                                            'Approved' => 'badge-approved',
+                                                            'Rejected' => 'badge-rejected',
+                                                            default => 'badge-default',
+                                                        };
                                                         ?>
-                                                        <span class="badge <?= $badgeClass; ?>"><?= $status; ?></span>
+                                                        <span class="badge <?= $badgeClass; ?>"><?= htmlspecialchars($status); ?></span>
                                                     </td>
-
                                                 </tr>
-                                            <?php endwhile; ?>
+                                            <?php endforeach; ?>
+                                            <?php endif; ?>
                                         </table>
-                                        <?php $conn->close(); ?>
                                     </div>
                                 </div>
                             </div>
@@ -362,6 +236,87 @@
                 <!-- ============================================================== -->
                 <!-- End PAge Content -->
                 <!-- ============================================================== -->
+
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card border-primary">
+                            <div class="card-body">
+                                <h4 class="card-title text-primary mb-3">Here is the format</h4>
+                                <p class="text-muted mb-3">
+                                    Upload the <strong>Annex 7 — Scholarship Grant Utilization</strong> file for chairman review.
+                                    Accepted files: <strong>.xlsx</strong>, <strong>.xls</strong>, or <strong>.csv</strong>.
+                                    Row 1 is the report title, row 2 is the column headers, and <strong>student data starts on row 3</strong> (one scholar per row).
+                                </p>
+                                <div class="mb-3">
+                                    <a href="download_submit_form_sample.php" class="btn btn-outline-primary btn-sm">
+                                        <i data-feather="download" class="feather-icon"></i> Download sample template (CSV)
+                                    </a>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm format-sample-table mb-0">
+                                        <thead>
+                                            <tr class="table-active">
+                                                <th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th>
+                                                <th>H</th><th>I</th><th>J</th><th>K</th><th>L</th><th>M</th><th>N</th>
+                                                <th>O</th><th>P</th><th>Q</th><th>R</th><th>S</th>
+                                            </tr>
+                                            <tr>
+                                                <th>Last Name</th>
+                                                <th>First Name</th>
+                                                <th>Scholarship Type</th>
+                                                <th>Units Enrolled</th>
+                                                <th>Course</th>
+                                                <th>Campus</th>
+                                                <th>Year &amp; Date Submitted (CHED)</th>
+                                                <th>Amount</th>
+                                                <th>1st Semester</th>
+                                                <th>2nd Semester</th>
+                                                <th>Status</th>
+                                                <th>Payment Scholarship Type</th>
+                                                <th>Payment Amount</th>
+                                                <th>Payment Year &amp; Date</th>
+                                                <th>Payment OR No.</th>
+                                                <th>Payment Amount per OR</th>
+                                                <th>Refund 1st Sem</th>
+                                                <th>Refund 2nd Sem</th>
+                                                <th>Refund Year &amp; Date Released</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="text-muted">
+                                                <td colspan="19"><em>Row 1 (optional title): Annex 7 - Scholarship Grant Utilization Report</em></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Dela Cruz</td>
+                                                <td>Juan</td>
+                                                <td>TDP</td>
+                                                <td>18</td>
+                                                <td>BS Information Technology</td>
+                                                <td><?= htmlspecialchars((string) ($sheet_name ?: 'Main')) ?></td>
+                                                <td>2025-01-15</td>
+                                                <td>15000</td>
+                                                <td>7500</td>
+                                                <td>7500</td>
+                                                <td>Active</td>
+                                                <td>TDP</td>
+                                                <td>15000</td>
+                                                <td>2025-02-01</td>
+                                                <td>OR-2025-001</td>
+                                                <td>15000</td>
+                                                <td>0</td>
+                                                <td>0</td>
+                                                <td>—</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <p class="small text-muted mt-3 mb-0">
+                                    After upload, status will show as <span class="badge badge-pending">Pending</span> until the chairman approves your Annex 7 form.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <!-- ============================================================== -->
             <!-- End Container fluid  -->
@@ -580,18 +535,8 @@
     <script src="../../dist/js/sidebarmenu.js"></script>
     <!--Custom JavaScript -->
     <script src="../../dist/js/custom.min.js"></script>
-    <!--This page JavaScript -->
-    <script src="../../assets/extra-libs/c3/d3.min.js"></script>
-    <script src="../../assets/extra-libs/c3/c3.min.js"></script>
-    <script src="../../assets/libs/chartist/dist/chartist.min.js"></script>
-    <script src="../../assets/libs/chartist-plugin-tooltips/dist/chartist-plugin-tooltip.min.js"></script>
-    <script src="../../assets/extra-libs/jvector/jquery-jvectormap-2.0.2.min.js"></script>
-    <script src="../../assets/extra-libs/jvector/jquery-jvectormap-world-mill-en.js"></script>
-    <script src="../../dist/js/pages/dashboards/dashboard1.min.js"></script>
+    <?php require_once __DIR__ . '/inc/assets.php'; schogms_coordinator_footer_scripts(['datatables' => true, 'sweetalert' => true]); ?>
 
-    <!--This page plugins -->
-    <script src="../../assets/extra-libs/datatables.net/js/jquery.dataTables.min.js"></script>
-    <script src="../../dist/js/pages/datatable/datatable-basic.init.js"></script>
 </body>
 
 </html>

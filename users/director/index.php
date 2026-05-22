@@ -143,14 +143,7 @@
                 <!-- Sidebar navigation-->
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="index.php"
-                                aria-expanded="false"><i data-feather="home" class="feather-icon"></i><span
-                                    class="hide-menu">Dashboard</span></a></li>
-                                    
-                        <li class="list-divider"></li>
-                                    <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="dean.php"
-                                aria-expanded="false"><i data-feather="users" class="feather-icon"></i><span
-                                    class="hide-menu">College Dean</span></a></li>
+                        <?php require __DIR__ . "/inc/director_sidebar_menu.php"; ?>
                     </ul>
                 </nav>
                 <!-- End Sidebar navigation -->

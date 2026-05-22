@@ -1,6 +1,6 @@
 <?php
 /**
- * Ensure assigned_dean rows can log in at login_dean.php (username = `dean` column).
+ * Ensure assigned_dean rows can log in at index.php (dean name or email).
  * Resets non-bcrypt passwords to the default; sets status to active so login is allowed.
  *
  *   php setup_assigned_dean_accounts.php
@@ -49,7 +49,7 @@ $conn->close();
 
 header('Content-Type: text/plain; charset=utf-8');
 echo "If password was reset, default is: {$defaultPassword}\n";
-echo "Login URL: login-dean.php — Username = dean name in table, not email.\n\n";
+echo "Login URL: index.php — use dean name or email and password.\n\n";
 if (count($report) === 0) {
     echo "No updates (all rows already use bcrypt and non-pending status).\n";
 } else {

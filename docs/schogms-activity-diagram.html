@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SchoGMS — Activity Diagram (Easy to Understand)</title>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --paper: #ffffff;
+      --text: #1a2332;
+      --muted: #5c6b7a;
+      --line: #c5d0dc;
+      --admin: #5b6abf;
+      --staff: #2d8f6f;
+      --coord: #0d7ea6;
+      --reg: #b86b00;
+      --chair: #8b3d9e;
+      --system: #4a5568;
+      --yes: #1e7a4c;
+      --no: #b42318;
+      --phase1: #e8ecf8;
+      --phase2: #e6f4ef;
+      --phase3: #e8f2f8;
+      --phase4: #f3ebf6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 1.65rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 540px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      justify-content: center;
+      margin-bottom: 32px;
+      padding: 14px 18px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-size: 0.82rem;
+    }
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .phase {
+      margin-bottom: 28px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: var(--paper);
+    }
+    .phase-head {
+      padding: 14px 18px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: 0.02em;
+    }
+    .phase-head small {
+      display: block;
+      font-weight: 500;
+      font-size: 0.85rem;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+    .phase-1 .phase-head { background: var(--phase1); }
+    .phase-2 .phase-head { background: var(--phase2); }
+    .phase-3 .phase-head { background: var(--phase3); }
+    .phase-4 .phase-head { background: var(--phase4); }
+
+    .flow { padding: 8px 18px 20px; }
+    .step {
+      position: relative;
+      display: grid;
+      grid-template-columns: 100px 1fr;
+      gap: 14px;
+      align-items: start;
+      padding: 14px 0;
+    }
+    .step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      left: 49px;
+      bottom: 0;
+      width: 2px;
+      height: 14px;
+      background: var(--line);
+      transform: translateY(100%);
+    }
+    .role {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 6px 8px;
+      border-radius: 6px;
+      text-align: center;
+      color: #fff;
+    }
+    .role-admin { background: var(--admin); }
+    .role-staff { background: var(--staff); }
+    .role-coord { background: var(--coord); }
+    .role-reg { background: var(--reg); }
+    .role-chair { background: var(--chair); }
+    .role-system { background: var(--system); }
+
+    .box {
+      border: 2px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: #fafbfc;
+    }
+    .box strong { display: block; font-size: 0.95rem; margin-bottom: 4px; }
+    .box span { font-size: 0.88rem; color: var(--muted); }
+
+    .decision {
+      border: 2px solid var(--coord);
+      border-radius: 8px;
+      padding: 12px 14px;
+      background: #f0f9fc;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.92rem;
+    }
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .branch {
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .branch-yes { background: #e8f5ee; color: var(--yes); border: 1px solid #9fd4b8; }
+    .branch-no { background: #fdecec; color: var(--no); border: 1px solid #f5b4b0; }
+
+    .merge {
+      text-align: center;
+      padding: 10px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .terminal {
+      text-align: center;
+      padding: 16px;
+      margin-top: 8px;
+    }
+    .terminal .pill {
+      display: inline-block;
+      background: var(--text);
+      color: #fff;
+      padding: 10px 28px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .note {
+      margin-top: 24px;
+      padding: 16px 18px;
+      background: #fff8e6;
+      border: 1px solid #e8d49a;
+      border-radius: 10px;
+      font-size: 0.9rem;
+    }
+    .note strong { color: #7a5a00; }
+
+    .caption {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 0.88rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    @media print {
+      body { background: #fff; }
+      .wrap { max-width: 100%; padding: 12px; }
+      .phase { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>How SchoGMS Works</h1>
+      <p>Scholarship and Grants Management System — one path from new staff account to approved campus report. Read top to bottom.</p>
+    </header>
+
+    <div class="legend" aria-label="Role colors">
+      <span><i class="dot" style="background:var(--admin)"></i> Administrator</span>
+      <span><i class="dot" style="background:var(--staff)"></i> Any staff (first login)</span>
+      <span><i class="dot" style="background:var(--coord)"></i> Coordinator</span>
+      <span><i class="dot" style="background:var(--reg)"></i> Registrar</span>
+      <span><i class="dot" style="background:var(--chair)"></i> Chairman</span>
+      <span><i class="dot" style="background:var(--system)"></i> System</span>
+    </div>
+
+    <!-- PHASE 1 -->
+    <section class="phase phase-1">
+      <div class="phase-head">
+        Phase 1 — Get access
+        <small>Before anyone can work on scholarships</small>
+      </div>
+      <div class="flow">
+        <div class="step">
+          <div class="role role-admin">Admin</div>
+          <div class="box">
+            <strong>Create staff account</strong>
+            <span>Adds coordinator, registrar, chairman, or director with email and campus.</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="role role-staff">Staff</div>
+          <div class="box">
+            <strong>Receive verification code by email</strong>
+            <span>6-digit code confirms the account is real (shown as 2FA on login screen).</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="role role-staff">Staff</div>
+          <div class="box">
+            <strong>Enter code on Verify page</strong>
+            <span>Wrong code → try again. Correct code → account becomes active.</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="role role-staff">Staff</div>
+          <div class="box">
+            <strong>Log in and open dashboard</strong>
+            <span>Each role sees their own menu (coordinator, registrar, chairman, etc.).</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHASE 2 -->
+    <section class="phase phase-2">
+      <div class="phase-head">
+        Phase 2 — Load scholar names and documents
+        <small>Scholars are added as a list — they do not log in themselves</small>
+      </div>
+      <div class="flow">
+        <div class="step">
+          <div class="role role-chair">Chairman / Coord</div>
+          <div class="box">
+            <strong>Upload CHED scholar list (Excel)</strong>
+            <span>Official TDP/TES names go into the system for the campus.</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="role role-reg">Registrar</div>
+          <div class="box">
+            <strong>Upload COR and COG files</strong>
+            <span>Certificate of Registration and Certificate of Grades per student.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHASE 3 -->
+    <section class="phase phase-3">
+      <div class="phase-head">
+        Phase 3 — Check if everything matches
+        <small>Coordinator compares lists and documents</small>
+      </div>
+      <div class="flow">
+        <div class="step">
+          <div class="role role-coord">Coordinator</div>
+          <div class="box">
+            <strong>Run validation</strong>
+            <span>Compare CHED list vs registrar records and uploaded COR/COG.</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="role role-coord">Coordinator</div>
+          <div>
+            <div class="decision">Do name, enrollment, and documents match?</div>
+            <div class="split">
+              <div class="branch branch-yes">Yes → Mark validated</div>
+              <div class="branch branch-no">No → Mark failed</div>
+            </div>
+            <div class="merge">Both paths continue to Phase 4</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHASE 4 -->
+    <section class="phase phase-4">
+      <div class="phase-head">
+        Phase 4 — Submit and approve campus report
+        <small>Annex 7 workflow</small>
+      </div>
+      <div class="flow">
+        <div class="step">
+          <div class="role role-coord">Coordinator</div>
+          <div class="box">
+            <strong>Upload Annex 7 report</strong>
+            <span>Campus utilization report sent to chairman — status: Pending.</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="role role-chair">Chairman</div>
+          <div class="box">
+            <strong>Review Annex 7 file</strong>
+            <span>Preview in system, then approve or reject.</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="role role-chair">Chairman</div>
+          <div>
+            <div class="decision">Approve or reject?</div>
+            <div class="split">
+              <div class="branch branch-yes">Approve → Email coordinator</div>
+              <div class="branch branch-no">Reject → Record decision</div>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="role role-system">System</div>
+          <div class="box">
+            <strong>Save results for reports</strong>
+            <span>Dashboards, exports, and records stay in SchoGMS for monitoring.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="terminal">
+      <span class="pill">End — Scholarship cycle recorded</span>
+    </div>
+
+    <div class="note">
+      <strong>Important for your paper:</strong> SchoGMS is built for <em>staff roles</em> (admin, coordinator, registrar, chairman, director, dean, program chair). There is no student or guardian login in the current system — scholar names only appear on uploaded lists.
+    </div>
+
+    <p class="caption">Figure X. Activity diagram of the SchoGMS scholarship workflow in four phases: access, data loading, validation, and Annex 7 approval.</p>
+  </div>
+</body>
+</html>

@@ -114,9 +114,9 @@
             </tr>
             <tr>
                 <td><strong>Dean</strong></td>
-                <td><a href="index.php" target="_blank">http://localhost/SchoGMS/index.php</a></td>
-                <td>(varies by campus)</td>
-                <td>password123</td>
+                <td><a href="index.php" target="_blank">http://localhost/SchoGMS/index.php</a> (same as all roles)</td>
+                <td>Dean name or email from assignment email</td>
+                <td>schogms123 (or password in assignment email)</td>
                 <td>http://localhost/SchoGMS/users/dean/</td>
             </tr>
             <tr>
@@ -124,7 +124,7 @@
                 <td><a href="index.php" target="_blank">http://localhost/SchoGMS/index.php</a></td>
                 <td>(varies by program)</td>
                 <td>password123</td>
-                <td>http://localhost/SchoGMS/users/program-head/</td>
+                <td>http://localhost/SchoGMS/users/program-chair/</td>
             </tr>
         </table>
         

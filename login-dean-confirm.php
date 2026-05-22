@@ -4,7 +4,7 @@ require_once __DIR__ . '/users/dean/config/conn.php';
 
 // Check if required parameters are in the URL
 if (!isset($_GET['username']) || !isset($_GET['email']) || !isset($_GET['campus'])) {
-    header("Location: login-dean.php?ERROR=missing_parameters");
+    header('Location: index.php?ERROR=1&msg=missing_parameters');
     exit();
 }
 
@@ -34,12 +34,13 @@ if ($stmt->num_rows > 0) {
     $updateStmt->execute();
     $updateStmt->close();
 
-    // Store session variables
+    $_SESSION['auth_type'] = 'mysql_ad';
     $_SESSION['user_id'] = $user_id;
     $_SESSION['username'] = $program_chair;
     $_SESSION['user_email'] = $email;
     $_SESSION['course_program'] = $course_program;
     $_SESSION['campus'] = $campus;
+    $_SESSION['role'] = 'dean';
 
     $conn->close();
 
@@ -51,6 +52,6 @@ if ($stmt->num_rows > 0) {
 // Redirect if user is not found
 $stmt->close();
 $conn->close();
-header("Location: login-dean.php?ERROR=user_not_found");
+header('Location: index.php?ERROR=1&msg=user_not_found');
 exit();
 ?>

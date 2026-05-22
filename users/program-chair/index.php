@@ -143,16 +143,7 @@
                 <!-- Sidebar navigation-->
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="index.php"
-                                aria-expanded="false"><i data-feather="home" class="feather-icon"></i><span
-                                    class="hide-menu">Dashboard</span></a></li>
-                                    <li class="list-divider"></li>
-                                    <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="tdp.php"
-                                aria-expanded="false"><i data-feather="users" class="feather-icon"></i><span
-                                    class="hide-menu">TDP</span></a></li>
-                                    <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="tes.php"
-                                aria-expanded="false"><i data-feather="users" class="feather-icon"></i><span
-                                    class="hide-menu">TES</span></a></li>
+                        <?php require __DIR__ . "/inc/program_chair_sidebar_menu.php"; ?>
                     </ul>
                 </nav>
                 <!-- End Sidebar navigation -->
@@ -290,6 +281,12 @@ $percentageTes = ($totalStudentsCampusTes > 0) ? round(($totalStudentsTes / $tot
 
 // Define text color based on percentage
 $textColorClassTes = ($percentageTes >= 75) ? "text-success" : (($percentageTes >= 50) ? "text-warning" : "text-danger");
+$tdpSubtext = ($totalStudentsCampus > 0)
+    ? number_format($percentageTdp, 1) . '% of campus TDP masterlist'
+    : 'No campus TDP records available.';
+$tesSubtext = ($totalStudentsCampusTes > 0)
+    ? number_format($percentageTes, 1) . '% of campus TES masterlist'
+    : 'No campus TES records available.';
 
 $stmt->close();
 $conn->close();
@@ -304,14 +301,14 @@ $conn->close();
     <div class="card-body">
         <div class="d-flex d-lg-flex d-md-block align-items-center">
             <div>
-                <div class="d-inline-flex align-items-center">
-                    <h2 class="text-dark mb-1 font-weight-medium"><?php echo $totalStudentsTdp; ?></h2>
-                </div>
-                <div class="d-inline-flex align-items-center <?php echo $textColorClassTdp; ?>">
-                    <h2>(<?php echo $percentageTdp; ?>%) Availed</h2>
-                </div>
+                <h2 class="text-dark mb-1 font-weight-medium"><?php echo (int) $totalStudentsTdp; ?></h2>
+                <?php if ((int) $totalStudentsCampus > 0) : ?>
+                <p class="mb-1 <?php echo $textColorClassTdp; ?> small font-weight-medium"><?php echo htmlspecialchars($tdpSubtext); ?></p>
+                <?php else: ?>
+                <p class="mb-1 text-muted small">Add records to view the TDP share.</p>
+                <?php endif; ?>
                 <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">
-                    Total TDP Students in <?php echo htmlspecialchars($_SESSION['campus']); ?>
+                    Total TDP scholars in <?php echo htmlspecialchars($_SESSION['campus']); ?>
                 </h6>
             </div>
             <div class="ml-auto mt-md-3 mt-lg-0">
@@ -326,14 +323,14 @@ $conn->close();
     <div class="card-body">
         <div class="d-flex d-lg-flex d-md-block align-items-center">
             <div>
-                <div class="d-inline-flex align-items-center">
-                    <h2 class="text-dark mb-1 font-weight-medium"><?php echo $totalStudentsTes; ?></h2>
-                </div>
-                <div class="d-inline-flex align-items-center <?php echo $textColorClassTes; ?>">
-                    <h2>(<?php echo $percentageTes; ?>%) Availed</h2>
-                </div>
+                <h2 class="text-dark mb-1 font-weight-medium"><?php echo (int) $totalStudentsTes; ?></h2>
+                <?php if ((int) $totalStudentsCampusTes > 0) : ?>
+                <p class="mb-1 <?php echo $textColorClassTes; ?> small font-weight-medium"><?php echo htmlspecialchars($tesSubtext); ?></p>
+                <?php else: ?>
+                <p class="mb-1 text-muted small">Add records to view the TES share.</p>
+                <?php endif; ?>
                 <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">
-                    Total TDP Students in <?php echo htmlspecialchars($_SESSION['campus']); ?>
+                    Total TES scholars in <?php echo htmlspecialchars($_SESSION['campus']); ?>
                 </h6>
             </div>
             <div class="ml-auto mt-md-3 mt-lg-0">
@@ -452,6 +449,8 @@ $conn->close();
                  <div class="col-lg-6 col-md-12">
                         <div class="card">
                             <div class="card-body">
+                                <h4 class="card-title mb-3">TDP Scholars by Program</h4>
+                                <p id="course-chart-empty" class="text-muted small mb-2 d-none">No TDP data to display for this program.</p>
                                 <canvas id="course-chart" width="400" height="200"></canvas>
                             </div>
                         </div>
@@ -459,6 +458,8 @@ $conn->close();
                      <div class="col-lg-6 col-md-12">
                         <div class="card">
                             <div class="card-body">
+                                <h4 class="card-title mb-3">TES Scholars by Program</h4>
+                                <p id="course-chart-tes-empty" class="text-muted small mb-2 d-none">No TES data to display for this program.</p>
                                 <canvas id="course-chart-tes" width="400" height="200"></canvas>
                             </div>
                         </div>
@@ -527,11 +528,16 @@ $conn->close();
 
             var studentsData = data.students_data || [];
             var totalStudents = data.total_students || 0;
+            var emptyTdp = document.getElementById("course-chart-empty");
+            var tdpCanvas = document.getElementById("course-chart");
 
             if (studentsData.length === 0) {
-                console.warn("No student data available.");
+                if (emptyTdp) emptyTdp.classList.remove("d-none");
+                if (tdpCanvas) tdpCanvas.style.display = "none";
                 return;
             }
+            if (emptyTdp) emptyTdp.classList.add("d-none");
+            if (tdpCanvas) tdpCanvas.style.display = "block";
 
             // Prepare chart labels and data
             var courseLabels = studentsData.map(item => 
@@ -558,7 +564,7 @@ $conn->close();
                 data: {
                     labels: courseLabels,
                     datasets: [{
-                        label: "Students TDP Course Program",
+                        label: "Number of TDP scholars",
                         backgroundColor: backgroundColors,
                         data: studentCounts
                     }]
@@ -572,7 +578,7 @@ $conn->close();
                         },
                         title: {
                             display: true,
-                            text: 'Scholars Distribution by Course Program',
+                            text: 'TDP Scholar Distribution by Program',
                             font: {
                                 size: 16
                             }
@@ -623,11 +629,16 @@ $conn->close();
 
             var studentsData = data.students_data_tes || [];
             var totalStudents = data.total_students || 0;
+            var emptyTes = document.getElementById("course-chart-tes-empty");
+            var tesCanvas = document.getElementById("course-chart-tes");
 
             if (studentsData.length === 0) {
-                console.warn("No student data available.");
+                if (emptyTes) emptyTes.classList.remove("d-none");
+                if (tesCanvas) tesCanvas.style.display = "none";
                 return;
             }
+            if (emptyTes) emptyTes.classList.add("d-none");
+            if (tesCanvas) tesCanvas.style.display = "block";
 
             // Prepare chart labels and data
             var courseLabels = studentsData.map(item => 
@@ -654,7 +665,7 @@ $conn->close();
                 data: {
                     labels: courseLabels,
                     datasets: [{
-                        label: "Students TES Course Program",
+                        label: "Number of TES scholars",
                         backgroundColor: backgroundColors,
                         data: studentCounts
                     }]
@@ -668,7 +679,7 @@ $conn->close();
                         },
                         title: {
                             display: true,
-                            text: 'Scholars Distribution by Course Program',
+                            text: 'TES Scholar Distribution by Program',
                             font: {
                                 size: 16
                             }

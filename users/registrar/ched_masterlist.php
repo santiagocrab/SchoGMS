@@ -138,26 +138,7 @@
                 <!-- Sidebar navigation-->
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="index.php"
-                                aria-expanded="false"><i data-feather="home" class="feather-icon"></i><span
-                                    class="hide-menu">Dashboard</span></a></li>
-                        <li class="list-divider"></li>
-                        <li class="nav-small-cap"><span class="hide-menu">Applications</span></li>
-                        <li class="sidebar-item"> <a class="sidebar-link" href="ched_masterlist.php"
-                                aria-expanded="false"><i data-feather="users" class="feather-icon"></i><span
-                                    class="hide-menu">Ched
-                                    Masterlist
-                                </span></a>
-                        </li>
-                        <li class="sidebar-item"> <a class="sidebar-link" href="program_list.php"
-                                aria-expanded="false"><i data-feather="folder" class="feather-icon"></i><span
-                                    class="hide-menu">Program List
-                                </span></a>
-                        </li>
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="documents_uploaded.php"
-                                aria-expanded="false"><i data-feather="folder" class="feather-icon"></i><span
-                                    class="hide-menu">Document uploaded</span></a></li>
-
+                        <?php require __DIR__ . '/inc/registrar_sidebar_menu.php'; ?>
                     </ul>
                 </nav>
                 <!-- End Sidebar navigation -->

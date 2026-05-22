@@ -4,7 +4,10 @@ require '../config/conn.php';
 require '../vendor/autoload.php';  // Ensure PhpSpreadsheet is installed via Composer
 
 // Get filters from GET request
-$sheet_name = isset($_GET['sheet_name']) ? $_GET['sheet_name'] : '';
+require_once __DIR__ . '/inc/validation_export.php';
+$program = strtolower((string) ($_GET['program'] ?? 'tes'));
+$sheet_name = trim((string) ($_GET['sheet_name'] ?? ''));
+$exportRows = schogms_validation_export_rows($conn, $program, $sheet_name, $_GET);
 
 $query = "SELECT 
     cm.id, cm.filename, cm.campus, cm.seq, cm.app_no, cm.lastname, cm.firstname, cm.ext, 
@@ -45,7 +48,7 @@ if (isset($_POST['export'])) {
     $control_number3 = 1;
 
     // Process only entries with id_number
-    while ($row = $result->fetch_assoc()) {
+    foreach ($exportRows as $row) {
         if (!empty($row['id_number'])) {
             // Insert new row in Sheet 3
             $sheet3->insertNewRowBefore($row_num3, 1);
@@ -156,7 +159,6 @@ if (isset($_POST['export'])) {
 </head>
 
 <body>
-    <?php include 'loading-screen.php'; ?>
 
     <h2>Data TES Results</h2>
 

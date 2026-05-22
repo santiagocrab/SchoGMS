@@ -1,4 +1,39 @@
-<?php include '../config/session.php'; ?>
+<?php
+include '../config/session.php';
+require_once __DIR__ . '/../../inc/campus_access.php';
+
+schogms_ensure_campus_access_tables($conn);
+schogms_seed_campus_access_catalog($conn);
+
+$colleges = [];
+$campusFilter = trim((string) ($sheet_name ?? ''));
+if ($campusFilter !== '') {
+    $colleges = schogms_get_colleges_for_campus($conn, $campusFilter);
+}
+
+$deanRows = [];
+$deanCampusWarning = '';
+if ($campusFilter === '') {
+    $deanCampusWarning = 'No campus is assigned to your director account. You cannot view or assign deans until a coordinator assigns your campus.';
+} else {
+    $deanStmt = $conn->prepare(
+        'SELECT id, campus, college_name, course_program, dean, status, assigned_at
+         FROM assigned_dean
+         WHERE UPPER(TRIM(campus)) = UPPER(TRIM(?))
+         ORDER BY assigned_at DESC
+         LIMIT 500'
+    );
+    if ($deanStmt) {
+        $deanStmt->bind_param('s', $campusFilter);
+        $deanStmt->execute();
+        $deanRes = $deanStmt->get_result();
+        while ($row = $deanRes->fetch_assoc()) {
+            $deanRows[] = $row;
+        }
+        $deanStmt->close();
+    }
+}
+?>
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
 
@@ -16,11 +51,8 @@
 
     <!-- This page plugin CSS -->
     <link href="../../assets/extra-libs/datatables.net-bs4/css/dataTables.bootstrap4.css" rel="stylesheet">
-    <link href="../../assets/extra-libs/c3/c3.min.css" rel="stylesheet">
-    <link href="../../assets/libs/chartist/dist/chartist.min.css" rel="stylesheet">
-    <link href="../../assets/extra-libs/jvector/jquery-jvectormap-2.0.2.css" rel="stylesheet" />
-    <!-- Custom CSS -->
     <link href="../../dist/css/style.min.css" rel="stylesheet">
+    <style>.preloader { display: none !important; }</style>
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -33,12 +65,6 @@
     <!-- ============================================================== -->
     <!-- Preloader - style you can find in spinners.css -->
     <!-- ============================================================== -->
-    <div class="preloader">
-        <div class="lds-ripple">
-            <div class="lds-pos"></div>
-            <div class="lds-pos"></div>
-        </div>
-    </div>
     <!-- ============================================================== -->
     <!-- Main wrapper - style you can find in pages.scss -->
     <!-- ============================================================== -->
@@ -141,15 +167,7 @@
                 <!-- Sidebar navigation-->
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="index.php"
-                                aria-expanded="false"><i data-feather="home" class="feather-icon"></i><span
-                                    class="hide-menu">Dashboard</span></a></li>
-
-                        <li class="list-divider"></li>
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="dean.php"
-                                aria-expanded="false"><i data-feather="users" class="feather-icon"></i><span
-                                    class="hide-menu">College Dean</span></a></li>
-                    </ul>
+                        <?php require __DIR__ . "/inc/director_sidebar_menu.php"; ?>
                     </ul>
                 </nav>
                 <!-- End Sidebar navigation -->
@@ -182,29 +200,14 @@
                     <div class="col-5 align-self-center">
                         <div class="customize-input float-right">
                             <button type="button" class="btn waves-effect waves-light btn-rounded btn-success"
-                                data-toggle="modal" data-target="#documentUploadModal">
+                                data-toggle="modal" data-target="#documentUploadModal"
+                                <?= $campusFilter === '' ? 'disabled title="Campus not set on your account"' : '' ?>>
                                 Assign College Dean
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-            <?php
-            // Include database connection
-            // 1️⃣ **Fetch `file_group` Based on Campus**
-            $fileGroups = [];
-            $query = "SELECT DISTINCT file_group FROM registrar_master_list WHERE campus = ?";
-            $stmt = $conn->prepare($query);
-            $stmt->bind_param("s", $sheet_name);
-            $stmt->execute();
-            $result = $stmt->get_result();
-
-            while ($row = $result->fetch_assoc()) {
-                $fileGroups[] = $row['file_group'];
-            }
-            $stmt->close();
-            ?>
-
             <div class="modal fade" id="documentUploadModal" tabindex="-1" role="dialog"
                 aria-labelledby="documentUploadModalLabel" aria-hidden="true">
                 <div class="modal-dialog" role="document">
@@ -228,14 +231,14 @@
                                         value="<?= htmlspecialchars($sheet_name); ?>" hidden>
                                 </div>
 
-                                <!-- File Group (Populated with PHP) -->
+                                <!-- College (one dean per college) -->
                                 <div class="form-group">
-                                    <label for="fileGroup">File Group</label>
-                                    <select class="form-control" id="fileGroup" name="course_program_enrolled" required>
-                                        <option value="" disabled selected>Select File Group</option>
-                                        <?php foreach ($fileGroups as $group): ?>
-                                            <option value="<?= htmlspecialchars($group); ?>">
-                                                <?= htmlspecialchars($group); ?>
+                                    <label for="collegeName">College</label>
+                                    <select class="form-control" id="collegeName" name="college_name" required>
+                                        <option value="" disabled selected>Select college</option>
+                                        <?php foreach ($colleges as $col): ?>
+                                            <option value="<?= htmlspecialchars((string) $col['college_name']); ?>">
+                                                <?= htmlspecialchars((string) $col['college_name']); ?>
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
@@ -262,10 +265,6 @@
                     </div>
                 </div>
             </div>
-
-            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
             <script>
                 document.querySelector('#documentUploadForm').addEventListener('submit', async (event) => {
@@ -335,12 +334,18 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-body">
+                                <h4 class="card-title">College deans — campus: <strong><?= htmlspecialchars($campusFilter !== '' ? $campusFilter : 'Not set') ?></strong></h4>
+                                <?php if ($deanCampusWarning !== ''): ?>
+                                <div class="alert alert-warning"><?= htmlspecialchars($deanCampusWarning) ?></div>
+                                <?php else: ?>
+                                <p class="text-muted small">Assign one dean per college on your campus. Each dean may assign program chairs per course in that college.</p>
+                                <?php endif; ?>
                                 <div class="table-responsive">
                                     <table id="zero_config" class="table table-striped table-bordered no-wrap">
                                         <thead>
                                             <tr>
                                                 <th>Status</th>
-                                                <th>Course Program</th>
+                                                <th>College</th>
                                                 <th>Dean</th>
                                                 <th>Date Added</th>
                                                 <th>Action</th>
@@ -349,47 +354,32 @@
                                         <tbody>
                                             <!-- Loop through each user to generate table rows -->
                                             <?php
-                                            // include 'config/conn.php';
-                                            // Assuming you've fetched users from the database
-                                            $sql = "SELECT id, course_program,	dean, status, assigned_at FROM assigned_dean";
-                                            $result = $conn->query($sql);
-                                            if ($result->num_rows > 0) {
-                                                while ($row = $result->fetch_assoc()) {
-                                                    $statusBadge = '';
-                                                    switch ($row['status']) {
-                                                        case 'active':
-                                                            $statusBadge = '<span class="badge badge-success btn-rounded">Active</span>';
-                                                            break;
-                                                        case 'pending':
-                                                            $statusBadge = '<span class="badge badge-warning btn-rounded">Pending</span>';
-                                                            break;
-                                                        case 'restricted':
-                                                            $statusBadge = '<span class="badge badge-secondary btn-rounded">Restricted</span>';
-                                                            break;
-                                                    }
-                                                    // Display user data in the table
+                                            if (count($deanRows) > 0) {
+                                                foreach ($deanRows as $row) {
+                                                    $statusBadge = match ($row['status']) {
+                                                        'active' => '<span class="badge badge-success btn-rounded">Active</span>',
+                                                        'pending' => '<span class="badge badge-warning btn-rounded">Pending</span>',
+                                                        'restricted' => '<span class="badge badge-secondary btn-rounded">Restricted</span>',
+                                                        default => '<span class="badge badge-light btn-rounded">' . htmlspecialchars((string) $row['status']) . '</span>',
+                                                    };
                                                     echo '<tr>';
                                                     echo '<td>' . $statusBadge . '</td>';
-                                                    echo '<td>' . $row['course_program'] . '</td>';
-                                                    echo '<td>' . $row['dean'] . '</td>';
-                                                    echo '<td>' . $row['assigned_at'] . '</td>';
-                                                    echo '<td>
-                                                            <button class="btn btn-danger delete-btn btn-rounded" 
-                                                                    data-id="' . $row['id'] . '">
-                                                                <i class="fa fa-trash"></i>
-                                                            </button>
-                                                          </td>';
+                                                    $collegeLabel = schogms_resolve_dean_college_name($row);
+                                                    echo '<td>' . htmlspecialchars($collegeLabel) . '</td>';
+                                                    echo '<td>' . htmlspecialchars((string) $row['dean']) . '</td>';
+                                                    echo '<td>' . htmlspecialchars((string) $row['assigned_at']) . '</td>';
+                                                    echo '<td><button type="button" class="btn btn-danger delete-btn btn-rounded" data-id="' . (int) $row['id'] . '"><i class="fa fa-trash"></i></button></td>';
                                                     echo '</tr>';
                                                 }
                                             } else {
-                                                echo '<tr><td colspan="6">No users found.</td></tr>';
+                                                echo '<tr><td colspan="5">No college deans assigned yet.</td></tr>';
                                             }
                                             ?>
                                         </tbody>
                                         <tfoot>
                                             <tr>
                                                 <th>Status</th>
-                                                <th>Course Program</th>
+                                                <th>College</th>
                                                 <th>Dean</th>
                                                 <th>Date Added</th>
                                                 <th>Action</th>
@@ -403,7 +393,6 @@
                         <!-- End PAge Content -->
                         <!-- ============================================================== -->
                     </div>
-                    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
                                                 <script>
                                                     document.querySelectorAll('.delete-btn').forEach(button => {
                                                         button.addEventListener('click', function () {
@@ -465,35 +454,33 @@
             <!-- All Jquery -->
             <!-- ============================================================== -->
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-            <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-
-
-
             <script src="../../assets/libs/jquery/dist/jquery.min.js"></script>
             <script src="../../assets/libs/popper.js/dist/umd/popper.min.js"></script>
             <script src="../../assets/libs/bootstrap/dist/js/bootstrap.min.js"></script>
-            <!-- apps -->
-            <!-- apps -->
             <script src="../../dist/js/app-style-switcher.js"></script>
             <script src="../../dist/js/feather.min.js"></script>
             <script src="../../assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js"></script>
             <script src="../../dist/js/sidebarmenu.js"></script>
-            <!--Custom JavaScript -->
             <script src="../../dist/js/custom.min.js"></script>
-            <!--This page JavaScript -->
-            <script src="../../assets/extra-libs/c3/d3.min.js"></script>
-            <script src="../../assets/extra-libs/c3/c3.min.js"></script>
-            <script src="../../assets/libs/chartist/dist/chartist.min.js"></script>
-            <script src="../../assets/libs/chartist-plugin-tooltips/dist/chartist-plugin-tooltip.min.js"></script>
-            <script src="../../assets/extra-libs/jvector/jquery-jvectormap-2.0.2.min.js"></script>
-            <script src="../../assets/extra-libs/jvector/jquery-jvectormap-world-mill-en.js"></script>
-            <script src="../../dist/js/pages/dashboards/dashboard1.min.js"></script>
-
-            <!--This page plugins -->
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
             <script src="../../assets/extra-libs/datatables.net/js/jquery.dataTables.min.js"></script>
-            <script src="../../dist/js/pages/datatable/datatable-basic.init.js"></script>
+            <script src="../../assets/extra-libs/datatables.net-bs4/js/dataTables.bootstrap4.min.js"></script>
+            <script>
+            $(function () {
+                if ($.fn.DataTable && $('#zero_config').length) {
+                    $('#zero_config').DataTable({
+                        pageLength: 25,
+                        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
+                        deferRender: true,
+                        order: [[3, 'desc']],
+                        stateSave: false
+                    });
+                }
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
+            });
+            </script>
 </body>
 
 </html>

@@ -1,0 +1,20 @@
+# SchoGMS — custom error pages and basic security headers
+ErrorDocument 404 /SchoGMS/404.php
+
+# Disable directory listing
+Options -Indexes
+
+# Protect sensitive config (Apache 2.4+)
+<IfModule mod_authz_core.c>
+    <FilesMatch "^(schogms_mysql\.php|\.env)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+# Legacy Apache 2.2
+<IfModule !mod_authz_core.c>
+    <FilesMatch "^(schogms_mysql\.php|\.env)$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>

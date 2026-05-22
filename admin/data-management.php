@@ -145,26 +145,7 @@ include 'config/session.php';
                 <!-- Sidebar navigation-->
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="dashboard.php"
-                                aria-expanded="false"><i data-feather="home" class="feather-icon"></i><span
-                                    class="hide-menu">Dashboard</span></a></li>
-                        <li class="list-divider"></li>
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="user-management.php"
-                                aria-expanded="false"><i data-feather="users" class="feather-icon"></i><span
-                                    class="hide-menu">User Management</span></a></li>
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="data-management.php"
-                                aria-expanded="false"><i data-feather="file" class="feather-icon"></i><span
-                                    class="hide-menu">Data Management</span></a></li>
-                        <li class="sidebar-item"> <a class="sidebar-link has-arrow" href="javascript:void(0)"
-                                aria-expanded="false"><i data-feather="file-text" class="feather-icon"></i><span
-                                    class="hide-menu">Report </span></a>
-                            <ul aria-expanded="false" class="collapse  first-level base-level-line">
-                                <li class="sidebar-item"><a href="logs.php" class="sidebar-link"><span
-                                            class="hide-menu"> Logs
-                                        </span></a>
-                                </li>
-                            </ul>
-                        </li>
+                        <?php require __DIR__ . '/inc/admin_sidebar_menu.php'; ?>
                     </ul>
                 </nav>
                 <!-- End Sidebar navigation -->

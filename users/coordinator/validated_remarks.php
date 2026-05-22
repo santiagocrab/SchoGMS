@@ -1,9 +1,12 @@
 <?php
 require '../config/conn.php';
 require '../vendor/autoload.php';  // Ensure PhpSpreadsheet is installed via Composer
+require_once __DIR__ . '/inc/validation_export.php';
 
 // Get filters from GET request
-$sheet_name = isset($_GET['sheet_name']) ? $_GET['sheet_name'] : '';
+$program = strtolower((string) ($_GET['program'] ?? 'tdp'));
+$sheet_name = trim((string) ($_GET['sheet_name'] ?? ''));
+$exportRows = schogms_validation_export_rows($conn, $program, $sheet_name, $_GET);
 
 $query = "SELECT 
                                         cm.*, 
@@ -60,7 +63,8 @@ if (isset($_POST['export'])) {
     // Start updating from row 5
     $row_num = 5;
 
-    while ($row = $result->fetch_assoc()) {
+    foreach ($exportRows as $row) {
+        $check = $row['_check'] ?? schogms_validation_row_check($row, [], $program);
 
         // Apply styles to L, M, N, O columns
         for ($col = 'A'; $col <= 'O'; $col++) {
@@ -76,11 +80,11 @@ if (isset($_POST['export'])) {
         }
 
         // Determine Enrollment Status
-        $enrollment_status = ($row['enrollment_status'] == 'Enrolled') ? 'Enrolled' : 'Not Enrolled';
+        $enrollment_status = $check['enrollment'];
 
         // Determine COR & COG Submission Status
-        $hasCOR = strpos($row['uploaded_categories'], 'COR') !== false;
-        $hasCOG = strpos($row['uploaded_categories'], 'COG') !== false;
+        $hasCOR = $check['has_cor'];
+        $hasCOG = $check['has_cog'];
 
         if ($hasCOR && $hasCOG) {
             $cor_cog_status = "COR & COG Submitted";
@@ -141,15 +145,7 @@ ini_set('log_errors', 1);  // Enable error logging
 error_reporting(E_ALL);
 ini_set('error_log', 'remark_error.txt');  // Path to the error log file
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-// SMTP Configuration
-$smtp_host = 'smtp.hostinger.com';
-$smtp_username = 'server-email@cloudhost.host';
-$smtp_password = 'Schogms_2025';
-$smtp_port = 465;
-$smtp_secure = PHPMailer::ENCRYPTION_SMTPS;
+require_once __DIR__ . '/../../config/mail.php';
 // Get filters from GET request
 $sheet_name = isset($_GET['sheet_name']) ? $_GET['sheet_name'] : '';
 
@@ -274,43 +270,19 @@ if (isset($_POST['export'])) {
         $user = $result->fetch_assoc();
         $chairmanEmail = $user['email'];
 
-        $mail = new PHPMailer(true);
-        $mail->isSMTP();
-        $mail->Host = $smtp_host;
-        $mail->SMTPAuth = true;
-        $mail->Username = $smtp_username;
-        $mail->Password = $smtp_password;
-        $mail->SMTPSecure = $smtp_secure;
-        $mail->Port = $smtp_port;
-
-        $mail->setFrom($smtp_username, 'SchoGMS Export Notification');
-        $mail->addAddress($chairmanEmail);
-        $mail->addReplyTo($smtp_username, 'SchoGMS Support');
-        $mail->isHTML(true);
-        $mail->Subject = 'Your Export Request Has Been Processed';
-        $mail->Body = "
-            <html>
-            <head>
-                        <style>
-                            body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
-                            .email-container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
-                            .header { text-align: center; padding: 10px; background: #5f76e8; color: white; border-radius: 5px; }
-                            .message { padding: 15px; font-size: 16px; line-height: 1.6; color: #333333; text-align: center; }
-                            .footer { text-align: center; font-size: 14px; color: #777777; margin-top: 20px; }
-                        </style>
-                    </head>
-            <body>
-            <div style='font-family: Arial, sans-serif;'>
-                <h2 style='background:#5f76e8;color:white;padding:10px;'>SchoGMS Export Request</h2>
-                <p>Dear Chairman,</p>
-                <p>The export request for the Masterlist Remarks <strong>{$sheet_name}</strong> has been successfully processed.</p>
-                <p>Please find the exported file attached.</p>
-                <p>Best regards,<br>SchoGMS Team</p>
-            </div>
-            </body>
-            </html>";
-        $mail->addAttachment($outputFile);
-        $mail->send();
+        $html = schogms_email_export_processed([
+            'recipient_label' => 'Chairman',
+            'sheet_name' => $sheet_name,
+            'detail' => 'The masterlist remarks export has been processed successfully.',
+        ]);
+        schogms_send_mail(
+            $chairmanEmail,
+            'Export Ready — SchoGMS Remarks',
+            $html,
+            'Chairman',
+            'SchoGMS Export',
+            [$outputFile]
+        );
         
         echo json_encode(['success' => true, 'message' => 'Export and email sent successfully.']);
         exit;

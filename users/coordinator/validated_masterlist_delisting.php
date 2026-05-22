@@ -1,9 +1,12 @@
 <?php
 require '../config/conn.php';
 require '../vendor/autoload.php';  // Ensure PhpSpreadsheet is installed via Composer
+require_once __DIR__ . '/inc/validation_export.php';
 
 // Get filters from GET request
-$sheet_name = isset($_GET['sheet_name']) ? $_GET['sheet_name'] : '';
+$program = strtolower((string) ($_GET['program'] ?? 'tdp'));
+$sheet_name = trim((string) ($_GET['sheet_name'] ?? ''));
+$exportRows = schogms_validation_export_rows($conn, $program, $sheet_name, $_GET);
 
 // Query to retrieve data from both ched_masterlist and registrar_master_list
 // $query = "SELECT 
@@ -63,7 +66,7 @@ if (isset($_POST['export'])) {
 
     // **First Pass: Process Sheet 5 Entries**
     $rowsToInsertInSheet3 = [];
-    while ($row = $result->fetch_assoc()) {
+    foreach ($exportRows as $row) {
         if (empty($row['id_number'])) {
             // **Insert into Sheet 5**
             $sheet5->insertNewRowBefore($row_num5);
@@ -131,15 +134,7 @@ ini_set('error_log', 'remark_error.txt');  // Path to the error log file
 require '../config/conn.php';
 require '../vendor/autoload.php';  // Ensure PhpSpreadsheet is installed via Composer
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-// SMTP Configuration
-$smtp_host = 'smtp.hostinger.com';
-$smtp_username = 'server-email@cloudhost.host';
-$smtp_password = 'Schogms_2025';
-$smtp_port = 465;
-$smtp_secure = PHPMailer::ENCRYPTION_SMTPS;
+require_once __DIR__ . '/../../config/mail.php';
 
 // Get filters from GET request
 $sheet_name = isset($_GET['sheet_name']) ? $_GET['sheet_name'] : '';
@@ -244,43 +239,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
         $user = $result->fetch_assoc();
         $chairmanEmail = $user['email'];
 
-        $mail = new PHPMailer(true);
-        $mail->isSMTP();
-        $mail->Host = $smtp_host;
-        $mail->SMTPAuth = true;
-        $mail->Username = $smtp_username;
-        $mail->Password = $smtp_password;
-        $mail->SMTPSecure = $smtp_secure;
-        $mail->Port = $smtp_port;
-
-        $mail->setFrom($smtp_username, 'SchoGMS Export Notification');
-        $mail->addAddress($chairmanEmail);
-        $mail->addReplyTo($smtp_username, 'SchoGMS Support');
-        $mail->isHTML(true);
-        $mail->Subject = 'Your Export Request Has Been Processed';
-        $mail->Body = "
-            <html>
-            <head>
-                        <style>
-                            body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
-                            .email-container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
-                            .header { text-align: center; padding: 10px; background: #5f76e8; color: white; border-radius: 5px; }
-                            .message { padding: 15px; font-size: 16px; line-height: 1.6; color: #333333; text-align: center; }
-                            .footer { text-align: center; font-size: 14px; color: #777777; margin-top: 20px; }
-                        </style>
-                    </head>
-            <body>
-            <div style='font-family: Arial, sans-serif;'>
-                <h2 style='background:#5f76e8;color:white;padding:10px;'>SchoGMS Export Request</h2>
-                <p>Dear Chairman,</p>
-                <p>The export request for the Masterlist Delisting <strong>{$sheet_name}</strong> has been successfully processed.</p>
-                <p>Please find the exported file attached.</p>
-                <p>Best regards,<br>SchoGMS Team</p>
-            </div>
-            </body>
-            </html>";
-        $mail->addAttachment($outputFile);
-        $mail->send();
+        $html = schogms_email_export_processed([
+            'recipient_label' => 'Chairman',
+            'sheet_name' => $sheet_name,
+            'detail' => 'The masterlist delisting export has been processed successfully.',
+        ]);
+        schogms_send_mail(
+            $chairmanEmail,
+            'Export Ready — SchoGMS Delisting',
+            $html,
+            'Chairman',
+            'SchoGMS Export',
+            [$outputFile]
+        );
         
         echo json_encode(['success' => true, 'message' => 'Export and email sent successfully.']);
         exit;

@@ -21,6 +21,7 @@
     <link href="../../assets/extra-libs/jvector/jquery-jvectormap-2.0.2.css" rel="stylesheet" />
     <!-- Custom CSS -->
     <link href="../../dist/css/style.min.css" rel="stylesheet">
+    <style>.preloader{display:none!important}#main-wrapper{opacity:1!important}</style>
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -138,23 +139,7 @@
                 <!-- Sidebar navigation-->
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="index.php"
-                                aria-expanded="false"><i data-feather="home" class="feather-icon"></i><span
-                                    class="hide-menu">Home</span></a></li>
-                        <li class="list-divider"></li>
-                        <li class="nav-small-cap"><span class="hide-menu">Registrar</span></li>
-                        <li class="sidebar-item"> <a class="sidebar-link" href="masterlist.php" aria-expanded="false"><i
-                                    data-feather="users" class="feather-icon"></i><span class="hide-menu">Registrar
-                                    Masterlist
-                                </span></a>
-                        </li>
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="cor-cog.php"
-                                aria-expanded="false"><i data-feather="book-open" class="feather-icon"></i><span
-                                    class="hide-menu">COR & COG</span></a></li>
-                                    
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="documents_uploaded.php"
-                                aria-expanded="false"><i data-feather="folder" class="feather-icon"></i><span
-                                    class="hide-menu">Document uploaded</span></a></li>
+                        <?php require __DIR__ . '/inc/registrar_sidebar_menu.php'; ?>
                     </ul>
                 </nav>
                 <!-- End Sidebar navigation -->
@@ -267,110 +252,28 @@
                                 <div class="row">
                                     <div class="table-responsive">
                                         <?php
-                                        // Include your database connection
-                                        require '../../conn_mongodb.php';
-                                        
-                                        // Performance timing
+                                        require_once __DIR__ . '/inc/registrar_data.php';
                                         $startTime = microtime(true);
 
-                                        // Get the selected category, academic_year, semester, and search from the form (if any)
-                                        $category = isset($_GET['category']) ? $_GET['category'] : '';
-                                        $academic_year_filter = isset($_GET['academic_year']) ? $_GET['academic_year'] : '';
-                                        $semester_filter = isset($_GET['semester']) ? $_GET['semester'] : '';
-                                        $search_term = isset($_GET['search']) ? $_GET['search'] : '';
+                                        $category = isset($_GET['category']) ? (string) $_GET['category'] : '';
+                                        $academic_year_filter = isset($_GET['academic_year']) ? (string) $_GET['academic_year'] : '';
+                                        $semester_filter = isset($_GET['semester']) ? (string) $_GET['semester'] : '';
+                                        $search_term = isset($_GET['search']) ? (string) $_GET['search'] : '';
 
-                                        // Get distinct categories efficiently
-                                        $categories = [];
-                                        
-                                        try {
-                                            $registrarCollection = $mongodb->collection('registrar_master_list');
-                                            
-                                            // Get ALL records to ensure we have all categories
-                                            $allRecords = $registrarCollection->find([]);
-                                            
-                                            foreach ($allRecords as $record) {
-                                                if (!empty($record['filename'])) {
-                                                    $categories[$record['filename']] = $record['filename'];
-                                                }
-                                            }
-                                            
-                                            // Sort categories alphabetically
-                                            ksort($categories);
-                                            
-                                        } catch (Exception $e) {
-                                            echo "<!-- Error loading categories: " . $e->getMessage() . " -->";
-                                            $categories = [];
-                                        }
-
-                                        // Build filter for MongoDB query
-                                        $filter = [];
-                                        if ($category !== '') {
-                                            $filter['filename'] = $category;
-                                        }
-                                        if ($academic_year_filter !== '') {
-                                            $filter['academic_year'] = $academic_year_filter;
-                                        }
-                                        if ($semester_filter !== '') {
-                                            $filter['semester'] = $semester_filter;
-                                        }
-                                        
-                                        // Add search functionality
-                                        if ($search_term !== '') {
-                                            // Search in multiple fields using regex
-                                            $filter['$or'] = [
-                                                ['last_name' => ['$regex' => $search_term, '$options' => 'i']],
-                                                ['first_name' => ['$regex' => $search_term, '$options' => 'i']],
-                                                ['middle_name' => ['$regex' => $search_term, '$options' => 'i']],
-                                                ['id_number' => ['$regex' => $search_term, '$options' => 'i']],
-                                                ['course_program_enrolled' => ['$regex' => $search_term, '$options' => 'i']],
-                                                ['scholarship_type' => ['$regex' => $search_term, '$options' => 'i']]
-                                            ];
-                                        }
-                                        
-                                        // Debug: Show current filter
-                                        if (!empty($filter)) {
-                                            echo "<!-- Debug: Filter applied: " . json_encode($filter) . " -->";
-                                        }
-
-                                        // Get registrar masterlist data with pagination for better performance
-                                        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-                                        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 100; // Increased default to 100 records per page
-                                        
-                                        // Validate limit to prevent invalid values
-                                        $allowedLimits = [10, 25, 50, 100, 200, 500];
-                                        if (!in_array($limit, $allowedLimits)) {
-                                            $limit = 100;
-                                        }
-                                        
-                                        try {
-                                            // Clear cache to ensure fresh data for pagination
-                                            $registrarCollection = $mongodb->collection('registrar_master_list');
-                                            $registrarCollection->clearCache();
-                                            
-                                            // Get data with alphabetical sorting by last name
-                                            $registrarCollection = $mongodb->collection('registrar_master_list');
-                                            $result = $registrarCollection->findPaginated($filter, [
-                                                'page' => $page,
-                                                'limit' => $limit,
-                                                'sort' => ['last_name' => 1, 'first_name' => 1] // Alphabetical by last name, then first name
-                                            ]);
-                                            $registrarData = $result['data'];
-                                            $totalRecords = $result['total'];
-                                            $totalPages = $result['pages'];
-                                            
-                                            // Debug output
-                                            echo "<!-- Debug: Page {$page}, Limit {$limit}, Total Records: {$totalRecords}, Total Pages: {$totalPages}, Data Count: " . count($registrarData) . " -->";
-                                            echo "<!-- Debug: Filter: " . json_encode($filter) . " -->";
-                                            if (!empty($registrarData)) {
-                                                $firstRecord = $registrarData[0];
-                                                echo "<!-- Debug: First record ID: " . ($firstRecord['_id'] ?? 'no_id') . ", Name: " . ($firstRecord['last_name'] ?? 'no_name') . " -->";
-                                            }
-                                        } catch (Exception $e) {
-                                            echo "<!-- Error: " . $e->getMessage() . " -->";
-                                            $registrarData = [];
-                                            $totalRecords = 0;
-                                            $totalPages = 0;
-                                        }
+                                        $categories = schogms_registrar_masterlist_categories($sheet_name ?? null);
+                                        $ml = schogms_registrar_masterlist_fetch([
+                                            'category' => $category,
+                                            'academic_year' => $academic_year_filter,
+                                            'semester' => $semester_filter,
+                                            'search' => $search_term,
+                                            'page' => $_GET['page'] ?? 1,
+                                            'limit' => $_GET['limit'] ?? 100,
+                                        ], $sheet_name ?? null);
+                                        $registrarData = $ml['data'];
+                                        $totalRecords = $ml['total'];
+                                        $totalPages = $ml['pages'];
+                                        $page = $ml['page'];
+                                        $limit = $ml['limit'];
                                         ?>
 
                                         <div class="table-responsive">
@@ -817,7 +720,7 @@
                                             } else {
                                                 echo "<p>No records found</p>";
                                             }
-                                            echo "<small class='text-success'><i class='fa fa-bolt'></i> Loaded in {$loadTime}ms (Ultra-Fast MongoDB)</small>";
+                                            echo "<small class='text-success'><i class='fa fa-bolt'></i> Loaded in {$loadTime}ms</small>";
                                             echo "</div>";
                                             echo "<div class='col-md-6'>";
                                             

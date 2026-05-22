@@ -1,4 +1,8 @@
-<?php include 'config/session.php'; ?>
+<?php
+include 'config/session.php';
+require_once __DIR__ . '/../../inc/campus_access.php';
+schogms_ensure_campus_access_tables($conn);
+?>
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
 
@@ -141,20 +145,7 @@
                 <!-- Sidebar navigation-->
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="index.php"
-                                aria-expanded="false"><i data-feather="home" class="feather-icon"></i><span
-                                    class="hide-menu">Dashboard</span></a></li>
-                                    <li class="list-divider"></li>
-                                     <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="tdp.php"
-                                aria-expanded="false"><i data-feather="users" class="feather-icon"></i><span
-                                    class="hide-menu">TDP</span></a></li>
-                                     <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="tes.php"
-                                aria-expanded="false"><i data-feather="users" class="feather-icon"></i><span
-                                    class="hide-menu">TES</span></a></li>
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="program-chair.php"
-                                aria-expanded="false"><i data-feather="users" class="feather-icon"></i><span
-                                    class="hide-menu">Program Chair</span></a></li>
-                                    
+                        <?php require __DIR__ . "/inc/dean_sidebar_menu.php"; ?>
                     </ul>
                 </nav>
                 <!-- End Sidebar navigation -->
@@ -198,37 +189,11 @@
             // Include database connection and session
             include 'config/conn.php';
 
-            // Ensure session variables are set
-            $campus = isset($_SESSION['campus']) ? $conn->real_escape_string($_SESSION['campus']) : '';
-            $file_group = isset($_SESSION['course_program']) ? $conn->real_escape_string($_SESSION['course_program']) : '';
-            $selected_course = isset($_GET['course_program_enrolled']) ? $conn->real_escape_string($_GET['course_program_enrolled']) : '';
-
-            // Fetch available courses
-            $courseQuery = "
-    SELECT DISTINCT cm.course_program_enrolled 
-    FROM ched_masterlist cm
-    INNER JOIN registrar_master_list rm
-        ON cm.lastname COLLATE utf8mb4_general_ci = rm.last_name COLLATE utf8mb4_general_ci 
-        AND cm.firstname COLLATE utf8mb4_general_ci = rm.first_name COLLATE utf8mb4_general_ci
-        AND (cm.middlename COLLATE utf8mb4_general_ci = rm.middle_name COLLATE utf8mb4_general_ci 
-            OR cm.middlename IS NULL 
-            OR rm.middle_name IS NULL 
-            OR cm.middlename = '' 
-            OR rm.middle_name = '')
-    WHERE cm.sheet_name = ? 
-    AND rm.file_group = ?
-    AND cm.course_program_enrolled IS NOT NULL
-    ORDER BY cm.course_program_enrolled ASC";
-
-            $stmt = $conn->prepare($courseQuery);
-            $stmt->bind_param("ss", $campus, $file_group);
-            $stmt->execute();
-            $courseResult = $stmt->get_result();
-            $courses = [];
-            while ($row = $courseResult->fetch_assoc()) {
-                $courses[] = $row['course_program_enrolled'];
-            }
-            $stmt->close();
+            $campus = trim((string) ($_SESSION['campus'] ?? ''));
+            $collegeName = trim((string) ($_SESSION['college_name'] ?? $_SESSION['course_program'] ?? ''));
+            $catalogCourses = $campus !== '' && $collegeName !== ''
+                ? schogms_get_course_names_for_college($conn, $campus, $collegeName)
+                : [];
             ?>
 
             <div class="modal fade" id="documentUploadModal" tabindex="-1" role="dialog"
@@ -254,15 +219,17 @@
                                         value="<?= htmlspecialchars($campus); ?>" hidden>
                                 </div>
 
-                                <!-- File Group (Populated with PHP) -->
                                 <div class="form-group">
-                                    <label for="fileGroup">File Group</label>
-                                    <select class="form-control" id="fileGroup" name="course_program_enrolled" required>
-                                        <option value="" disabled selected>Select File Group</option>
-                                        <?php foreach ($courses as $course): ?>
-                                            <option value="<?php echo htmlspecialchars($course); ?>">
-                                            <?php echo htmlspecialchars($course); ?>
-                                        </option>
+                                    <label>College</label>
+                                    <input type="text" class="form-control" value="<?= htmlspecialchars($collegeName) ?>" readonly>
+                                    <input type="hidden" name="college_name" value="<?= htmlspecialchars($collegeName) ?>">
+                                </div>
+                                <div class="form-group">
+                                    <label for="courseName">Course (one program chair per course)</label>
+                                    <select class="form-control" id="courseName" name="course_program_enrolled" required>
+                                        <option value="" disabled selected>Select course</option>
+                                        <?php foreach ($catalogCourses as $course): ?>
+                                            <option value="<?= htmlspecialchars($course) ?>"><?= htmlspecialchars($course) ?></option>
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
@@ -372,80 +339,38 @@
                                         </thead>
                                         <tbody>
     <?php
-    // Fetch courses from ched_masterlist and registrar_master_list
-    $courseQuery = "
-        SELECT DISTINCT cm.course_program_enrolled 
-        FROM ched_masterlist cm
-        INNER JOIN registrar_master_list rm
-            ON cm.lastname COLLATE utf8mb4_general_ci = rm.last_name COLLATE utf8mb4_general_ci 
-            AND cm.firstname COLLATE utf8mb4_general_ci = rm.first_name COLLATE utf8mb4_general_ci
-            AND (cm.middlename COLLATE utf8mb4_general_ci = rm.middle_name COLLATE utf8mb4_general_ci 
-                OR cm.middlename IS NULL 
-                OR rm.middle_name IS NULL 
-                OR cm.middlename = '' 
-                OR rm.middle_name = '')
-        WHERE cm.sheet_name = ? 
-        AND rm.file_group = ?
-        AND cm.course_program_enrolled IS NOT NULL
-        ORDER BY cm.course_program_enrolled ASC";
-
-    $stmt = $conn->prepare($courseQuery);
-    $stmt->bind_param("ss", $campus, $file_group);
-    $stmt->execute();
-    $courseResult = $stmt->get_result();
-    $courses = [];
-
-    while ($row = $courseResult->fetch_assoc()) {
-        $courses[] = $row['course_program_enrolled'];
-    }
-    $stmt->close();
-
-    // Apply the selected courses to filter assigned_program_chairs
-    if (!empty($courses)) {
-        $placeholders = implode(',', array_fill(0, count($courses), '?'));
-        $sql = "SELECT id, course_program, program_chair, status, assigned_at 
-                FROM assigned_program_chairs 
-                WHERE course_program IN ($placeholders)";
-
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param(str_repeat('s', count($courses)), ...$courses);
+    if ($campus === '' || $collegeName === '') {
+        echo '<tr><td colspan="4">College not set on your dean account. Contact your director.</td></tr>';
+    } else {
+        $stmt = $conn->prepare(
+            'SELECT id, course_program, program_chair, status, assigned_at
+             FROM assigned_program_chairs
+             WHERE UPPER(TRIM(campus)) = UPPER(TRIM(?))
+               AND college_name = ?
+             ORDER BY course_program ASC'
+        );
+        $stmt->bind_param('ss', $campus, $collegeName);
         $stmt->execute();
         $result = $stmt->get_result();
-
         if ($result->num_rows > 0) {
             while ($row = $result->fetch_assoc()) {
-                $statusBadge = '';
-                switch ($row['status']) {
-                    case 'active':
-                        $statusBadge = '<span class="badge badge-success btn-rounded">Active</span>';
-                        break;
-                    case 'pending':
-                        $statusBadge = '<span class="badge badge-warning btn-rounded">Pending</span>';
-                        break;
-                    case 'restricted':
-                        $statusBadge = '<span class="badge badge-secondary btn-rounded">Restricted</span>';
-                        break;
-                }
-                // Display user data in the table
+                $statusBadge = match ($row['status']) {
+                    'active' => '<span class="badge badge-success btn-rounded">Active</span>',
+                    'pending' => '<span class="badge badge-warning btn-rounded">Pending</span>',
+                    'restricted' => '<span class="badge badge-secondary btn-rounded">Restricted</span>',
+                    default => '<span class="badge badge-light btn-rounded">' . htmlspecialchars((string) $row['status']) . '</span>',
+                };
                 echo '<tr>';
                 echo '<td>' . $statusBadge . '</td>';
-                echo '<td>' . $row['course_program'] . '</td>';
-                echo '<td>' . $row['program_chair'] . '</td>';
-                echo '<td>' . $row['assigned_at'] . '</td>';
-                // echo '<td >
-                //         <button class="btn btn-danger delete-btn btn-rounded" 
-                //                 data-id="' . $row['id'] . '">
-                //             <i class="fa fa-trash"></i>
-                //         </button>
-                //       </td>';
+                echo '<td>' . htmlspecialchars((string) $row['course_program']) . '</td>';
+                echo '<td>' . htmlspecialchars((string) $row['program_chair']) . '</td>';
+                echo '<td>' . htmlspecialchars((string) $row['assigned_at']) . '</td>';
                 echo '</tr>';
             }
         } else {
-            echo '<tr><td colspan="5">No users found.</td></tr>';
+            echo '<tr><td colspan="4">No program chairs assigned yet for this college.</td></tr>';
         }
         $stmt->close();
-    } else {
-        echo '<tr><td colspan="5">No matching courses found.</td></tr>';
     }
     ?>
 </tbody>

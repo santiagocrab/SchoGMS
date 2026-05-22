@@ -1,11 +1,15 @@
 <?php
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 
-// Require necessary dependencies
-require '../config/conn.php';
-require '../vendor/autoload.php';
+require_once __DIR__ . '/../config/session.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
+
+if (!($conn instanceof mysqli)) {
+    echo json_encode(['success' => false, 'error' => 'Database unavailable']);
+    exit;
+}
 
 // Enable error reporting for debugging purposes
 error_reporting(E_ALL);
@@ -60,8 +64,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    echo json_encode(['success' => true, 'message' => 'File uploaded successfully.']);
-
     try {
         // Load the Excel file
         $spreadsheet = IOFactory::load($targetFilePath);
@@ -79,21 +81,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Extract data starting from row 3
         $dataRows = array_slice($rows, 2);
-
-        // Database connection details
-        $servername = "localhost";
-        $username = "root";
-        $password = "";
-        $dbname = "schogms";
-
-        // Establish database connection
-        $conn = new mysqli($servername, $username, $password, $dbname);
-        if ($conn->connect_error) {
-            $error = 'Database connection failed: ' . $conn->connect_error;
-            logError($error);
-            echo json_encode(['success' => false, 'error' => $error]);
-            exit;
-        }
 
         // Prepare the SQL insert query
         $insertQuery = "
@@ -169,10 +156,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $stmt->close();
-        $conn->close();
-        unlink($targetFilePath); // Remove uploaded file after processing
+        unlink($targetFilePath);
 
-        echo json_encode(['success' => true, 'message' => 'Data successfully uploaded.']);
+        echo json_encode([
+            'success' => true,
+            'message' => 'Billing records imported successfully. Rows from Excel row 3 onward were processed.',
+        ]);
     } catch (Exception $e) {
         $error = 'Error processing file: ' . $e->getMessage();
         logError($error);

@@ -1,26 +1,13 @@
 <?php
-// Your database connection parameters
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "schogms";
+$c = require __DIR__ . '/../../config/schogms_mysql.php';
 
-// Create a connection to the database
-$conn = new mysqli($servername, $username, $password, $dbname);
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+try {
+    $conn = new mysqli($c['host'], $c['username'], $c['password'], $c['database']);
+    $conn->set_charset('utf8mb4');
+} catch (mysqli_sql_exception $e) {
+    error_log('SchoGMS MySQL connection failed: ' . $e->getMessage());
+    http_response_code(500);
+    die('Database connection failed. Check config/schogms_mysql.local.php.');
 }
-// $servername = "localhost";
-// $username = "u957444413_schogms";
-// $password = "Schogms_2025";
-// $dbname = "u957444413_schogms";
-
-// // Create a connection to the database
-// $conn = new mysqli($servername, $username, $password, $dbname);
-
-// if ($conn->connect_error) {
-//     die("Connection failed: " . $conn->connect_error);
-// }
-// echo "Connected successfully";
-?>

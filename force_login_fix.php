@@ -49,7 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         header("Location: users/registrar/");
                         break;
                     case 'program-head':
-                        header("Location: users/program-head/");
+                    case 'program-chair':
+                        header("Location: users/program-chair/");
                         break;
                     case 'director':
                         header("Location: users/director/");

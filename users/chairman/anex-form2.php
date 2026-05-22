@@ -14,13 +14,35 @@
     <title> Scholarship and Grants Management System | SchoGMS </title>
     <!-- Custom CSS -->
 
-    <!-- This page plugin CSS -->
-    <link href="../../assets/extra-libs/datatables.net-bs4/css/dataTables.bootstrap4.css" rel="stylesheet">
-    <link href="../../assets/extra-libs/c3/c3.min.css" rel="stylesheet">
-    <link href="../../assets/libs/chartist/dist/chartist.min.css" rel="stylesheet">
-    <link href="../../assets/extra-libs/jvector/jquery-jvectormap-2.0.2.css" rel="stylesheet" />
-    <!-- Custom CSS -->
-    <link href="../../dist/css/style.min.css" rel="stylesheet">
+    <!-- This page plugin CSS --><!-- Custom CSS -->
+        <?php require_once __DIR__ . '/inc/assets.php'; schogms_chairman_head(true); ?>
+    <style>
+        #annexPreviewModal .modal-dialog { max-width: 96%; margin: 1rem auto; }
+        #annexPreviewModal .modal-body {
+            max-height: calc(100vh - 140px);
+            overflow: auto;
+            background: #f8fafc;
+        }
+        #annexPreviewBody .annex-preview-meta {
+            font-size: 0.9rem;
+            color: #475569;
+            margin-bottom: 0.75rem;
+        }
+        #annexPreviewBody .table-responsive {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+        }
+        #annexPreviewBody table { font-size: 12px; margin-bottom: 0; }
+        #annexPreviewBody table th {
+            position: sticky;
+            top: 0;
+            background: #eef2ff;
+            z-index: 1;
+        }
+        .btn-view-annex { min-width: 4.5rem; }
+    </style>
+
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -42,145 +64,8 @@
     <!-- ============================================================== -->
     <!-- Main wrapper - style you can find in pages.scss -->
     <!-- ============================================================== -->
-    <div id="main-wrapper" data-theme="light" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
-        data-sidebar-position="fixed" data-header-position="fixed" data-boxed-layout="full">
-        <!-- ============================================================== -->
-        <!-- Topbar header - style you can find in pages.scss -->
-        <!-- ============================================================== -->
-        <header class="topbar" data-navbarbg="skin6">
-            <nav class="navbar top-navbar navbar-expand-md">
-                <div class="navbar-header" data-logobg="skin6">
-                    <!-- This is for the sidebar toggle which is visible on mobile only -->
-                    <a class="nav-toggler waves-effect waves-light d-block d-md-none" href="javascript:void(0)"><i
-                            class="ti-menu ti-close"></i></a>
-                    <!-- ============================================================== -->
-                    <!-- Logo -->
-                    <!-- ============================================================== -->
-                    <div class="navbar-brand">
-                        <!-- Logo icon -->
-                        <a href="index.php">
-                            <b class="logo-icon">
-                                <!-- Dark Logo icon -->
-                                <img src="../../assets/images/logo.png" style="height: auto; width: 200px;"
-                                    alt="homepage" class="dark-logo" />
-                                <!-- Light Logo icon -->
-                                <img src="../../assets/images/logo.png" alt="homepage" class="light-logo" />
-                            </b>
-                        </a>
-                    </div>
-                    <!-- ============================================================== -->
-                    <!-- End Logo -->
-                    <!-- ============================================================== -->
-                    <!-- ============================================================== -->
-                    <!-- Toggle which is visible on mobile only -->
-                    <!-- ============================================================== -->
-                    <a class="topbartoggler d-block d-md-none waves-effect waves-light" href="javascript:void(0)"
-                        data-toggle="collapse" data-target="#navbarSupportedContent"
-                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><i
-                            class="ti-more"></i></a>
-                </div>
-                <!-- ============================================================== -->
-                <!-- End Logo -->
-                <!-- ============================================================== -->
-                <div class="navbar-collapse collapse" id="navbarSupportedContent">
-                    <!-- ============================================================== -->
-                    <!-- toggle and nav items -->
-                    <!-- ============================================================== -->
-                    <ul class="navbar-nav float-left mr-auto ml-3 pl-1">
-                        <!-- Notification -->
-                        <h3 class="page-title text-truncate text-dark font-weight-medium mb-1">Scholarship and Grants
-                            Management System</h3>
+    <?php require_once __DIR__ . '/inc/chairman_nav.php'; schogms_chairman_shell_open('Annex 7 review'); ?>
 
-                        <!-- End Notification -->
-                        <!-- ============================================================== -->
-                        <!-- create new -->
-                        <!-- ============================================================== -->
-
-                    </ul>
-                    <!-- ============================================================== -->
-                    <!-- Right side toggle and nav items -->
-                    <!-- ============================================================== -->
-                    <ul class="navbar-nav float-right">
-                        <!-- ============================================================== -->
-                        <!-- User profile and search -->
-                        <!-- ============================================================== -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="javascript:void(0)" data-toggle="dropdown"
-                                aria-haspopup="true" aria-expanded="false">
-                                <img src="../../assets/images/users/image.png" alt="user" class="rounded-circle"
-                                    width="40">
-                                <span class="ml-2 d-none d-lg-inline-block"><span>Hello,</span> <span
-                                        class="text-dark"><?= $fullname ?></span> <i data-feather="chevron-down"
-                                        class="svg-icon"></i></span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-right user-dd animated flipInY">
-                            <a class="dropdown-item" href="change_password.php"><i data-feather="key"
-                                        class="svg-icon mr-2 ml-1"></i>
-                                    Change Password</a>
-                                <a class="dropdown-item" href="logout.php"><i data-feather="power"
-                                        class="svg-icon mr-2 ml-1"></i>
-                                    Logout</a>
-                            </div>
-                        </li>
-                        <!-- ============================================================== -->
-                        <!-- User profile and search -->
-                        <!-- ============================================================== -->
-                    </ul>
-                </div>
-            </nav>
-        </header>
-        <!-- ============================================================== -->
-        <!-- End Topbar header -->
-        <!-- ============================================================== -->
-        <!-- ============================================================== -->
-        <!-- Left Sidebar - style you can find in sidebar.scss  -->
-        <!-- ============================================================== -->
-        <aside class="left-sidebar" data-sidebarbg="skin6">
-            <!-- Sidebar scroll-->
-            <div class="scroll-sidebar" data-sidebarbg="skin6">
-                <!-- Sidebar navigation-->
-                <nav class="sidebar-nav">
-               <ul id="sidebarnav">
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="index.php"
-                                aria-expanded="false"><i data-feather="home" class="feather-icon"></i><span
-                                    class="hide-menu">Dashboard</span></a></li>
-                        <li class="list-divider"></li>
-                        <li class="nav-small-cap"><span class="hide-menu">Applications</span></li>
-                        <li class="sidebar-item"> <a class="sidebar-link" href="ched_masterlist.php"
-                                aria-expanded="false"><i data-feather="users" class="feather-icon"></i><span
-                                    class="hide-menu">CHED TDP
-                                    Masterlist
-                                </span></a>
-                        </li>
-                        <li class="sidebar-item"> <a class="sidebar-link" href="ched_masterlist_tes.php"
-                                aria-expanded="false"><i data-feather="users" class="feather-icon"></i><span
-                                    class="hide-menu">CHED TES
-                                    Masterlist
-                                </span></a>
-                        </li>
-                        <li class="sidebar-item"> <a class="sidebar-link" href="program_list.php"
-                                aria-expanded="false"><i data-feather="folder" class="feather-icon"></i><span
-                                    class="hide-menu">Program List
-                                </span></a>
-                        </li>
-                        <li class="sidebar-item"> <a class="sidebar-link" href="anex-form2.php" aria-expanded="false"><i
-                                    data-feather="folder" class="feather-icon"></i><span class="hide-menu">Annex 7 Form 2
-                                </span></a>
-                        </li>
-
-                    </ul>
-                </nav>
-                <!-- End Sidebar navigation -->
-            </div>
-            <!-- End Sidebar scroll-->
-        </aside>
-        <!-- ============================================================== -->
-        <!-- End Left Sidebar - style you can find in sidebar.scss  -->
-        <!-- ============================================================== -->
-        <!-- ============================================================== -->
-        <!-- Page wrapper  -->
-        <!-- ============================================================== -->
-        <div class="page-wrapper">
             <!-- ============================================================== -->
             <!-- Bread crumb and right sidebar toggle -->
             <!-- ============================================================== -->
@@ -191,8 +76,8 @@
                         <div class="d-flex align-items-center">
                             <nav aria-label="breadcrumb">
                                 <ol class="breadcrumb m-0 p-0">
-                                    <li class="breadcrumb-item"><a href="index.php">Program List</a>
-                                    </li>
+                                    <li class="breadcrumb-item"><a href="index.php">Dashboard</a></li>
+                                    <li class="breadcrumb-item active">Annex 7 review</li>
                                 </ol>
                             </nav>
                         </div>
@@ -284,100 +169,83 @@
                                 <div class="row">
                                     <div class="table-responsive">
                                         <?php
-                                        include 'config/conn.php';
-
-                                        $result = $conn->query("SELECT * FROM file_submissions ORDER BY uploaded_at DESC");
+                                        $pendingAnnex = 0;
+                                        $pRes = $conn->query("SELECT COUNT(*) AS n FROM file_submissions WHERE status = 'Pending'");
+                                        if ($pRes) {
+                                            $pendingAnnex = (int) ($pRes->fetch_assoc()['n'] ?? 0);
+                                        }
+                                        $result = $conn->query(
+                                            'SELECT id, user_email, campus, file_name, file_path, uploaded_at, status
+                                             FROM file_submissions ORDER BY uploaded_at DESC'
+                                        );
                                         ?>
+                                        <?php if ($pendingAnnex > 0): ?>
+                                        <div class="alert alert-warning d-flex align-items-center mb-3" role="alert">
+                                            <i data-feather="bell" class="feather-icon mr-2"></i>
+                                            <span><strong><?= $pendingAnnex ?></strong> submission(s) awaiting your review. Use <strong>View</strong> to scroll through the file before approving.</span>
+                                        </div>
+                                        <?php endif; ?>
                                         <table id="zero_config" class="table table-striped table-bordered no-wrap">
+                                            <thead>
                                             <tr>
                                                 <th>ID</th>
                                                 <th>User Email</th>
                                                 <th>Campus</th>
                                                 <th>File Name</th>
-                                                <th>Download</th>
+                                                <th>Preview</th>
                                                 <th>Uploaded At</th>
                                                 <th>Status</th>
                                                 <th>Action</th>
                                             </tr>
-                                            <?php while ($row = $result->fetch_assoc()): ?>
-                                                <tr>
-                                                    <td><?= $row['id']; ?></td>
-                                                    <td><?= $row['user_email']; ?></td>
-                                                    <td><?= $row['campus']; ?></td>
-                                                    <td><?= $row['file_name']; ?></td>
-                                                    <td>
-                                                        <?php if ($row['status'] == 'Pending'): ?>
-                                                            <a href="../coordinator/<?= $row['file_path']; ?>"
-                                                                download>Download</a>
-                                                        <?php else: ?>
-                                                            <span style="color: gray; cursor: not-allowed;">Download
-                                                                Disabled</span>
+                                            </thead>
+                                            <tbody>
+                                            <?php while ($row = $result->fetch_assoc()):
+                                                $fid = (int) $row['id'];
+                                                $fname = (string) $row['file_name'];
+                                                $ext = strtolower(pathinfo($fname, PATHINFO_EXTENSION));
+                                                $isPending = ($row['status'] ?? '') === 'Pending';
+                                                $downloadUrl = '../coordinator/' . htmlspecialchars((string) $row['file_path'], ENT_QUOTES, 'UTF-8');
+                                            ?>
+                                                <tr class="<?= $isPending ? 'table-warning' : '' ?>">
+                                                    <td><?= $fid ?></td>
+                                                    <td><?= htmlspecialchars((string) $row['user_email'], ENT_QUOTES, 'UTF-8') ?></td>
+                                                    <td><?= htmlspecialchars((string) $row['campus'], ENT_QUOTES, 'UTF-8') ?></td>
+                                                    <td><?= htmlspecialchars($fname, ENT_QUOTES, 'UTF-8') ?></td>
+                                                    <td class="text-nowrap">
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-primary btn-view-annex"
+                                                            data-id="<?= $fid ?>"
+                                                            data-name="<?= htmlspecialchars($fname, ENT_QUOTES, 'UTF-8') ?>"
+                                                            data-campus="<?= htmlspecialchars((string) $row['campus'], ENT_QUOTES, 'UTF-8') ?>"
+                                                            data-email="<?= htmlspecialchars((string) $row['user_email'], ENT_QUOTES, 'UTF-8') ?>"
+                                                            data-ext="<?= htmlspecialchars($ext, ENT_QUOTES, 'UTF-8') ?>">
+                                                            View
+                                                        </button>
+                                                        <?php if ($isPending): ?>
+                                                        <a class="btn btn-sm btn-outline-secondary"
+                                                            href="<?= $downloadUrl ?>"
+                                                            download
+                                                            title="Download file">Save</a>
                                                         <?php endif; ?>
                                                     </td>
-                                                    <td><?= $row['uploaded_at']; ?></td>
-                                                    <td><?= $row['status']; ?></td>
+                                                    <td><?= htmlspecialchars((string) $row['uploaded_at'], ENT_QUOTES, 'UTF-8') ?></td>
+                                                    <td><?= htmlspecialchars((string) $row['status'], ENT_QUOTES, 'UTF-8') ?></td>
                                                     <td>
-                                                        <form class="statusForm" method="post">
-                                                            <input type="hidden" name="file_id" value="<?= $row['id']; ?>">
-                                                            <!-- <span class="statusText"><?= $row['status']; ?></span> -->
-
-                                                            <?php if ($row['status'] == 'Pending'): ?>
-                                                                <button type="button" class="updateStatusBtn btn-success"
-                                                                    data-status="Approved">Approve</button>
-                                                                <button type="button" class="updateStatusBtn btn-danger"
-                                                                    data-status="Rejected">Decline</button>
-                                                            <?php endif; ?>
+                                                        <?php if ($isPending): ?>
+                                                        <form class="statusForm d-inline" method="post">
+                                                            <input type="hidden" name="file_id" value="<?= $fid ?>">
+                                                            <button type="button" class="updateStatusBtn btn btn-sm btn-success"
+                                                                data-status="Approved">Approve</button>
+                                                            <button type="button" class="updateStatusBtn btn btn-sm btn-danger"
+                                                                data-status="Rejected">Decline</button>
                                                         </form>
+                                                        <?php else: ?>
+                                                        <span class="text-muted small">—</span>
+                                                        <?php endif; ?>
                                                     </td>
-
-                                                    <script>
-                                                        document.querySelectorAll(".updateStatusBtn").forEach(button => {
-                                                            button.addEventListener("click", function () {
-                                                                const form = this.closest(".statusForm");
-                                                                const fileId = form.querySelector("input[name='file_id']").value;
-                                                                const status = this.getAttribute("data-status");
-
-                                                                Swal.fire({
-                                                                    title: "Are you sure?",
-                                                                    text: `Do you want to mark this file as "${status}"?`,
-                                                                    icon: "warning",
-                                                                    showCancelButton: true,
-                                                                    confirmButtonText: `Yes, ${status} it!`,
-                                                                    cancelButtonText: "Cancel",
-                                                                    reverseButtons: true
-                                                                }).then((result) => {
-                                                                    if (result.isConfirmed) {
-                                                                        fetch("update_status.php", {
-                                                                            method: "POST",
-                                                                            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                                                                            body: `file_id=${fileId}&status=${status}`
-                                                                        })
-                                                                            .then(response => response.json())
-                                                                            .then(data => {
-                                                                                if (data.success) {
-                                                                                    Swal.fire({
-                                                                                        title: "Updated!",
-                                                                                        text: "The file status has been updated successfully.",
-                                                                                        icon: "success",
-                                                                                        timer: 3000
-                                                                                    });
-                                                                                    setTimeout(() => location.reload(), 1500); // Reload after update
-                                                                                } else {
-                                                                                    Swal.fire("Error!", data.error || "Failed to update status.", "error");
-                                                                                }
-                                                                            })
-                                                                            .catch(error => {
-                                                                                Swal.fire("Error!", "An error occurred while updating.", "error");
-                                                                                console.error("Fetch error:", error);
-                                                                            });
-                                                                    }
-                                                                });
-                                                            });
-                                                        });
-                                                    </script>
-
                                                 </tr>
                                             <?php endwhile; ?>
+                                            </tbody>
                                         </table>
                                         <?php $conn->close(); ?>
                                     </div>
@@ -385,42 +253,145 @@
                             </div>
                         </div>
                     </div>
-                    <!-- ============================================================== -->
-                    <!-- End PAge Content -->
-                    <!-- ============================================================== -->
                 </div>
-                <!-- ============================================================== -->
-                <!-- End Container fluid  -->
-                <!-- ============================================================== -->
-                <!-- ============================================================== -->
-                <!-- footer -->
-                <!-- ============================================================== -->
-                <footer class="footer text-center text-muted">
-                    All Rights Reserved 2026. Scholarship and Grants Management System <a href="">(SchoGMS)</a>.
-                </footer>
-                <!-- ============================================================== -->
-                <!-- End footer -->
-                <!-- ============================================================== -->
-            </div>
-            <!-- ============================================================== -->
-            <!-- End Page wrapper  -->
-            <!-- ============================================================== -->
-        </div>
-        <!-- ============================================================== -->
-        <!-- End Wrapper -->
-        <!-- ============================================================== -->
-        <!-- End Wrapper -->
-        <!-- ============================================================== -->
-        <!-- All Jquery -->
-        <!-- ============================================================== -->
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-        <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+            <!-- Annex file preview (scroll in modal, no forced download) -->
+            <div class="modal fade" id="annexPreviewModal" tabindex="-1" role="dialog" aria-labelledby="annexPreviewTitle" aria-hidden="true">
+                <div class="modal-dialog modal-xl" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="annexPreviewTitle">Annex 7 preview</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="annexPreviewBody">
+                                <p class="text-muted mb-0">Loading…</p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="#" id="annexPreviewDownload" class="btn btn-outline-secondary btn-sm d-none" download>Download file</a>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <?php require_once __DIR__ . '/inc/assets.php'; schogms_chairman_footer_scripts(['datatables' => true, 'sweetalert' => true]); ?>
+        <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
         <script>
-            document.getElementById('uploadForm').addEventListener('submit', function (event) {
+            function annexEscapeHtml(text) {
+                const d = document.createElement('div');
+                d.textContent = text == null ? '' : String(text);
+                return d.innerHTML;
+            }
+
+            function annexSheetToTable(sheet) {
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                if (!rows.length) {
+                    return '<p class="text-muted">This sheet is empty.</p>';
+                }
+                let html = '<div class="table-responsive"><table class="table table-sm table-bordered table-hover mb-0"><tbody>';
+                rows.forEach((row, ri) => {
+                    html += '<tr>';
+                    (row || []).forEach((cell) => {
+                        const tag = ri === 0 ? 'th' : 'td';
+                        html += '<' + tag + '>' + annexEscapeHtml(cell) + '</' + tag + '>';
+                    });
+                    html += '</tr>';
+                });
+                html += '</tbody></table></div>';
+                return html;
+            }
+
+            document.querySelectorAll('.btn-view-annex').forEach((btn) => {
+                btn.addEventListener('click', async function () {
+                    const id = this.getAttribute('data-id');
+                    const name = this.getAttribute('data-name') || 'Submission';
+                    const campus = this.getAttribute('data-campus') || '';
+                    const email = this.getAttribute('data-email') || '';
+                    const ext = (this.getAttribute('data-ext') || '').toLowerCase();
+                    const body = document.getElementById('annexPreviewBody');
+                    const title = document.getElementById('annexPreviewTitle');
+                    const dl = document.getElementById('annexPreviewDownload');
+                    const viewUrl = 'view_annex_file.php?id=' + encodeURIComponent(id);
+
+                    title.textContent = name;
+                    body.innerHTML = '<p class="text-muted">Loading preview…</p>';
+                    dl.href = viewUrl;
+                    dl.setAttribute('download', name);
+                    dl.classList.remove('d-none');
+                    $('#annexPreviewModal').modal('show');
+
+                    try {
+                        const res = await fetch(viewUrl);
+                        if (!res.ok) {
+                            throw new Error('Could not load file (HTTP ' + res.status + ').');
+                        }
+                        const meta = '<div class="annex-preview-meta"><strong>Campus:</strong> ' + annexEscapeHtml(campus)
+                            + ' &nbsp;|&nbsp; <strong>Coordinator:</strong> ' + annexEscapeHtml(email)
+                            + ' &nbsp;|&nbsp; <span class="text-muted">Scroll to review all rows</span></div>';
+
+                        if (ext === 'csv') {
+                            const text = await res.text();
+                            const wb = XLSX.read(text, { type: 'string' });
+                            const sheet = wb.Sheets[wb.SheetNames[0]];
+                            body.innerHTML = meta + annexSheetToTable(sheet);
+                        } else if (ext === 'xlsx' || ext === 'xls') {
+                            const buf = await res.arrayBuffer();
+                            const wb = XLSX.read(buf, { type: 'array' });
+                            const sheet = wb.Sheets[wb.SheetNames[0]];
+                            body.innerHTML = meta + annexSheetToTable(sheet);
+                        } else {
+                            body.innerHTML = meta + '<p class="alert alert-info mb-0">Preview is only available for Excel (.xls, .xlsx) and CSV. Use <strong>Save</strong> to download this file.</p>';
+                        }
+                    } catch (err) {
+                        body.innerHTML = '<p class="alert alert-danger mb-0">' + annexEscapeHtml(err.message || 'Failed to load preview.') + '</p>';
+                    }
+                    if (typeof feather !== 'undefined') {
+                        feather.replace();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.updateStatusBtn').forEach((button) => {
+                button.addEventListener('click', function () {
+                    const form = this.closest('.statusForm');
+                    const fileId = form.querySelector("input[name='file_id']").value;
+                    const status = this.getAttribute('data-status');
+
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: 'Mark this submission as "' + status + '"?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, ' + status,
+                        cancelButtonText: 'Cancel',
+                        reverseButtons: true
+                    }).then((result) => {
+                        if (!result.isConfirmed) return;
+                        fetch('update_status.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: 'file_id=' + encodeURIComponent(fileId) + '&status=' + encodeURIComponent(status)
+                        })
+                            .then((r) => r.json())
+                            .then((data) => {
+                                if (data.success) {
+                                    Swal.fire({ title: 'Updated!', icon: 'success', timer: 2000, showConfirmButton: false });
+                                    setTimeout(() => location.reload(), 1200);
+                                } else {
+                                    Swal.fire('Error!', data.error || 'Failed to update status.', 'error');
+                                }
+                            })
+                            .catch(() => Swal.fire('Error!', 'An error occurred while updating.', 'error'));
+                    });
+                });
+            });
+
+            const uploadFormEl = document.getElementById('uploadForm');
+            if (uploadFormEl) uploadFormEl.addEventListener('submit', function (event) {
                 event.preventDefault();
 
                 const fileGroupInput = document.getElementById('file_group');
@@ -519,7 +490,6 @@
                 });
             });
         </script>
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
             document.querySelectorAll('.delete-btn').forEach(button => {
                 button.addEventListener('click', function () {
@@ -606,30 +576,7 @@
 
 
 
-        <script src="../../assets/libs/jquery/dist/jquery.min.js"></script>
-        <script src="../../assets/libs/popper.js/dist/umd/popper.min.js"></script>
-        <script src="../../assets/libs/bootstrap/dist/js/bootstrap.min.js"></script>
-        <!-- apps -->
-
-        <!-- apps -->
-        <script src="../../dist/js/app-style-switcher.js"></script>
-        <script src="../../dist/js/feather.min.js"></script>
-        <script src="../../assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js"></script>
-        <script src="../../dist/js/sidebarmenu.js"></script>
-        <!--Custom JavaScript -->
-        <script src="../../dist/js/custom.min.js"></script>
-        <!--This page JavaScript -->
-        <script src="../../assets/extra-libs/c3/d3.min.js"></script>
-        <script src="../../assets/extra-libs/c3/c3.min.js"></script>
-        <script src="../../assets/libs/chartist/dist/chartist.min.js"></script>
-        <script src="../../assets/libs/chartist-plugin-tooltips/dist/chartist-plugin-tooltip.min.js"></script>
-        <script src="../../assets/extra-libs/jvector/jquery-jvectormap-2.0.2.min.js"></script>
-        <script src="../../assets/extra-libs/jvector/jquery-jvectormap-world-mill-en.js"></script>
-        <script src="../../dist/js/pages/dashboards/dashboard1.min.js"></script>
-
-        <!--This page plugins -->
-        <script src="../../assets/extra-libs/datatables.net/js/jquery.dataTables.min.js"></script>
-        <script src="../../dist/js/pages/datatable/datatable-basic.init.js"></script>
+            <?php schogms_chairman_shell_close(); ?>
 </body>
 
 </html>

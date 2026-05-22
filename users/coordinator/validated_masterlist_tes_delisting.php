@@ -4,7 +4,10 @@ require '../config/conn.php';
 require '../vendor/autoload.php';  // Ensure PhpSpreadsheet is installed via Composer
 
 // Get filters from GET request
-$sheet_name = isset($_GET['sheet_name']) ? $_GET['sheet_name'] : '';
+require_once __DIR__ . '/inc/validation_export.php';
+$program = strtolower((string) ($_GET['program'] ?? 'tes'));
+$sheet_name = trim((string) ($_GET['sheet_name'] ?? ''));
+$exportRows = schogms_validation_export_rows($conn, $program, $sheet_name, $_GET);
 
 // Query to retrieve data from both ched_masterlist and registrar_master_list
 // $query = "SELECT 
@@ -57,8 +60,8 @@ if (isset($_POST['export'])) {
     $row_num5 = 40; // For Sheet 3
     $control_number5 = 1;
 
-    // Process only entries with id_number
-    while ($row = $result->fetch_assoc()) {
+    // Process only entries without id_number
+    foreach ($exportRows as $row) {
         if (empty($row['id_number'])) {
             // Insert new row in Sheet 3
             $sheet5->insertNewRowBefore($row_num5);

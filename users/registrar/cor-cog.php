@@ -1,5 +1,23 @@
-<?php 
-include 'config/session.php'; 
+<?php
+include 'config/session.php';
+require_once __DIR__ . '/inc/registrar_data.php';
+
+$docFetch = schogms_registrar_document_fetch($_GET, $sheet_name ?? null);
+$documentRows = $docFetch['rows'];
+$totalDocuments = $docFetch['total'];
+$perPage = $docFetch['per_page'];
+$page = $docFetch['page'];
+$totalPages = $docFetch['total_pages'];
+$displayCount = $docFetch['display_count'];
+$dashCounts = schogms_registrar_dashboard_counts($sheet_name ?? null);
+$corCount = $dashCounts['cor'];
+$filterCategory = $_GET['category'] ?? '';
+$filterAcademicYear = $_GET['academic_year'] ?? '';
+$filterSemester = $_GET['semester'] ?? '';
+$filterCampus = $_GET['campus'] ?? '';
+$filterLastName = $_GET['lastname'] ?? '';
+$filterFirstName = $_GET['firstname'] ?? '';
+$searchTerm = $_GET['search'] ?? '';
 
 // Handle incoming COR/COG view requests from masterlist
 $viewCor = isset($_GET['view_cor']) ? $_GET['view_cor'] : '';
@@ -37,6 +55,7 @@ if (($viewCor || $viewCog) && !empty($filePath)) {
     <link href="../../assets/extra-libs/jvector/jquery-jvectormap-2.0.2.css" rel="stylesheet" />
     <!-- Custom CSS -->
     <link href="../../dist/css/style.min.css" rel="stylesheet">
+    <style>.preloader{display:none!important}#main-wrapper{opacity:1!important}</style>
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -154,23 +173,7 @@ if (($viewCor || $viewCog) && !empty($filePath)) {
                 <!-- Sidebar navigation-->
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="index.php"
-                                aria-expanded="false"><i data-feather="home" class="feather-icon"></i><span
-                                    class="hide-menu">Dashboard</span></a></li>
-                        <li class="list-divider"></li>
-                        <li class="nav-small-cap"><span class="hide-menu">Registrar</span></li>
-                        <li class="sidebar-item"> <a class="sidebar-link" href="masterlist.php" aria-expanded="false"><i
-                                    data-feather="users" class="feather-icon"></i><span class="hide-menu">Registrar
-                                    Masterlist
-                                </span></a>
-                        </li>
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="cor-cog.php"
-                                aria-expanded="false"><i data-feather="book-open" class="feather-icon"></i><span
-                                    class="hide-menu">COR & COG</span></a></li>
-                                    
-                                    <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="documents_uploaded.php"
-                                aria-expanded="false"><i data-feather="folder" class="feather-icon"></i><span
-                                    class="hide-menu">Document uploaded</span></a></li>
+                        <?php require __DIR__ . '/inc/registrar_sidebar_menu.php'; ?>
                     </ul>
                 </nav>
                 <!-- End Sidebar navigation -->
@@ -497,239 +500,33 @@ if (($viewCor || $viewCog) && !empty($filePath)) {
                                         </thead>
                                         <tbody>
                                             <?php
-                                            try {
-                                                // Get filter parameters
-                                                $filterCategory = $_GET['category'] ?? '';
-                                                $filterAcademicYear = $_GET['academic_year'] ?? '';
-                                                $filterSemester = $_GET['semester'] ?? '';
-                                                $filterCampus = $_GET['campus'] ?? '';
-                                                $filterLastName = $_GET['lastname'] ?? '';
-                                                $filterFirstName = $_GET['firstname'] ?? '';
-                                                $searchTerm = $_GET['search'] ?? '';
-                                                
-                                                // Build MongoDB filter
-                                                $filter = [];
-                                                if ($filterCategory) $filter['category'] = $filterCategory;
-                                                if ($filterAcademicYear) $filter['academic_year'] = $filterAcademicYear;
-                                                if ($filterSemester) $filter['semester'] = $filterSemester;
-                                                if ($filterCampus) $filter['campus'] = $filterCampus;
-                                                
-                                                // Get MongoDB collection
-                                                $documentCollection = $mongodb->collection('document_uploads');
-                                                
-                                                // Pagination parameters
-                                                $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-                                                $perPage = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 20; // Default 20, user can choose 10, 20, 50
-                                                $offset = ($page - 1) * $perPage;
-                                                
-                                                // Get total count for pagination
-                                                $totalDocuments = $documentCollection->count($filter);
-                                                
-                                                // If no documents in database, count files in filesystem
-                                                if ($totalDocuments == 0) {
-                                                    $totalDocuments = 0;
-                                                    $directories = [
-                                                        'uploads/COR/',
-                                                        'uploads/COG/',
-                                                        'uploads/documents/ISULAN/2024-2025/1st Semester/COR/',
-                                                        'uploads/documents/ISULAN/2024-2025/2nd Semester/COR/',
-                                                        'uploads/documents/ISULAN/2023-2024/1st Semester/COR/',
-                                                        'uploads/documents/ISULAN/2023-2024/2nd Semester/COR/'
-                                                    ];
-                                                    
-                                                    foreach ($directories as $dir) {
-                                                        if (is_dir($dir)) {
-                                                            $files = scandir($dir);
-                                                            foreach ($files as $file) {
-                                                                if ($file != '.' && $file != '..' && in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), ['pdf', 'rar', 'zip'])) {
-                                                                    $totalDocuments++;
-                                                                }
-                                                            }
-                                                        }
-                                                    }
+                                            if (empty($documentRows)) {
+                                                echo '<tr><td colspan="8" class="text-center text-muted">No documents found matching the filter criteria</td></tr>';
+                                            }
+                                            foreach ($documentRows as $doc) {
+                                                $cat = (string) ($doc['category'] ?? '');
+                                                $badge = $cat === 'COR' ? 'success' : 'primary';
+                                                $displayName = str_replace('?', 'Ñ', (string) ($doc['original_name'] ?? 'Unknown'));
+                                                $path = (string) ($doc['file_path'] ?? '');
+                                                $diskPath = $path;
+                                                if ($diskPath !== '' && !file_exists($diskPath) && str_starts_with($diskPath, '../../')) {
+                                                    $diskPath = __DIR__ . '/' . $diskPath;
                                                 }
-                                                
-                                                $totalPages = ceil($totalDocuments / $perPage);
-                                                
-                                                // Get documents with filter and pagination - SORTED ALPHABETICALLY BY FILENAME
-                                                $documents = $documentCollection->find($filter, [
-                                                    'sort' => ['original_name' => 1], // 1 = ascending (A to Z)
-                                                    'limit' => $perPage,
-                                                    'skip' => $offset
-                                                ]);
-                                                
-                                                // If no documents in database, get files from filesystem
-                                                if ($documentCollection->count($filter) == 0) {
-                                                    $documents = [];
-                                                    $directories = [
-                                                        'uploads/COR/',
-                                                        'uploads/COG/',
-                                                        'uploads/documents/ISULAN/2024-2025/1st Semester/COR/',
-                                                        'uploads/documents/ISULAN/2024-2025/2nd Semester/COR/',
-                                                        'uploads/documents/ISULAN/2023-2024/1st Semester/COR/',
-                                                        'uploads/documents/ISULAN/2023-2024/2nd Semester/COR/'
-                                                    ];
-                                                    
-                                                    $allFiles = [];
-                                                    foreach ($directories as $dir) {
-                                                        if (is_dir($dir)) {
-                                                            $files = scandir($dir);
-                                                            foreach ($files as $file) {
-                                                                if ($file != '.' && $file != '..' && in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), ['pdf', 'rar', 'zip'])) {
-                                                                    $filePath = $dir . $file;
-                                                                    $fileSize = file_exists($filePath) ? filesize($filePath) : 0;
-                                                                    
-                                                                    // Determine category from path
-                                                                    $category = 'COR';
-                                                                    if (strpos($dir, 'COG') !== false) {
-                                                                        $category = 'COG';
-                                                                    }
-                                                                    
-                                                                    // Determine academic year and semester from path
-                                                                    $academicYear = '2024-2025';
-                                                                    $semester = '1st Semester';
-                                                                    if (strpos($dir, '2023-2024') !== false) {
-                                                                        $academicYear = '2023-2024';
-                                                                    }
-                                                                    if (strpos($dir, '2nd Semester') !== false) {
-                                                                        $semester = '2nd Semester';
-                                                                    }
-                                                                    
-                                                                    // Determine file type
-                                                                    $fileType = 'application/pdf';
-                                                                    if ($fileExtension === 'rar') {
-                                                                        $fileType = 'application/x-rar-compressed';
-                                                                    } elseif ($fileExtension === 'zip') {
-                                                                        $fileType = 'application/zip';
-                                                                    }
-                                                                    
-                                                                    $allFiles[] = [
-                                                                        'original_name' => $file,
-                                                                        'file_path' => $filePath,
-                                                                        'file_size' => $fileSize,
-                                                                        'file_type' => $fileType,
-                                                                        'category' => $category,
-                                                                        'academic_year' => $academicYear,
-                                                                        'semester' => $semester,
-                                                                        'campus' => 'ISULAN',
-                                                                        'uploaded_by' => 'registrar isulan',
-                                                                        'uploaded_at' => date('Y-m-d H:i:s', filemtime($filePath))
-                                                                    ];
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                    
-                                                    // Sort alphabetically by filename (A to Z)
-                                                    usort($allFiles, function($a, $b) {
-                                                        return strcmp(strtolower($a['original_name']), strtolower($b['original_name']));
-                                                    });
-                                                    
-                                                    // Apply pagination
-                                                    $documents = array_slice($allFiles, $offset, $perPage);
+                                                echo '<tr>';
+                                                echo '<td><span class="badge badge-' . $badge . '">' . htmlspecialchars($cat !== '' ? $cat : 'Unknown', ENT_QUOTES, 'UTF-8') . '</span></td>';
+                                                echo '<td>' . htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8') . '</td>';
+                                                echo '<td>' . htmlspecialchars((string) ($doc['academic_year'] ?? '—'), ENT_QUOTES, 'UTF-8') . '</td>';
+                                                echo '<td>' . htmlspecialchars((string) ($doc['semester'] ?? '—'), ENT_QUOTES, 'UTF-8') . '</td>';
+                                                echo '<td>' . htmlspecialchars((string) ($doc['campus'] ?? '—'), ENT_QUOTES, 'UTF-8') . '</td>';
+                                                echo '<td>' . htmlspecialchars((string) ($doc['uploaded_by'] ?? '—'), ENT_QUOTES, 'UTF-8') . '</td>';
+                                                echo '<td>' . htmlspecialchars((string) ($doc['uploaded_at'] ?? '—'), ENT_QUOTES, 'UTF-8') . '</td>';
+                                                echo '<td>';
+                                                if ($path !== '' && ($diskPath === '' || file_exists($diskPath))) {
+                                                    echo '<a href="' . htmlspecialchars($path, ENT_QUOTES, 'UTF-8') . '" target="_blank" class="btn btn-sm btn-primary">View</a>';
+                                                } else {
+                                                    echo '<span class="text-muted">File missing</span>';
                                                 }
-                                                
-                                                $displayCount = 0;
-                                                
-                                                foreach ($documents as $doc) {
-                                                    // Apply comprehensive search term filter
-                                                    if ($searchTerm) {
-                                                        $originalName = $doc['original_name'] ?? '';
-                                                        $fixedName = str_replace('?', 'Ñ', $originalName);
-                                                        
-                                                        // Create comprehensive searchable text with multiple variations
-                                                        $searchableText = strtolower(implode(' ', [
-                                                            $fixedName,                    // Fixed name with Ñ
-                                                            $originalName,                 // Original name with ?
-                                                            $doc['academic_year'] ?? '',   // Academic year
-                                                            $doc['semester'] ?? '',        // Semester
-                                                            $doc['campus'] ?? '',          // Campus
-                                                            $doc['uploaded_by'] ?? '',     // Uploaded by
-                                                            $doc['category'] ?? '',        // Category (COR/COG)
-                                                            $doc['file_name'] ?? '',       // File name
-                                                            $doc['file_path'] ?? ''        // File path
-                                                        ]));
-                                                        
-                                                        // Also search in individual name parts
-                                                        $nameParts = explode(', ', $originalName);
-                                                        $lastName = $nameParts[0] ?? '';
-                                                        $firstName = $nameParts[1] ?? '';
-                                                        $middleName = $nameParts[2] ?? '';
-                                                        
-                                                        $searchableText .= ' ' . strtolower(implode(' ', [
-                                                            $lastName,
-                                                            $firstName,
-                                                            $middleName,
-                                                            str_replace('?', 'Ñ', $lastName),
-                                                            str_replace('?', 'Ñ', $firstName),
-                                                            str_replace('?', 'Ñ', $middleName)
-                                                        ]));
-                                                        
-                                                        $searchTermLower = strtolower($searchTerm);
-                                                        
-                                                        // Enhanced search logic with multiple variations
-                                                        $searchVariations = [
-                                                            $searchTermLower,
-                                                            str_replace('?', 'ñ', $searchTermLower),
-                                                            str_replace('ñ', '?', $searchTermLower),
-                                                            str_replace(['ñ', 'Ñ'], ['n', 'N'], $searchTermLower),
-                                                            preg_replace('/[^a-z0-9]/', '', $searchTermLower) // Remove special characters
-                                                        ];
-                                                        
-                                                        $found = false;
-                                                        foreach ($searchVariations as $variation) {
-                                                            if (stripos($searchableText, $variation) !== false) {
-                                                                $found = true;
-                                                                break;
-                                                            }
-                                                        }
-                                                        
-                                                        if (!$found) continue;
-                                                    }
-                                                    
-                                                    // Apply name filters if specified
-                                                    if ($filterLastName || $filterFirstName) {
-                                                        $originalName = $doc['original_name'] ?? '';
-                                                        $nameParts = explode(', ', $originalName);
-                                                        $lastName = $nameParts[0] ?? '';
-                                                        $firstName = $nameParts[1] ?? '';
-                                                        
-                                                        // Fix character encoding for name filters
-                                                        $fixedLastName = str_replace('?', 'Ñ', $lastName);
-                                                        $fixedFirstName = str_replace('?', 'Ñ', $firstName);
-                                                        
-                                                        if ($filterLastName && stripos($fixedLastName, $filterLastName) === false && stripos($lastName, $filterLastName) === false) continue;
-                                                        if ($filterFirstName && stripos($fixedFirstName, $filterFirstName) === false && stripos($firstName, $filterFirstName) === false) continue;
-                                                    }
-                                                    
-                                                    $displayCount++;
-                                                    
-                                                    echo "<tr>";
-                                                    echo "<td><span class='badge badge-" . ($doc['category'] == 'COR' ? 'success' : 'primary') . "'>" . htmlspecialchars($doc['category'] ?? 'Unknown') . "</span></td>";
-                                                    // Fix character encoding for display
-                                                    $displayName = str_replace('?', 'Ñ', $doc['original_name'] ?? 'Unknown');
-                                                    echo "<td>" . htmlspecialchars($displayName) . "</td>";
-                                                    echo "<td>" . htmlspecialchars($doc['academic_year'] ?? 'Unknown') . "</td>";
-                                                    echo "<td>" . htmlspecialchars($doc['semester'] ?? 'Unknown') . "</td>";
-                                                    echo "<td>" . htmlspecialchars($doc['campus'] ?? 'Unknown') . "</td>";
-                                                    echo "<td>" . htmlspecialchars($doc['uploaded_by'] ?? 'Unknown') . "</td>";
-                                                    echo "<td>" . htmlspecialchars($doc['uploaded_at'] ?? 'Unknown') . "</td>";
-                                                    echo "<td>";
-                                                    if (isset($doc['file_path']) && file_exists($doc['file_path'])) {
-                                                        echo "<a href='" . htmlspecialchars($doc['file_path']) . "' target='_blank' class='btn btn-sm btn-primary'>View</a>";
-                                                    } else {
-                                                        echo "<span class='text-muted'>File missing</span>";
-                                                    }
-                                                    echo "</td>";
-                                                    echo "</tr>";
-                                                }
-                                                
-                                                if ($displayCount == 0) {
-                                                    echo "<tr><td colspan='8' class='text-center text-muted'>No documents found matching the filter criteria</td></tr>";
-                                                }
-                                                
-                                            } catch (Exception $e) {
-                                                echo "<tr><td colspan='8' class='text-center text-danger'>Error loading documents: " . htmlspecialchars($e->getMessage()) . "</td></tr>";
+                                                echo '</td></tr>';
                                             }
                                             ?>
                                         </tbody>
@@ -741,25 +538,7 @@ if (($viewCor || $viewCog) && !empty($filePath)) {
                                     <div class="row">
                                         <div class="col-md-6">
                                             <small class="text-muted">
-                                                <strong>Total Documents:</strong> <?= $totalDocuments ?> 
-                                                <?php 
-                                                $corCount = $documentCollection->count(array_merge($filter, ['category' => 'COR']));
-                                                if ($corCount == 0) {
-                                                    // Count COR files from filesystem
-                                                    $corCount = 0;
-                                                    $corDirs = ['uploads/COR/', 'uploads/documents/ISULAN/2024-2025/1st Semester/COR/', 'uploads/documents/ISULAN/2024-2025/2nd Semester/COR/', 'uploads/documents/ISULAN/2023-2024/1st Semester/COR/', 'uploads/documents/ISULAN/2023-2024/2nd Semester/COR/'];
-                                                    foreach ($corDirs as $dir) {
-                                                        if (is_dir($dir)) {
-                                                            $files = scandir($dir);
-                                                            foreach ($files as $file) {
-                                                                if ($file != '.' && $file != '..' && in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), ['pdf', 'rar', 'zip'])) {
-                                                                    $corCount++;
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                                ?>
+                                                <strong>Total Documents:</strong> <?= $totalDocuments ?>
                                                 | <strong>COR Documents:</strong> <?= $corCount ?>
                                                 | <strong>Showing:</strong> <?= $displayCount ?> of <?= $totalDocuments ?>
                                                 <?php if ($filterCategory || $filterAcademicYear || $filterSemester || $filterCampus || $filterLastName || $filterFirstName): ?>

@@ -137,22 +137,7 @@
                 <!-- Sidebar navigation-->
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="index.php"
-                                aria-expanded="false"><i data-feather="home" class="feather-icon"></i><span
-                                    class="hide-menu">Dashboard</span></a></li>
-                        <li class="list-divider"></li>
-                        <li class="nav-small-cap"><span class="hide-menu">Registrar</span></li>
-
-                        <li class="sidebar-item"> <a class="sidebar-link" href="masterlist.php" aria-expanded="false"><i
-                                    data-feather="users" class="feather-icon"></i><span class="hide-menu">Registrar Masterist
-                                </span></a>
-                        </li>
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="requirements.php"
-                                aria-expanded="false"><i data-feather="folder" class="feather-icon"></i><span
-                                    class="hide-menu">Requirements</span></a></li>
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="scholarship.html"
-                                aria-expanded="false"><i data-feather="book-open" class="feather-icon"></i><span
-                                    class="hide-menu">Scholarship</span></a></li>
+                        <?php require __DIR__ . '/inc/registrar_sidebar_menu.php'; ?>
                     </ul>
                 </nav>
                 <!-- End Sidebar navigation -->

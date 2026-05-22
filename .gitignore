@@ -9,4 +9,20 @@ data/db/
 *.tmp
 node_modules/
 
+# Local SMTP secrets (copy from config/smtp.example.php)
+config/smtp.local.php
+
+# Local MySQL password overrides
+config/schogms_mysql.local.php
+
+# Local app URL for email links (copy from config/app_url.example.php)
+config/app_url.local.php
+
+# User-uploaded spreadsheets and documents (keep on server only)
+**/uploads/
+users/coordinator/forms/
+
+# Coordinator sample/test data (optional local only)
+users/coordinator/samples/
+users/coordinator/data/
 

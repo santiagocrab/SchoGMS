@@ -89,10 +89,19 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   console.log("Service Worker: Fetching", event.request.url);
 
+  // Never intercept non-GET requests (e.g., login POST)
+  if (event.request.method !== "GET") {
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Clone the response to cache it
+        // Cache only successful/basic GET responses
+        if (!response || response.status !== 200 || response.type !== "basic") {
+          return response;
+        }
+
         const responseClone = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(event.request, responseClone);

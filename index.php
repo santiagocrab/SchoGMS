@@ -79,13 +79,13 @@
             <div class="text-center mb-3">
                 <img src="assets/images/logo.png" style="width: 300px;" alt="Homepage">
             </div>
-            <p class="text-center text-dark">Enter your username and password to access.</p>
+            <p class="text-center text-dark">Enter your email (or username) and password to access.</p>
 
             <!-- Login Form -->
             <form method="post" action="login.php">
                 <div class="form-group">
-                    <label class="text-dark" for="uname">Username</label>
-                    <input class="form-control" id="uname" type="text" name="username" placeholder="Enter your username"
+                    <label class="text-dark" for="uname">Email or username</label>
+                    <input class="form-control" id="uname" type="text" name="username" placeholder="Enter your email or username"
                         required>
                 </div>
                 <div class="form-group">
@@ -103,8 +103,14 @@
                         case 'restricted':
                             $error_message = 'Your account is restricted. Please contact support.';
                             break;
+                        case 'session':
+                            $error_message = 'Your session has expired. Please sign in again.';
+                            break;
                         case 'pending':
-                            $error_message = 'Your account is pending approval. Did you receive a 2FA verification code.<a href="verify.php"><strong>Click here to verify.</strong></a>';
+                            $verifyEmail = htmlspecialchars(trim((string) ($_GET['email'] ?? '')), ENT_QUOTES, 'UTF-8');
+                            $verifyHref = 'verify.php' . ($verifyEmail !== '' ? '?email=' . rawurlencode(trim((string) $_GET['email'])) : '');
+                            $error_message = 'Your account is pending email verification. '
+                                . '<a href="' . $verifyHref . '"><strong>Click here to enter your verification code.</strong></a>';
                             break;
                         case 'inactive':
                             $error_message = 'Your account is inactive. Please contact the administrator.';

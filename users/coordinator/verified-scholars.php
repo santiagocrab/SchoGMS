@@ -12,15 +12,8 @@
     <!-- Favicon icon -->
     <link rel="icon" type="image/png" sizes="16x16" href="../../assets/images/logo.png">
     <title> Scholarship and Grants Management System | SchoGMS </title>
-    <!-- Custom CSS -->
-
-    <!-- This page plugin CSS -->
-    <link href="../../assets/extra-libs/datatables.net-bs4/css/dataTables.bootstrap4.css" rel="stylesheet">
-    <link href="../../assets/extra-libs/c3/c3.min.css" rel="stylesheet">
-    <link href="../../assets/libs/chartist/dist/chartist.min.css" rel="stylesheet">
-    <link href="../../assets/extra-libs/jvector/jquery-jvectormap-2.0.2.css" rel="stylesheet" />
-    <!-- Custom CSS -->
-    <link href="../../dist/css/style.min.css" rel="stylesheet">
+    <!-- Custom CSS -->    <?php require_once __DIR__ . '/inc/assets.php'; schogms_coordinator_head(true); ?>
+    <style>.preloader{display:none!important}</style>
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -43,130 +36,8 @@
     <!-- ============================================================== -->
     <!-- Main wrapper - style you can find in pages.scss -->
     <!-- ============================================================== -->
-    <div id="main-wrapper" data-theme="light" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
-        data-sidebar-position="fixed" data-header-position="fixed" data-boxed-layout="full">
-        <!-- ============================================================== -->
-        <!-- Topbar header - style you can find in pages.scss -->
-        <!-- ============================================================== -->
-        <header class="topbar" data-navbarbg="skin6">
-            <nav class="navbar top-navbar navbar-expand-md">
-                <div class="navbar-header" data-logobg="skin6">
-                    <!-- This is for the sidebar toggle which is visible on mobile only -->
-                    <a class="nav-toggler waves-effect waves-light d-block d-md-none" href="javascript:void(0)"><i
-                            class="ti-menu ti-close"></i></a>
-                    <!-- ============================================================== -->
-                    <!-- Logo -->
-                    <!-- ============================================================== -->
-                    <div class="navbar-brand">
-                        <!-- Logo icon -->
-                        <a href="index.php">
-                            <b class="logo-icon">
-                                <!-- Dark Logo icon -->
-                                <img src="../../assets/images/logo.png" style="height: auto; width: 200px;"
-                                    alt="homepage" class="dark-logo" />
-                                <!-- Light Logo icon -->
-                                <img src="../../assets/images/logo.png" alt="homepage" class="light-logo" />
-                            </b>
-                        </a>
-                    </div>
-                    <!-- ============================================================== -->
-                    <!-- End Logo -->
-                    <!-- ============================================================== -->
-                    <!-- ============================================================== -->
-                    <!-- Toggle which is visible on mobile only -->
-                    <!-- ============================================================== -->
-                    <a class="topbartoggler d-block d-md-none waves-effect waves-light" href="javascript:void(0)"
-                        data-toggle="collapse" data-target="#navbarSupportedContent"
-                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><i
-                            class="ti-more"></i></a>
-                </div>
-                <!-- ============================================================== -->
-                <!-- End Logo -->
-                <!-- ============================================================== -->
-                <div class="navbar-collapse collapse" id="navbarSupportedContent">
-                    <!-- ============================================================== -->
-                    <!-- toggle and nav items -->
-                    <!-- ============================================================== -->
-                    <ul class="navbar-nav float-left mr-auto ml-3 pl-1">
-                        <!-- Notification -->
-                        <h3 class="page-title text-truncate text-dark font-weight-medium mb-1">Scholarship and Grants
-                            Management System</h3>
+    <?php require_once __DIR__ . '/inc/coordinator_nav.php'; schogms_coordinator_shell_open('Verified Scholars'); ?>
 
-                        <!-- End Notification -->
-                        <!-- ============================================================== -->
-                        <!-- create new -->
-                        <!-- ============================================================== -->
-
-                    </ul>
-                    <!-- ============================================================== -->
-                    <!-- Right side toggle and nav items -->
-                    <!-- ============================================================== -->
-                    <ul class="navbar-nav float-right">
-                        <!-- ============================================================== -->
-                        <!-- User profile and search -->
-                        <!-- ============================================================== -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="javascript:void(0)" data-toggle="dropdown"
-                                aria-haspopup="true" aria-expanded="false">
-                                <img src="../../assets/images/users/11.png" alt="user" class="rounded-circle" width="40">
-                                <span class="ml-2 d-none d-lg-inline-block"><span>Hello,</span> <span
-                                        class="text-dark"><?= $fullname ?></span> <i data-feather="chevron-down"
-                                        class="svg-icon"></i></span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-right user-dd animated flipInY">
-                                <a class="dropdown-item" href="logout.php"><i data-feather="power"
-                                        class="svg-icon mr-2 ml-1"></i>
-                                    Logout</a>
-                            </div>
-                        </li>
-                        <!-- ============================================================== -->
-                        <!-- User profile and search -->
-                        <!-- ============================================================== -->
-                    </ul>
-                </div>
-            </nav>
-        </header>
-        <!-- ============================================================== -->
-        <!-- End Topbar header -->
-        <!-- ============================================================== -->
-        <!-- ============================================================== -->
-        <!-- Left Sidebar - style you can find in sidebar.scss  -->
-        <!-- ============================================================== -->
-        <aside class="left-sidebar" data-sidebarbg="skin6">
-            <!-- Sidebar scroll-->
-            <div class="scroll-sidebar" data-sidebarbg="skin6">
-                <!-- Sidebar navigation-->
-                <nav class="sidebar-nav">
-                    <ul id="sidebarnav">
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="index.php"
-                                aria-expanded="false"><i data-feather="home" class="feather-icon"></i><span
-                                    class="hide-menu">Dashboard</span></a></li>
-                        <li class="list-divider"></li>
-                        <li class="nav-small-cap"><span class="hide-menu">Applications</span></li>
-
-                        <li class="sidebar-item"> <a class="sidebar-link" href="masterlist.php" aria-expanded="false"><i
-                                    data-feather="users" class="feather-icon"></i><span class="hide-menu">Master list
-                                </span></a>
-                        </li>
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="requirements.php"
-                                aria-expanded="false"><i data-feather="folder" class="feather-icon"></i><span
-                                    class="hide-menu">Requirements</span></a></li>
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="scholarship.html"
-                                aria-expanded="false"><i data-feather="book-open" class="feather-icon"></i><span
-                                    class="hide-menu">Scholarship</span></a></li>
-                    </ul>
-                </nav>
-                <!-- End Sidebar navigation -->
-            </div>
-            <!-- End Sidebar scroll-->
-        </aside>
-        <!-- ============================================================== -->
-        <!-- End Left Sidebar - style you can find in sidebar.scss  -->
-        <!-- ============================================================== -->
-        <!-- ============================================================== -->
-        <!-- Page wrapper  -->
-        <!-- ============================================================== -->
-        <div class="page-wrapper">
             <!-- ============================================================== -->
             <!-- Bread crumb and right sidebar toggle -->
             <!-- ============================================================== -->
@@ -195,24 +66,28 @@
             </div>
             <div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel"
                 aria-hidden="true">
-                <div class="modal-dialog" role="document">
+                <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="uploadModalLabel">Upload Student Data</h5>
+                            <h5 class="modal-title" id="uploadModalLabel">Upload verified scholars (billing Excel)</h5>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
                         <div class="modal-body">
+                            <?php
+                            require_once __DIR__ . '/inc/verified_scholars_upload_guide.php';
+                            schogms_render_verified_scholars_upload_guide(true, (string) ($sheet_name ?? ''));
+                            ?>
                             <form id="uploadForm">
                                 <div class="mb-3">
-                                    <label for="excelFile" class="form-label">Choose Excel File</label>
+                                    <label for="excelFile" class="form-label">Choose Excel file (.xlsx or .xls)</label>
                                     <input type="file" class="form-control" id="excelFile" name="excelFile"
-                                        accept=".xlsx, .xls">
+                                        accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
                                 </div>
-                                <button type="submit" class="btn btn-primary">Upload</button>
+                                <button type="submit" class="btn btn-primary">Upload &amp; import</button>
                             </form>
-                            <div id="message"></div>
+                            <div id="message" class="mt-2"></div>
                         </div>
                     </div>
                 </div>
@@ -227,6 +102,10 @@
             <!-- Container fluid  -->
             <!-- ============================================================== -->
             <div class="container-fluid">
+                <?php
+                require_once __DIR__ . '/inc/verified_scholars_upload_guide.php';
+                schogms_render_verified_scholars_upload_guide(false, (string) ($sheet_name ?? ''));
+                ?>
                 <!-- ============================================================== -->
                 <!-- Start Page Content -->
                 <!-- ============================================================== -->
@@ -235,122 +114,60 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-body">
+                                <h4 class="card-title mb-3">CHED masterlist scholars (your campus)</h4>
+                                <p class="text-muted small mb-3">
+                                    This table lists scholars from the <strong>CHED TDP Masterlist</strong> for your campus.
+                                    To add or update masterlist rows, use <a href="ched_masterlist.php">TDP Masterlist</a>.
+                                    Billing / payment data is uploaded with the <strong>Upload File</strong> button above.
+                                </p>
                                 <div class="row">
                                     <div class="table-responsive">
                                         <?php
-                                        // Include your database connection
-                                        require '../config/conn.php';
-
-                                        // Query to select data from billing_table
-                                        $query = "SELECT * FROM billing_table";
-                                        $result = $conn->query($query);
-
-                                        // Check for errors in the query
-                                        if (!$result) {
-                                            die("Query failed: " . $conn->error);
-                                        }
-                                        ?>
+                                        require_once __DIR__ . '/inc/coordinator_data.php';
+                                        $campusFilter = trim((string) ($sheet_name ?? ''));
+                                        $scholarData = schogms_coordinator_ched_scholars($conn, $campusFilter);
+                                        $scholarRows = $scholarData['rows'];
+                                        $scholarError = $scholarData['error'];
+                                        if ($scholarError !== ''): ?>
+                                            <div class="alert alert-warning"><?= htmlspecialchars($scholarError) ?></div>
+                                        <?php endif; ?>
 
                                         <table id="zero_config" class="table table-striped table-bordered no-wrap">
                                             <thead>
                                                 <tr>
-                                                    <!-- <th>Status</th> -->
                                                     <th>Last Name</th>
                                                     <th>First Name</th>
-                                                    <th>Scholarship Type</th>
-                                                    <th>Units Enrolled</th>
                                                     <th>Course</th>
+                                                    <th>Year Level</th>
+                                                    <th>Units</th>
                                                     <th>Campus</th>
-                                                    <th>Year & Date Submitted (CHED)</th>
-                                                    <th>Amount</th>
-                                                    <th>First Semester</th>
-                                                    <th>Second Semester</th>
-                                                    <th>Payment Scholarship Type</th>
-                                                    <th>Payment Amount</th>
-                                                    <th>Payment Year & Date</th>
-                                                    <th>Payment OR Number</th>
-                                                    <th>Payment Amount Per OR</th>
-                                                    <th>Refund First Semester</th>
-                                                    <th>Refund Second Semester</th>
-                                                    <th>Refund Year & Date Released</th>
+                                                    <th>File Group</th>
+                                                    <th>Enrollment</th>
+                                                    <th>Remarks</th>
+                                                    <th>Uploaded</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <?php while ($row = $result->fetch_assoc()): ?>
+                                                <?php if (count($scholarRows) === 0): ?>
+                                                    <tr><td colspan="10" class="text-center text-muted">No scholars found<?= $campusFilter !== '' ? ' for ' . htmlspecialchars($campusFilter) : '' ?>.</td></tr>
+                                                <?php else: ?>
+                                                <?php foreach ($scholarRows as $row): ?>
                                                     <tr>
-                                                        <!-- <td> -->
-                                                        <?php
-                                                        // // Displaying status with different badge colors
-                                                        // switch ($row['status']) {
-                                                        //     case 'In Progress':
-                                                        //         echo '<span class="badge badge-light-warning">In Progress</span>';
-                                                        //         break;
-                                                        //     case 'Closed':
-                                                        //         echo '<span class="badge badge-light-danger">Closed</span>';
-                                                        //         break;
-                                                        //     case 'Opened':
-                                                        //         echo '<span class="badge badge-light-success">Opened</span>';
-                                                        //         break;
-                                                        //     default:
-                                                        //         echo '<span class="badge badge-light-secondary">Unknown</span>';
-                                                        // }
-                                                        ?>
-                                                        <!-- </td> -->
-                                                        <td><?php echo htmlspecialchars($row['last_name']); ?></td>
-                                                        <td><?php echo htmlspecialchars($row['first_name']); ?></td>
-                                                        <td><?php echo htmlspecialchars($row['scholarship_type']); ?></td>
-                                                        <td><?php echo htmlspecialchars($row['units_enrolled']); ?></td>
-                                                        <td><?php echo htmlspecialchars($row['course']); ?></td>
-                                                        <td><?php echo htmlspecialchars($row['campus']); ?></td>
-                                                        <td><?php echo htmlspecialchars($row['year_and_date_submitted_ched']); ?>
-                                                        </td>
-                                                        <td><?php echo htmlspecialchars($row['amount']); ?></td>
-                                                        <td><?php echo htmlspecialchars($row['first_semester']); ?></td>
-                                                        <td><?php echo htmlspecialchars($row['second_semester']); ?></td>
-                                                        <td><?php echo htmlspecialchars($row['payment_scholarship_type']); ?>
-                                                        </td>
-                                                        <td><?php echo htmlspecialchars($row['payment_amount']); ?></td>
-                                                        <td><?php echo htmlspecialchars($row['payment_year_and_date']); ?>
-                                                        </td>
-                                                        <td><?php echo htmlspecialchars($row['payment_or_number']); ?></td>
-                                                        <td><?php echo htmlspecialchars($row['payment_amount_per_or']); ?>
-                                                        </td>
-                                                        <td><?php echo htmlspecialchars($row['refund_first_sem']); ?></td>
-                                                        <td><?php echo htmlspecialchars($row['refund_second_sem']); ?></td>
-                                                        <td><?php echo htmlspecialchars($row['refund_year_and_date_released']); ?>
-                                                        </td>
+                                                        <td><?= htmlspecialchars((string) ($row['lastname'] ?? '')) ?></td>
+                                                        <td><?= htmlspecialchars((string) ($row['firstname'] ?? '')) ?></td>
+                                                        <td><?= htmlspecialchars((string) ($row['course_program_enrolled'] ?? '')) ?></td>
+                                                        <td><?= htmlspecialchars((string) ($row['year_level'] ?? '')) ?></td>
+                                                        <td><?= htmlspecialchars((string) ($row['total_units_enrolled'] ?? '')) ?></td>
+                                                        <td><?= htmlspecialchars((string) ($row['sheet_name'] ?? '')) ?></td>
+                                                        <td><?= htmlspecialchars((string) ($row['file_group'] ?? '')) ?></td>
+                                                        <td><?= htmlspecialchars((string) ($row['status_of_enrollment'] ?? '')) ?></td>
+                                                        <td><?= htmlspecialchars((string) ($row['remarks'] ?? '')) ?></td>
+                                                        <td><?= htmlspecialchars((string) ($row['upload_time'] ?? '')) ?></td>
                                                     </tr>
-                                                <?php endwhile; ?>
+                                                <?php endforeach; ?>
+                                                <?php endif; ?>
                                             </tbody>
-                                            <tfoot>
-                                                <tr>
-                                                    <!-- <th>Status</th> -->
-                                                    <th>Last Name</th>
-                                                    <th>First Name</th>
-                                                    <th>Scholarship Type</th>
-                                                    <th>Units Enrolled</th>
-                                                    <th>Course</th>
-                                                    <th>Campus</th>
-                                                    <th>Year & Date Submitted (CHED)</th>
-                                                    <th>Amount</th>
-                                                    <th>First Semester</th>
-                                                    <th>Second Semester</th>
-                                                    <th>Payment Scholarship Type</th>
-                                                    <th>Payment Amount</th>
-                                                    <th>Payment Year & Date</th>
-                                                    <th>Payment OR Number</th>
-                                                    <th>Payment Amount Per OR</th>
-                                                    <th>Refund First Semester</th>
-                                                    <th>Refund Second Semester</th>
-                                                    <th>Refund Year & Date Released</th>
-                                                </tr>
-                                            </tfoot>
                                         </table>
-
-                                        <?php
-                                        // Close the database connection
-                                        $conn->close();
-                                        ?>
 
                                     </div>
                                 </div>
@@ -408,9 +225,9 @@
                     'application/vnd.ms-excel'
                 ];
 
-                if (!allowedTypes.includes(file.type)) {
-                    showToast("Please upload a valid Excel file.", "error");
-                    console.error("Invalid file type:", file.type);
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (!allowedTypes.includes(file.type) && ext !== 'xls' && ext !== 'xlsx') {
+                    showToast("Please upload a valid Excel file (.xls or .xlsx).", "error");
                     return;
                 }
 
@@ -434,6 +251,7 @@
                     .then(data => {
                         if (data.success) {
                             showToast(data.message || "File processed successfully!", "success");
+                            setTimeout(function () { window.location.reload(); }, 1500);
                         } else {
                             showToast(data.error || "An error occurred during file processing.", "error");
                             console.error("Server error:", data.error);
@@ -491,18 +309,8 @@
         <script src="../../dist/js/sidebarmenu.js"></script>
         <!--Custom JavaScript -->
         <script src="../../dist/js/custom.min.js"></script>
-        <!--This page JavaScript -->
-        <script src="../../assets/extra-libs/c3/d3.min.js"></script>
-        <script src="../../assets/extra-libs/c3/c3.min.js"></script>
-        <script src="../../assets/libs/chartist/dist/chartist.min.js"></script>
-        <script src="../../assets/libs/chartist-plugin-tooltips/dist/chartist-plugin-tooltip.min.js"></script>
-        <script src="../../assets/extra-libs/jvector/jquery-jvectormap-2.0.2.min.js"></script>
-        <script src="../../assets/extra-libs/jvector/jquery-jvectormap-world-mill-en.js"></script>
-        <script src="../../dist/js/pages/dashboards/dashboard1.min.js"></script>
+    <?php require_once __DIR__ . '/inc/assets.php'; schogms_coordinator_footer_scripts(['datatables' => true]); ?>
 
-        <!--This page plugins -->
-        <script src="../../assets/extra-libs/datatables.net/js/jquery.dataTables.min.js"></script>
-        <script src="../../dist/js/pages/datatable/datatable-basic.init.js"></script>
 </body>
 
 </html>

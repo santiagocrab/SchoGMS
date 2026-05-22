@@ -1,6 +1,7 @@
 <?php
 include 'config/conn.php';
 include 'config/count.php';
+include 'config/mongodb_stats.php';
 include 'config/session.php';
 ?>
 
@@ -145,33 +146,7 @@ include 'config/session.php';
                 <!-- Sidebar navigation-->
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="dashboard.php"
-                                aria-expanded="false"><i data-feather="home" class="feather-icon"></i><span
-                                    class="hide-menu">Dashboard</span></a></li>
-                        <li class="list-divider"></li>
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="user-management.php"
-                                aria-expanded="false"><i data-feather="users" class="feather-icon"></i><span
-                                    class="hide-menu">User Management</span></a></li>
-                        <!-- <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="user-management.php"
-                                aria-expanded="false"><i data-feather="users" class="feather-icon"></i><span
-                                    class="hide-menu">Report Logs</span></a></li> -->
-                        <!-- <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="data-management.php"
-                                aria-expanded="false"><i data-feather="file" class="feather-icon"></i><span
-                                    class="hide-menu">Data Management</span></a></li>
-                        <li class="sidebar-item"> <a class="sidebar-link has-arrow" href="javascript:void(0)"
-                                aria-expanded="false"><i data-feather="file-text" class="feather-icon"></i><span
-                                    class="hide-menu">Report </span></a>
-                            <ul aria-expanded="false" class="collapse  first-level base-level-line">
-                                <li class="sidebar-item"><a href="form-inputs.html" class="sidebar-link"><span
-                                            class="hide-menu"> Logs
-                                        </span></a>
-                                </li>
-                                <li class="sidebar-item"><a href="form-input-grid.html" class="sidebar-link"><span
-                                            class="hide-menu"> Export Report
-                                        </span></a>
-                                </li>
-                            </ul>
-                        </li> -->
+                        <?php require __DIR__ . '/inc/admin_sidebar_menu.php'; ?>
                     </ul>
                 </nav>
                 <!-- End Sidebar navigation -->
@@ -259,6 +234,53 @@ include 'config/session.php';
                                 <div class="ml-auto mt-md-3 mt-lg-0">
                                     <span class="opacity-7 text-muted"><i data-feather="users"></i></span>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Scholarship data (MongoDB) -->
+                <div class="card-group mt-2">
+                    <div class="card border-right">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div>
+                                    <h2 class="text-dark mb-1 font-weight-medium"><?= (int) $total_scholars_tdp ?></h2>
+                                    <h6 class="text-muted font-weight-normal mb-0">TDP Scholars (MongoDB)</h6>
+                                </div>
+                                <div class="ml-auto"><span class="opacity-7 text-muted"><i data-feather="users"></i></span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card border-right">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div>
+                                    <h2 class="text-dark mb-1 font-weight-medium"><?= (int) $total_scholars_tes ?></h2>
+                                    <h6 class="text-muted font-weight-normal mb-0">TES Scholars (MongoDB)</h6>
+                                </div>
+                                <div class="ml-auto"><span class="opacity-7 text-muted"><i data-feather="user-check"></i></span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card border-right">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div>
+                                    <h2 class="text-dark mb-1 font-weight-medium"><?= (int) $total_documents ?></h2>
+                                    <h6 class="text-muted font-weight-normal mb-0">Uploaded Documents</h6>
+                                </div>
+                                <div class="ml-auto"><span class="opacity-7 text-muted"><i data-feather="file"></i></span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div>
+                                    <h2 class="text-dark mb-1 font-weight-medium"><?= (int) $pending_documents ?></h2>
+                                    <h6 class="text-muted font-weight-normal mb-0">Pending Requirements</h6>
+                                </div>
+                                <div class="ml-auto"><span class="opacity-7 text-muted"><i data-feather="clock"></i></span></div>
                             </div>
                         </div>
                     </div>

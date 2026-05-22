@@ -12,15 +12,7 @@
     <!-- Favicon icon -->
     <link rel="icon" type="image/png" sizes="16x16" href="../../assets/images/logo.png">
     <title> Scholarship and Grants Management System | SchoGMS </title>
-    <!-- Custom CSS -->
-
-    <!-- This page plugin CSS -->
-    <link href="../../assets/extra-libs/datatables.net-bs4/css/dataTables.bootstrap4.css" rel="stylesheet">
-    <link href="../../assets/extra-libs/c3/c3.min.css" rel="stylesheet">
-    <link href="../../assets/libs/chartist/dist/chartist.min.css" rel="stylesheet">
-    <link href="../../assets/extra-libs/jvector/jquery-jvectormap-2.0.2.css" rel="stylesheet" />
-    <!-- Custom CSS -->
-    <link href="../../dist/css/style.min.css" rel="stylesheet">
+    <!-- Custom CSS -->    <?php require_once __DIR__ . '/inc/assets.php'; schogms_coordinator_head(true); ?>
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -42,130 +34,8 @@
     <!-- ============================================================== -->
     <!-- Main wrapper - style you can find in pages.scss -->
     <!-- ============================================================== -->
-    <div id="main-wrapper" data-theme="light" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
-        data-sidebar-position="fixed" data-header-position="fixed" data-boxed-layout="full">
-        <!-- ============================================================== -->
-        <!-- Topbar header - style you can find in pages.scss -->
-        <!-- ============================================================== -->
-        <header class="topbar" data-navbarbg="skin6">
-            <nav class="navbar top-navbar navbar-expand-md">
-                <div class="navbar-header" data-logobg="skin6">
-                    <!-- This is for the sidebar toggle which is visible on mobile only -->
-                    <a class="nav-toggler waves-effect waves-light d-block d-md-none" href="javascript:void(0)"><i
-                            class="ti-menu ti-close"></i></a>
-                    <!-- ============================================================== -->
-                    <!-- Logo -->
-                    <!-- ============================================================== -->
-                    <div class="navbar-brand">
-                        <!-- Logo icon -->
-                        <a href="index.php">
-                            <b class="logo-icon">
-                                <!-- Dark Logo icon -->
-                                <img src="../../assets/images/logo.png" style="height: auto; width: 200px;"
-                                    alt="homepage" class="dark-logo" />
-                                <!-- Light Logo icon -->
-                                <img src="../../assets/images/logo.png" alt="homepage" class="light-logo" />
-                            </b>
-                        </a>
-                    </div>
-                    <!-- ============================================================== -->
-                    <!-- End Logo -->
-                    <!-- ============================================================== -->
-                    <!-- ============================================================== -->
-                    <!-- Toggle which is visible on mobile only -->
-                    <!-- ============================================================== -->
-                    <a class="topbartoggler d-block d-md-none waves-effect waves-light" href="javascript:void(0)"
-                        data-toggle="collapse" data-target="#navbarSupportedContent"
-                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><i
-                            class="ti-more"></i></a>
-                </div>
-                <!-- ============================================================== -->
-                <!-- End Logo -->
-                <!-- ============================================================== -->
-                <div class="navbar-collapse collapse" id="navbarSupportedContent">
-                    <!-- ============================================================== -->
-                    <!-- toggle and nav items -->
-                    <!-- ============================================================== -->
-                    <ul class="navbar-nav float-left mr-auto ml-3 pl-1">
-                        <!-- Notification -->
-                        <h3 class="page-title text-truncate text-dark font-weight-medium mb-1">Scholarship and Grants
-                            Management System</h3>
+    <?php require_once __DIR__ . '/inc/coordinator_nav.php'; schogms_coordinator_shell_open('Validate TDP'); ?>
 
-                        <!-- End Notification -->
-                        <!-- ============================================================== -->
-                        <!-- create new -->
-                        <!-- ============================================================== -->
-
-                    </ul>
-                    <!-- ============================================================== -->
-                    <!-- Right side toggle and nav items -->
-                    <!-- ============================================================== -->
-                    <ul class="navbar-nav float-right">
-                        <!-- ============================================================== -->
-                        <!-- User profile and search -->
-                        <!-- ============================================================== -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="javascript:void(0)" data-toggle="dropdown"
-                                aria-haspopup="true" aria-expanded="false">
-                                <img src="../../assets/images/users/image.png" alt="user" class="rounded-circle"
-                                    width="40">
-                                <span class="ml-2 d-none d-lg-inline-block"><span>Hello,</span> <span
-                                        class="text-dark"><?= $fullname ?></span> <i data-feather="chevron-down"
-                                        class="svg-icon"></i></span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-right user-dd animated flipInY">
-                                <a class="dropdown-item" href="logout.php"><i data-feather="power"
-                                        class="svg-icon mr-2 ml-1"></i>
-                                    Logout</a>
-                            </div>
-                        </li>
-                        <!-- ============================================================== -->
-                        <!-- User profile and search -->
-                        <!-- ============================================================== -->
-                    </ul>
-                </div>
-            </nav>
-        </header>
-        <!-- ============================================================== -->
-        <!-- End Topbar header -->
-        <!-- ============================================================== -->
-        <!-- ============================================================== -->
-        <!-- Left Sidebar - style you can find in sidebar.scss  -->
-        <!-- ============================================================== -->
-        <aside class="left-sidebar" data-sidebarbg="skin6">
-            <!-- Sidebar scroll-->
-            <div class="scroll-sidebar" data-sidebarbg="skin6">
-                <!-- Sidebar navigation-->
-                <nav class="sidebar-nav">
-                <ul id="sidebarnav">
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="index.php"
-                                aria-expanded="false"><i data-feather="home" class="feather-icon"></i><span
-                                    class="hide-menu">Dashboard</span></a></li>
-                        <li class="list-divider"></li>
-                        <li class="nav-small-cap"><span class="hide-menu">Applications</span></li>
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="ched_masterlist.php"
-                                aria-expanded="false"><i data-feather="folder" class="feather-icon"></i><span
-                                    class="hide-menu">CHED TDP Masterlist</span></a></li>
-                                    <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="ched_masterlist_tes.php"
-                                aria-expanded="false"><i data-feather="folder" class="feather-icon"></i><span
-                                    class="hide-menu">CHED TES Masterlist</span></a></li>
-                        <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="submit_form.php"
-                                aria-expanded="false"><i data-feather="folder" class="feather-icon"></i><span
-                                    class="hide-menu">Submit Form</span></a></li>
-                    </ul>
-                </nav>
-                </nav>
-                <!-- End Sidebar navigation -->
-            </div>
-            <!-- End Sidebar scroll-->
-        </aside>
-        <!-- ============================================================== -->
-        <!-- End Left Sidebar - style you can find in sidebar.scss  -->
-        <!-- ============================================================== -->
-        <!-- ============================================================== -->
-        <!-- Page wrapper  -->
-        <!-- ============================================================== -->
-        <div class="page-wrapper">
             <!-- ============================================================== -->
             <!-- Bread crumb and right sidebar toggle -->
             <!-- ============================================================== -->
@@ -236,275 +106,109 @@
                             <div class="card-body">
                                 <div class="row">
                                     <?php
-                                    // session_start();
-                                    require '../config/conn.php';
-                                    // $sheet_name = $sheet_name;
-                                    
-                                    // if (empty($sheet_name)) {
-                                    //     die("No campus assigned to this session.");
-                                    // }
-                                    
-                                    // Set execution time limit
-                                    set_time_limit(30);
-                                    
-                                    // Optimized query - simplified to avoid complex subqueries
-                                    // Add pagination
-                                    $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-                                    $perPage = 50; // Limit to 50 records per page
-                                    $offset = ($page - 1) * $perPage;
-                                    
-                                    // Build WHERE clause
-                                    $whereConditions = ["cm.sheet_name = '" . $conn->real_escape_string($sheet_name) . "'"];
-                                    if (isset($_GET['batch']) && !empty($_GET['batch'])) {
-                                        $whereConditions[] = "cm.file_group = '" . $conn->real_escape_string($_GET['batch']) . "'";
+                                    require_once __DIR__ . '/inc/tdp_bulk_validate.php';
+                                    require_once __DIR__ . '/inc/validation_filters.php';
+                                    require_once __DIR__ . '/inc/validation_edit_guide.php';
+                                    set_time_limit(120);
+
+                                    $tdpSheet = trim((string) ($sheet_name ?? ''));
+                                    $bulkStats = null;
+                                    $runBulk = isset($_GET['bulk']) && $_GET['bulk'] !== '0';
+                                    $tdpRows = [];
+                                    $vfOptions = [];
+
+                                    if ($tdpSheet === '') {
+                                        echo '<div class="alert alert-warning">No campus assigned to your account.</div>';
+                                    } elseif ($conn instanceof mysqli) {
+                                        if ($runBulk) {
+                                            $bulkStats = schogms_tdp_bulk_validate_campus($conn, $tdpSheet, $_GET);
+                                        }
+                                        $tdpRows = schogms_validation_fetch_rows($conn, 'tdp', $tdpSheet, $_GET, true);
+                                        $vfOptions = schogms_validation_filter_options($conn, 'tdp', $tdpSheet);
                                     }
-                                    if (isset($_GET['semester']) && !empty($_GET['semester'])) {
-                                        $whereConditions[] = "cm.semester = '" . $conn->real_escape_string($_GET['semester']) . "'";
+
+                                    $totalRecords = count($tdpRows);
+                                    $countPassed = 0;
+                                    $countFailed = 0;
+                                    $countNoCor = 0;
+                                    foreach ($tdpRows as $r) {
+                                        $c = $r['_check'] ?? schogms_validation_row_check($r, [], 'tdp');
+                                        if ($c['passed']) {
+                                            $countPassed++;
+                                        } else {
+                                            $countFailed++;
+                                        }
+                                        if (!$c['has_cor']) {
+                                            $countNoCor++;
+                                        }
                                     }
-                                    if (isset($_GET['academic_year']) && !empty($_GET['academic_year'])) {
-                                        $whereConditions[] = "cm.academic_year = '" . $conn->real_escape_string($_GET['academic_year']) . "'";
-                                    }
-                                    if (isset($_GET['search']) && !empty($_GET['search'])) {
-                                        $searchTerm = $conn->real_escape_string($_GET['search']);
-                                        $whereConditions[] = "(cm.lastname LIKE '%$searchTerm%' OR cm.firstname LIKE '%$searchTerm%' OR cm.id_number LIKE '%$searchTerm%' OR cm.course_program_enrolled LIKE '%$searchTerm%')";
-                                    }
-                                    
-                                    // Simplified query - get basic data first
-                                    $query = "
-                                        SELECT 
-                                        cm.*, 
-                                        rm.id_number, rm.enrolled, rm.zip_code, rm.email_address, rm.mobile_number
-
-                                    FROM ched_masterlist cm
-
-                                    LEFT JOIN registrar_master_list rm
-                                        ON cm.lastname = rm.last_name 
-                                        AND cm.firstname = rm.first_name
-                                        AND (cm.middlename = rm.middle_name OR cm.middlename IS NULL OR rm.middle_name IS NULL)
-
-                                    WHERE " . implode(' AND ', $whereConditions) . "
-
-                                    ORDER BY cm.id ASC
-                                    LIMIT $perPage OFFSET $offset;
-
-
-                                    "; // Preserve CHED masterlist order
-                                    
-                                    // Execute query with error handling and timeout
-                                    $startTime = microtime(true);
-                                    $result = @$conn->query($query);
-                                    $queryTime = microtime(true) - $startTime;
-
-                                    if (!$result) {
-                                        echo "<div class='alert alert-danger'>Query failed: " . htmlspecialchars($conn->error) . "</div>";
-                                        $result = false;
-                                    } else {
-                                        // Debug: Show query time (remove in production)
-                                        // echo "<!-- Query executed in " . round($queryTime, 3) . " seconds -->";
-                                    }
-                                    
-                                    // Get total count for pagination (optimized count query)
-                                    $countQuery = "SELECT COUNT(*) as total FROM ched_masterlist cm 
-                                                   WHERE " . implode(' AND ', $whereConditions);
-                                    
-                                    $countResult = @$conn->query($countQuery);
-                                    $totalRecords = $countResult ? $countResult->fetch_assoc()['total'] : 0;
-                                    $totalPages = max(1, ceil($totalRecords / $perPage));
                                     ?>
                                     <div class="table-responsive">
-                                        <h5>Displaying records for:
-                                            <strong><?php echo htmlspecialchars($sheet_name); ?></strong>
-                                            <span class="badge badge-info ml-2">Page <?php echo $page; ?> of <?php echo $totalPages; ?> (<?php echo $totalRecords; ?> total records)</span>
+                                        <h5 class="mb-2">TDP validation — campus:
+                                            <strong><?php echo htmlspecialchars($tdpSheet); ?></strong>
+                                            <span class="badge badge-info ml-2"><?php echo (int) $totalRecords; ?> scholars (all listed)</span>
                                         </h5>
-                                        
-                                        <!-- Pagination -->
-                                        <?php if ($totalPages > 1): ?>
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <nav>
-                                                <ul class="pagination mb-0">
-                                                    <?php
-                                                    $queryParams = $_GET;
-                                                    if ($page > 1): 
-                                                        $queryParams['page'] = $page - 1;
-                                                    ?>
-                                                    <li class="page-item">
-                                                        <a class="page-link" href="?<?php echo http_build_query($queryParams); ?>">Previous</a>
-                                                    </li>
-                                                    <?php endif; ?>
-                                                    
-                                                    <?php for ($i = max(1, $page - 2); $i <= min($totalPages, $page + 2); $i++): 
-                                                        $queryParams['page'] = $i;
-                                                    ?>
-                                                    <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
-                                                        <a class="page-link" href="?<?php echo http_build_query($queryParams); ?>"><?php echo $i; ?></a>
-                                                    </li>
-                                                    <?php endfor; ?>
-                                                    
-                                                    <?php if ($page < $totalPages): 
-                                                        $queryParams['page'] = $page + 1;
-                                                    ?>
-                                                    <li class="page-item">
-                                                        <a class="page-link" href="?<?php echo http_build_query($queryParams); ?>">Next</a>
-                                                    </li>
-                                                    <?php endif; ?>
-                                                </ul>
-                                            </nav>
+                                        <p class="text-muted small mb-3">
+                                            Validates every scholar at once (course &amp; year level vs registrar, COR/COG on file).
+                                            Same workflow as <strong>Validate TES</strong> — no per-row buttons.
+                                        </p>
+
+                                        <?php if ($bulkStats !== null): ?>
+                                        <div class="alert alert-success">
+                                            Bulk validation complete:
+                                            <strong><?php echo (int) $bulkStats['passed']; ?> passed</strong>,
+                                            <strong><?php echo (int) $bulkStats['failed']; ?> failed</strong>
+                                            (<?php echo (int) $bulkStats['total']; ?> total).
                                         </div>
                                         <?php endif; ?>
 
-                                        <!-- Filters for TDP Masterlist -->
                                         <div class="row mb-3">
-                                            <div class="col-md-12">
-                                                <form method="GET" action="" class="form-inline">
-                                                    <input type="hidden" name="sheet_name" value="<?php echo htmlspecialchars($sheet_name); ?>">
-                                                    
-                                                    <div class="form-group mr-2">
-                                                        <label for="batch_filter" class="mr-2">Batch:</label>
-                                                        <select name="batch" id="batch_filter" class="form-control">
-                                                            <option value="">All Batches</option>
-                                                            <?php
-                                                            // Get distinct batches from ched_masterlist
-                                                            $batchQuery = "SELECT DISTINCT file_group FROM ched_masterlist WHERE sheet_name = '" . $conn->real_escape_string($sheet_name) . "' ORDER BY file_group DESC";
-                                                            $batchResult = $conn->query($batchQuery);
-                                                            $selectedBatch = isset($_GET['batch']) ? $_GET['batch'] : '';
-                                                            if ($batchResult) {
-                                                                while ($batchRow = $batchResult->fetch_assoc()) {
-                                                                    $batchValue = $batchRow['file_group'];
-                                                                    $selected = ($selectedBatch == $batchValue) ? 'selected' : '';
-                                                                    echo "<option value='" . htmlspecialchars($batchValue) . "' $selected>" . htmlspecialchars($batchValue) . "</option>";
-                                                                }
-                                                            }
-                                                            ?>
-                                                        </select>
-                                                    </div>
-                                                    
-                                                    <div class="form-group mr-2">
-                                                        <label for="semester_filter" class="mr-2">Semester:</label>
-                                                        <select name="semester" id="semester_filter" class="form-control">
-                                                            <option value="">All Semesters</option>
-                                                            <option value="1st Semester" <?php echo (isset($_GET['semester']) && $_GET['semester'] == '1st Semester') ? 'selected' : ''; ?>>1st Semester</option>
-                                                            <option value="2nd Semester" <?php echo (isset($_GET['semester']) && $_GET['semester'] == '2nd Semester') ? 'selected' : ''; ?>>2nd Semester</option>
-                                                            <option value="Midyear" <?php echo (isset($_GET['semester']) && $_GET['semester'] == 'Midyear') ? 'selected' : ''; ?>>Midyear</option>
-                                                        </select>
-                                                    </div>
-                                                    
-                                                    <div class="form-group mr-2">
-                                                        <label for="academic_year_filter" class="mr-2">Academic Year:</label>
-                                                        <select name="academic_year" id="academic_year_filter" class="form-control">
-                                                            <option value="">All Academic Years</option>
-                                                            <?php
-                                                            // Get distinct academic years from ched_masterlist
-                                                            $ayQuery = "SELECT DISTINCT academic_year FROM ched_masterlist WHERE sheet_name = '" . $conn->real_escape_string($sheet_name) . "' ORDER BY academic_year DESC";
-                                                            $ayResult = $conn->query($ayQuery);
-                                                            $selectedAY = isset($_GET['academic_year']) ? $_GET['academic_year'] : '';
-                                                            if ($ayResult) {
-                                                                while ($ayRow = $ayResult->fetch_assoc()) {
-                                                                    $ayValue = $ayRow['academic_year'];
-                                                                    $selected = ($selectedAY == $ayValue) ? 'selected' : '';
-                                                                    echo "<option value='" . htmlspecialchars($ayValue) . "' $selected>" . htmlspecialchars($ayValue) . "</option>";
-                                                                }
-                                                            }
-                                                            ?>
-                                                        </select>
-                                                    </div>
-                                                    
-                                                    <div class="form-group mr-2">
-                                                        <label for="search_filter" class="mr-2">Search:</label>
-                                                        <input type="text" name="search" id="search_filter" class="form-control" 
-                                                               placeholder="Search by name, ID, course..." 
-                                                               value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
-                                                    </div>
-                                                    
-                                                    <button type="submit" class="btn btn-primary mr-2">Apply Filters</button>
-                                                    <a href="validate.php?sheet_name=<?php echo urlencode($sheet_name); ?>" class="btn btn-secondary">Clear Filters</a>
-                                                </form>
-                                            </div>
-                                        </div>
-
-                                        <!-- Hidden Form to Open in a New Window -->
-                                        <div class="row">
                                             <div class="col-md-3">
-                                                <form method="GET" action="validated_masterlist.php" id="filterForm"
-                                                    onsubmit="return openNewWindow(event)">
-                                                    <input type="hidden" name="sheet_name"
-                                                        value="<?php echo htmlspecialchars($sheet_name); ?>">
-                                                    <button type="submit" class="btn btn-success btn-rounded">Export Annex Form 2</button>
-                                                </form>
+                                                <div class="card bg-light mb-2 mb-md-0">
+                                                    <div class="card-body py-2 text-center">
+                                                        <div class="text-muted small">Total</div>
+                                                        <div class="h4 mb-0"><?php echo (int) $totalRecords; ?></div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div class="col-md-3" >
-                                                <form method="GET" action="validated_remarks.php" id="filterForm2"
-                                                    onsubmit="return openNewWindow2(event)">
-                                                    <input type="hidden" name="sheet_name"
-                                                        value="<?php echo htmlspecialchars($sheet_name); ?>">
-                                                    <button type="submit" class="btn btn-success btn-rounded">Export
-                                                        Remarks</button>
-                                                </form>
+                                            <div class="col-md-3">
+                                                <div class="card border-success mb-2 mb-md-0">
+                                                    <div class="card-body py-2 text-center">
+                                                        <div class="text-muted small">Passed</div>
+                                                        <div class="h4 mb-0 text-success"><?php echo (int) $countPassed; ?></div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            
-                                            <div class="col">
-                                                <form method="GET" action="validated_masterlist_delisting.php" id="filterForm3"
-                                                    onsubmit="return openNewWindow3(event)">
-                                                    <input type="hidden" name="sheet_name"
-                                                        value="<?php echo htmlspecialchars($sheet_name); ?>">
-                                                    <button type="submit" class="btn btn-success btn-rounded">Export Delisting Form</button>
-                                                </form>
+                                            <div class="col-md-3">
+                                                <div class="card border-danger mb-2 mb-md-0">
+                                                    <div class="card-body py-2 text-center">
+                                                        <div class="text-muted small">Failed</div>
+                                                        <div class="h4 mb-0 text-danger"><?php echo (int) $countFailed; ?></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="card border-warning mb-2 mb-md-0">
+                                                    <div class="card-body py-2 text-center">
+                                                        <div class="text-muted small">No COR</div>
+                                                        <div class="h4 mb-0 text-warning"><?php echo (int) $countNoCor; ?></div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <script>
-                                            function openNewWindow(event) {
-                                                event.preventDefault(); // Stop normal form submission
 
-                                                // Get the form and its data
-                                                var form = document.getElementById('filterForm');
-                                                var formData = new FormData(form);
-                                                var queryString = new URLSearchParams(formData).toString();
+                                        <button type="button" id="bulkValidateTdpBtn" class="btn btn-primary btn-rounded mb-3"
+                                            data-sheet-name="<?php echo htmlspecialchars($tdpSheet); ?>">
+                                            Re-validate all scholars
+                                        </button>
 
-                                                // Construct new window URL with query string
-                                                var newWindowUrl = form.action + '?' + queryString;
-
-                                                // Open a new window with custom size and options
-                                                window.open(newWindowUrl, '_blank', 'width=1200,height=800,scrollbars=yes');
-
-                                                return false; // Prevent default form submission
-                                            }
-                                        </script>
-                                        <script>
-                                            function openNewWindow2(event) {
-                                                event.preventDefault(); // Stop normal form submission
-
-                                                // Get the form and its data
-                                                var form = document.getElementById('filterForm2');
-                                                var formData = new FormData(form);
-                                                var queryString = new URLSearchParams(formData).toString();
-
-                                                // Construct new window URL with query string
-                                                var newWindowUrl = form.action + '?' + queryString;
-
-                                                // Open a new window with custom size and options
-                                                window.open(newWindowUrl, '_blank', 'width=1200,height=800,scrollbars=yes');
-
-                                                return false; // Prevent default form submission
-                                            }
-                                        </script>
-
-                                        <script>
-                                            function openNewWindow3(event) {
-                                                event.preventDefault(); // Stop normal form submission
-
-                                                // Get the form and its data
-                                                var form = document.getElementById('filterForm3');
-                                                var formData = new FormData(form);
-                                                var queryString = new URLSearchParams(formData).toString();
-
-                                                // Construct new window URL with query string
-                                                var newWindowUrl = form.action + '?' + queryString;
-
-                                                // Open a new window with custom size and options
-                                                window.open(newWindowUrl, '_blank', 'width=1200,height=800,scrollbars=yes');
-
-                                                return false; // Prevent default form submission
-                                            }
-                                        </script>
+                                        <?php
+                                        $vfProgram = 'tdp';
+                                        $vfCampus = $tdpSheet;
+                                        $vfGet = $_GET;
+                                        $vfPage = 'validate.php';
+                                        require __DIR__ . '/inc/validation_filters_ui.php';
+                                        ?>
                                         <br>
 
                                         <table id="zero_config" class="table table-striped table-bordered no-wrap">
@@ -524,171 +228,18 @@
                                                     <th>COR/COG</th>
                                                     <th>STATUS</th>
                                                     <th>REMARKS</th>
-                                                    <th>ACTION</th>
+                                                    <th>VALIDATION</th>
+                                                    <th>Edit</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <?php 
-                                                // Include MongoDB connection for document lookups
-                                                require '../../conn_mongodb.php';
-                                                $documentCollection = $mongodb->collection('document_uploads');
-                                                
-                                                if ($result && $result->num_rows > 0):
-                                                    while ($row = $result->fetch_assoc()): 
-                                                        // Query MongoDB for COR and COG documents for this student
-                                                        $corDoc = null;
-                                                        $cogDoc = null;
-                                                        
-                                                        // Build student name variations for matching
-                                                        $lastName = trim($row['lastname'] ?? '');
-                                                        $firstName = trim($row['firstname'] ?? '');
-                                                        $middleName = trim($row['middlename'] ?? '');
-                                                        
-                                                        // Create multiple name patterns for flexible matching
-                                                        $namePattern1 = $lastName . ', ' . $firstName; // "Lastname, Firstname"
-                                                        $namePattern2 = $lastName . ', ' . $firstName . ' ' . $middleName; // "Lastname, Firstname Middlename"
-                                                        
-                                                        // Escape special regex characters but allow case-insensitive matching
-                                                        $pattern1 = preg_quote($namePattern1, '/');
-                                                        $pattern2 = preg_quote($namePattern2, '/');
-                                                        
-                                                        // Find COR document - using same logic as diagnostic script that works
-                                                        // Pattern should match "Lastname, Firstname" or "Lastname, Firstname.pdf"
-                                                        $corQuery1 = [
-                                                            'original_name' => ['$regex' => '^' . $pattern1 . '(\.pdf)?$', '$options' => 'i'],
-                                                            'category' => 'COR'
-                                                        ];
-                                                        if (!empty($sheet_name)) {
-                                                            $corQuery1['campus'] = ['$regex' => '^' . preg_quote($sheet_name, '/') . '$', '$options' => 'i'];
-                                                        }
-                                                        $corDocs1 = $documentCollection->find($corQuery1, ['limit' => 1]);
-                                                        foreach ($corDocs1 as $doc) { $corDoc = $doc; break; }
-                                                        
-                                                        // Fallback 1: Try without campus restriction
-                                                        if (!$corDoc) {
-                                                            $corQuery2 = [
-                                                                'original_name' => ['$regex' => '^' . $pattern1 . '(\.pdf)?$', '$options' => 'i'],
-                                                                'category' => 'COR'
-                                                            ];
-                                                            $corDocs2 = $documentCollection->find($corQuery2, ['limit' => 1]);
-                                                            foreach ($corDocs2 as $doc) { $corDoc = $doc; break; }
-                                                        }
-                                                        
-                                                        // Fallback 2: Try with middle name pattern
-                                                        if (!$corDoc && !empty($pattern2)) {
-                                                            $corQuery3 = [
-                                                                'original_name' => ['$regex' => '^' . $pattern2 . '(\.pdf)?$', '$options' => 'i'],
-                                                                'category' => 'COR'
-                                                            ];
-                                                            if (!empty($sheet_name)) {
-                                                                $corQuery3['campus'] = ['$regex' => '^' . preg_quote($sheet_name, '/') . '$', '$options' => 'i'];
-                                                            }
-                                                            $corDocs3 = $documentCollection->find($corQuery3, ['limit' => 1]);
-                                                            foreach ($corDocs3 as $doc) { $corDoc = $doc; break; }
-                                                        }
-                                                        
-                                                        // Fallback 3: Try flexible match (contains) with campus
-                                                        if (!$corDoc) {
-                                                            $corQuery4 = [
-                                                                'original_name' => ['$regex' => $pattern1, '$options' => 'i'],
-                                                                'category' => 'COR'
-                                                            ];
-                                                            if (!empty($sheet_name)) {
-                                                                $corQuery4['campus'] = ['$regex' => '^' . preg_quote($sheet_name, '/') . '$', '$options' => 'i'];
-                                                            }
-                                                            $corDocs4 = $documentCollection->find($corQuery4, ['limit' => 1]);
-                                                            foreach ($corDocs4 as $doc) { $corDoc = $doc; break; }
-                                                        }
-                                                        
-                                                        // Fallback 4: Try file_name field - file_name might have timestamp
-                                                        if (!$corDoc) {
-                                                            $corQuery5 = [
-                                                                'file_name' => ['$regex' => $pattern1, '$options' => 'i'],
-                                                                'category' => 'COR'
-                                                            ];
-                                                            if (!empty($sheet_name)) {
-                                                                $corQuery5['campus'] = ['$regex' => '^' . preg_quote($sheet_name, '/') . '$', '$options' => 'i'];
-                                                            }
-                                                            $corDocs5 = $documentCollection->find($corQuery5, ['limit' => 1]);
-                                                            foreach ($corDocs5 as $doc) { $corDoc = $doc; break; }
-                                                        }
-                                                        
-                                                        // Find COG document - search with pattern that accounts for .pdf extension
-                                                        $cogQuery1 = [
-                                                            'original_name' => ['$regex' => '^' . $pattern1 . '(\.pdf)?$', '$options' => 'i'],
-                                                            'category' => 'COG'
-                                                        ];
-                                                        if (!empty($sheet_name)) {
-                                                            $cogQuery1['campus'] = ['$regex' => '^' . preg_quote($sheet_name, '/') . '$', '$options' => 'i'];
-                                                        }
-                                                        $cogDocs = $documentCollection->find($cogQuery1, ['limit' => 1]);
-                                                        foreach ($cogDocs as $doc) { $cogDoc = $doc; break; }
-                                                        
-                                                        // Fallback 1: Try without campus restriction
-                                                        if (!$cogDoc) {
-                                                            $cogQuery2 = [
-                                                                'original_name' => ['$regex' => '^' . $pattern1 . '(\.pdf)?$', '$options' => 'i'],
-                                                                'category' => 'COG'
-                                                            ];
-                                                            $cogDocs2 = $documentCollection->find($cogQuery2, ['limit' => 1]);
-                                                            foreach ($cogDocs2 as $doc) { $cogDoc = $doc; break; }
-                                                        }
-                                                        
-                                                        // Fallback 2: Try with middle name pattern
-                                                        if (!$cogDoc && !empty($pattern2)) {
-                                                            $cogQuery3 = [
-                                                                'original_name' => ['$regex' => '^' . $pattern2 . '(\.pdf)?$', '$options' => 'i'],
-                                                                'category' => 'COG'
-                                                            ];
-                                                            if (!empty($sheet_name)) {
-                                                                $cogQuery3['campus'] = ['$regex' => '^' . preg_quote($sheet_name, '/') . '$', '$options' => 'i'];
-                                                            }
-                                                            $cogDocs3 = $documentCollection->find($cogQuery3, ['limit' => 1]);
-                                                            foreach ($cogDocs3 as $doc) { $cogDoc = $doc; break; }
-                                                        }
-                                                        
-                                                        // Fallback 3: Try without anchor (contains match) with campus
-                                                        if (!$cogDoc) {
-                                                            $cogQuery4 = [
-                                                                'original_name' => ['$regex' => $pattern1, '$options' => 'i'],
-                                                                'category' => 'COG'
-                                                            ];
-                                                            if (!empty($sheet_name)) {
-                                                                $cogQuery4['campus'] = ['$regex' => '^' . preg_quote($sheet_name, '/') . '$', '$options' => 'i'];
-                                                            }
-                                                            $cogDocs4 = $documentCollection->find($cogQuery4, ['limit' => 1]);
-                                                            foreach ($cogDocs4 as $doc) { $cogDoc = $doc; break; }
-                                                        }
-                                                        
-                                                        // Fallback 4: Try file_name field (last resort) - file_name might have timestamp
-                                                        if (!$cogDoc) {
-                                                            // Try matching just the name part before the timestamp
-                                                            $namePart = preg_quote($namePattern1, '/');
-                                                            $cogQuery5 = [
-                                                                'file_name' => ['$regex' => $namePart, '$options' => 'i'],
-                                                                'category' => 'COG'
-                                                            ];
-                                                            if (!empty($sheet_name)) {
-                                                                $cogQuery5['campus'] = ['$regex' => '^' . preg_quote($sheet_name, '/') . '$', '$options' => 'i'];
-                                                            }
-                                                            $cogDocs5 = $documentCollection->find($cogQuery5, ['limit' => 1]);
-                                                            foreach ($cogDocs5 as $doc) { $cogDoc = $doc; break; }
-                                                        }
-                                                        
-                                                        // Fallback 5: Try matching original_name without strict start anchor (more flexible)
-                                                        if (!$cogDoc) {
-                                                            // Remove the ^ anchor to allow partial matches
-                                                            $flexiblePattern = preg_quote($lastName . ', ' . $firstName, '/');
-                                                            $cogQuery6 = [
-                                                                'original_name' => ['$regex' => $flexiblePattern, '$options' => 'i'],
-                                                                'category' => 'COG'
-                                                            ];
-                                                            if (!empty($sheet_name)) {
-                                                                $cogQuery6['campus'] = ['$regex' => '^' . preg_quote($sheet_name, '/') . '$', '$options' => 'i'];
-                                                            }
-                                                            $cogDocs6 = $documentCollection->find($cogQuery6, ['limit' => 1]);
-                                                            foreach ($cogDocs6 as $doc) { $cogDoc = $doc; break; }
-                                                        }
+                                                <?php
+                                                $viewBase = '../../view_document.php?path=';
+                                                if (count($tdpRows) > 0):
+                                                    foreach ($tdpRows as $row):
+                                                        $check = $row['_check'] ?? schogms_validation_row_check($row, [], 'tdp');
+                                                        $cor_path = $check['cor_path'];
+                                                        $cog_path = $check['cog_path'];
                                                 ?>
                                                     <tr>
                                                         <td><?php echo htmlspecialchars($row['seq']); ?></td>
@@ -711,23 +262,20 @@
                                                                 <?php 
                                                                 // Check if COR document exists in MongoDB - show button if found
                                                                 // Debug: Check if corDoc is set
-                                                                $hasCorDoc = ($corDoc !== null && isset($corDoc['file_path']));
+                                                                $hasCorDoc = !empty($cor_path);
                                                                 
                                                                 if ($hasCorDoc): 
                                                                     // Use document viewer script to serve the file
-                                                                    $docId = $corDoc['id'] ?? null;
-                                                                    $filePath = $corDoc['file_path'];
+                                                                    $filePath = $cor_path;
                                                                     // Encode the path for URL
                                                                     $encodedPath = base64_encode($filePath);
                                                                     $corPath = '../../view_document.php?path=' . urlencode($encodedPath);
-                                                                    if ($docId) {
-                                                                        $corPath = '../../view_document.php?id=' . urlencode($docId);
-                                                                    }
+                                                                    $corPath = $viewBase . urlencode(base64_encode($filePath));
                                                                 ?>
                                                                     <a href="<?php echo htmlspecialchars($corPath); ?>" 
                                                                        target="_blank" 
                                                                        class="btn btn-sm btn-success" 
-                                                                       title="View COR - <?php echo htmlspecialchars($corDoc['original_name'] ?? ''); ?>">
+                                                                       title="View COR">
                                                                         COR
                                                                     </a>
                                                                 <?php else: ?>
@@ -735,22 +283,17 @@
                                                                 <?php endif; ?>
                                                                 
                                                                 <?php 
-                                                                // Check if COG document exists in MongoDB - show button if found
-                                                                if ($cogDoc && isset($cogDoc['file_path'])): 
-                                                                    // Use document viewer script to serve the file
-                                                                    $docId = $cogDoc['id'] ?? null;
-                                                                    $filePath = $cogDoc['file_path'];
+                                                                if (!empty($cog_path)):
+                                                                    $filePath = $cog_path;
                                                                     // Encode the path for URL
                                                                     $encodedPath = base64_encode($filePath);
                                                                     $cogPath = '../../view_document.php?path=' . urlencode($encodedPath);
-                                                                    if ($docId) {
-                                                                        $cogPath = '../../view_document.php?id=' . urlencode($docId);
-                                                                    }
+                                                                    $cogPath = $viewBase . urlencode(base64_encode($filePath));
                                                                 ?>
                                                                     <a href="<?php echo htmlspecialchars($cogPath); ?>" 
                                                                        target="_blank" 
                                                                        class="btn btn-sm btn-primary" 
-                                                                       title="View COG - <?php echo htmlspecialchars($cogDoc['original_name'] ?? ''); ?>">
+                                                                       title="View COG">
                                                                         COG
                                                                     </a>
                                                                 <?php else: ?>
@@ -761,12 +304,7 @@
 
                                                         <!-- Enrollment Status -->
                                                         <td>
-                                                            <?php 
-                                                            // Check if documents actually exist (not just if variables are set)
-                                                            $hasCOR = ($corDoc !== null && isset($corDoc['file_path']));
-                                                            $hasCOG = ($cogDoc !== null && isset($cogDoc['file_path']));
-                                                            // Student is enrolled if they have COR (COR is required for enrollment)
-                                                            if ($hasCOR): ?>
+                                                            <?php if ($check['has_cor']): ?>
                                                                 <span class="badge badge-success">Enrolled</span>
                                                             <?php else: ?>
                                                                 <span class="badge badge-warning">Not Enrolled</span>
@@ -775,23 +313,51 @@
                                                         
                                                         <td><?php echo htmlspecialchars($row['remarks'] ?? ''); ?></td>
                                                         
-                                                        <!-- Validate TDP Action -->
                                                         <td>
-                                                            <button type="button" 
-                                                                    class="btn btn-sm btn-primary validate-tdp-btn" 
-                                                                    data-student-id="<?php echo $row['id']; ?>"
-                                                                    data-sheet-name="<?php echo htmlspecialchars($sheet_name); ?>"
-                                                                    data-student-name="<?php echo htmlspecialchars($row['lastname'] . ', ' . $row['firstname']); ?>">
-                                                                Validate TDP
+                                                            <?php if ($check['passed']): ?>
+                                                                <span class="badge badge-success" title="Course and year level match registrar">Validated</span>
+                                                            <?php else: ?>
+                                                                <span class="badge badge-danger" title="<?php
+                                                                    $tips = [];
+                                                                    if (!$check['course_match']) {
+                                                                        $tips[] = 'Course mismatch';
+                                                                    }
+                                                                    if (!$check['year_level_match']) {
+                                                                        $tips[] = 'Year level mismatch';
+                                                                    }
+                                                                    echo htmlspecialchars(implode('; ', $tips));
+                                                                ?>">Failed</span>
+                                                            <?php endif; ?>
+                                                            <div class="small text-muted mt-1">
+                                                                <?php if ($check['course_match']): ?>✓ Course<?php else: ?>✗ Course<?php endif; ?>
+                                                                ·
+                                                                <?php if ($check['year_level_match']): ?>✓ Year<?php else: ?>✗ Year<?php endif; ?>
+                                                            </div>
+                                                            <?php if (!$check['passed']): ?>
+                                                            <div class="small mt-1">
+                                                                <?php if (!$check['course_match'] && trim((string) ($row['reg_course'] ?? '')) !== ''): ?>
+                                                                    <div>Reg. course: <em><?= htmlspecialchars((string) $row['reg_course']) ?></em></div>
+                                                                <?php endif; ?>
+                                                                <?php if (!$check['year_level_match'] && trim((string) ($row['reg_year_level'] ?? '')) !== ''): ?>
+                                                                    <div>Reg. year: <em><?= htmlspecialchars((string) $row['reg_year_level']) ?></em></div>
+                                                                <?php endif; ?>
+                                                            </div>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-sm <?= $check['passed'] ? 'btn-outline-secondary' : 'btn-warning' ?> btn-edit-student"
+                                                                data-id="<?= (int) ($row['id'] ?? 0) ?>"
+                                                                data-guide="<?= schogms_validation_edit_guide_attr($row, $check) ?>">
+                                                                <?= $check['passed'] ? 'Edit' : 'Fix' ?>
                                                             </button>
                                                         </td>
                                                     </tr>
                                                 <?php 
-                                                    endwhile; 
+                                                    endforeach; 
                                                 else: 
                                                 ?>
                                                     <tr>
-                                                        <td colspan="14" class="text-center">No records found.</td>
+                                                        <td colspan="16" class="text-center">No records found.</td>
                                                     </tr>
                                                 <?php endif; ?>
                                             </tbody>
@@ -978,18 +544,8 @@
     <script src="../../dist/js/sidebarmenu.js"></script>
     <!--Custom JavaScript -->
     <script src="../../dist/js/custom.min.js"></script>
-    <!--This page JavaScript -->
-    <script src="../../assets/extra-libs/c3/d3.min.js"></script>
-    <script src="../../assets/extra-libs/c3/c3.min.js"></script>
-    <script src="../../assets/libs/chartist/dist/chartist.min.js"></script>
-    <script src="../../assets/libs/chartist-plugin-tooltips/dist/chartist-plugin-tooltip.min.js"></script>
-    <script src="../../assets/extra-libs/jvector/jquery-jvectormap-2.0.2.min.js"></script>
-    <script src="../../assets/extra-libs/jvector/jquery-jvectormap-world-mill-en.js"></script>
-    <script src="../../dist/js/pages/dashboards/dashboard1.min.js"></script>
+    <?php require_once __DIR__ . '/inc/assets.php'; schogms_coordinator_footer_scripts(['datatables' => true]); ?>
 
-    <!--This page plugins -->
-    <script src="../../assets/extra-libs/datatables.net/js/jquery.dataTables.min.js"></script>
-    <script src="../../dist/js/pages/datatable/datatable-basic.init.js"></script>
     
     <!-- Force hide preloader after page load -->
     <script>
@@ -1019,84 +575,52 @@
         }, 2000);
     </script>
     
-    <!-- Auto-Validation Script -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        $(document).ready(function() {
-            // Handle Validate TDP button clicks
-            $('.validate-tdp-btn').on('click', function() {
-                const studentId = $(this).data('student-id');
-                const sheetName = $(this).data('sheet-name');
-                const studentName = $(this).data('student-name');
-                const btn = $(this);
-                
-                // Show loading
+        $(document).ready(function () {
+            $('#bulkValidateTdpBtn').on('click', function () {
+                var sheetName = $(this).data('sheet-name');
+                if (!sheetName) return;
+
                 Swal.fire({
-                    title: 'Validating...',
-                    text: 'Please wait while we validate the student data.',
+                    title: 'Validating all scholars…',
+                    text: 'Please wait. This may take a minute for large lists.',
                     icon: 'info',
                     allowOutsideClick: false,
                     showConfirmButton: false,
-                    willOpen: () => Swal.showLoading()
+                    willOpen: function () { Swal.showLoading(); }
                 });
-                
-                // Call auto-validation endpoint
+
                 $.ajax({
-                    url: 'auto_validate_tdp.php',
+                    url: 'bulk_validate.php',
                     method: 'POST',
-                    data: {
-                        student_id: studentId,
-                        sheet_name: sheetName
-                    },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-                            if (response.validation_passed) {
-                                Swal.fire({
-                                    title: 'Validation Successful!',
-                                    html: '<p><strong>' + studentName + '</strong></p>' +
-                                          '<p>Course: ' + (response.data.ched_course || 'N/A') + '</p>' +
-                                          '<p>Year Level: ' + (response.data.ched_year_level || 'N/A') + '</p>' +
-                                          '<p>Email: ' + (response.data.email_address || 'N/A') + '</p>' +
-                                          '<p>Semester: ' + (response.data.semester || 'N/A') + '</p>' +
-                                          '<p class="text-success mt-3">✓ Data verified and ready for Annex Form 2</p>',
-                                    icon: 'success',
-                                    confirmButtonText: 'OK'
-                                }).then(() => {
-                                    location.reload();
-                                });
-                            } else {
-                                Swal.fire({
-                                    title: 'Validation Failed',
-                                    html: '<p><strong>' + studentName + '</strong></p>' +
-                                          '<p class="text-danger">Course or Year Level mismatch detected.</p>' +
-                                          '<p>CHED Course: ' + (response.data.ched_course || 'N/A') + '</p>' +
-                                          '<p>Registrar Course: ' + (response.data.registrar_course || 'N/A') + '</p>',
-                                    icon: 'error',
-                                    confirmButtonText: 'OK'
-                                });
-                            }
-                        } else {
-                            Swal.fire({
-                                title: 'Error',
-                                text: response.error || 'An error occurred during validation.',
-                                icon: 'error',
-                                confirmButtonText: 'OK'
-                            });
-                        }
-                    },
-                    error: function(xhr, status, error) {
+                    data: { sheet_name: sheetName, program: 'tdp' },
+                    dataType: 'json'
+                }).done(function (response) {
+                    if (response.success) {
                         Swal.fire({
-                            title: 'Error',
-                            text: 'Failed to validate student. Please try again.',
-                            icon: 'error',
-                            confirmButtonText: 'OK'
+                            title: 'Done',
+                            text: response.message || 'Bulk validation complete.',
+                            icon: 'success'
+                        }).then(function () {
+                            var url = new URL(window.location.href);
+                            url.searchParams.set('bulk', '1');
+                            window.location.href = url.toString();
                         });
+                    } else {
+                        Swal.fire({ title: 'Error', text: response.error || 'Validation failed.', icon: 'error' });
                     }
+                }).fail(function () {
+                    Swal.fire({ title: 'Error', text: 'Request failed. Please try again.', icon: 'error' });
                 });
             });
         });
     </script>
+    <?php
+    $mlProgram = 'tdp';
+    $mlCampus = $tdpSheet ?? (string) ($sheet_name ?? '');
+    require __DIR__ . '/inc/masterlist_edit_ui.php';
+    ?>
 </body>
 
 </html>
