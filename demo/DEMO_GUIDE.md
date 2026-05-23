@@ -4,14 +4,24 @@ Use this folder for **live presentations** and **screenshots**. All uploadable f
 
 **How uploads work (step-by-step, what happens next):** see **[`docs/SchoGMS_Upload_Workflow.md`](../docs/SchoGMS_Upload_Workflow.md)**.
 
+**Full presenter script (admin account creation + talk track + all files):** **[`docs/SchoGMS_Demo_Script.md`](../docs/SchoGMS_Demo_Script.md)**
+
 ## Build the file package
+
+```bash
+/Applications/XAMPP/xamppfiles/bin/php tools/prepare_demo_presentation.php
+```
+
+This builds `demo/files/` **and** prints admin account checklist + upload order.
+
+Or files only:
 
 ```bash
 /Applications/XAMPP/xamppfiles/bin/php tools/build_demo_package.php
 ```
 
-Or in the browser:  
-`http://localhost/SchoGMS/tools/build_demo_package.php?key=schogms_demo`
+Browser:  
+`http://localhost/SchoGMS/tools/prepare_demo_presentation.php?key=schogms_demo`
 
 That creates PDFs, Excel samples, and `demo/files/manifest.json`.
 

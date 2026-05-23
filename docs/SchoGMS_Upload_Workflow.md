@@ -3,7 +3,8 @@
 This guide explains **what each upload does**, **what happens in the system**, and **what you do next**. It matches the current codebase (MySQL masterlists, file group approval, COR/COG matching).
 
 **Demo files:** [`demo/DEMO_GUIDE.md`](../demo/DEMO_GUIDE.md) and [`demo/files/`](../demo/files/)  
-**Demo logins:** [`demo/ACCOUNTS.md`](../demo/ACCOUNTS.md)
+**Demo logins:** [`demo/ACCOUNTS.md`](../demo/ACCOUNTS.md)  
+**Presenter script:** [`SchoGMS_Demo_Script.md`](SchoGMS_Demo_Script.md) (admin setup + full talk track)
 
 ---
 
