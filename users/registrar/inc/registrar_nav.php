@@ -108,13 +108,19 @@ if (!function_exists('schogms_registrar_sidebar_menu_items')) {
                             </a>
                         </li>
                         <li class="sidebar-item">
-                            <a class="<?= schogms_registrar_nav_link_class('cor-cog.php') ?>" href="cor-cog.php">
+                            <a class="<?= schogms_registrar_nav_link_class('cor-cog.php', ['cor.php', 'cog.php']) ?>" href="cor-cog.php">
                                 <i data-feather="book-open" class="feather-icon"></i>
                                 <span class="hide-menu">COR &amp; COG</span>
                             </a>
                         </li>
                         <li class="sidebar-item">
-                            <a class="<?= schogms_registrar_nav_link_class('documents_uploaded.php') ?>" href="documents_uploaded.php">
+                            <a class="<?= schogms_registrar_nav_link_class('enrollment_status.php') ?>" href="enrollment_status.php">
+                                <i data-feather="clipboard" class="feather-icon"></i>
+                                <span class="hide-menu">Enrollment status</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a class="<?= schogms_registrar_nav_link_class('documents_uploaded.php', ['cor-cog.php', 'cor.php', 'cog.php']) ?>" href="cor-cog.php">
                                 <i data-feather="folder" class="feather-icon"></i>
                                 <span class="hide-menu">Documents uploaded</span>
                             </a>
@@ -184,8 +190,11 @@ if (!function_exists('schogms_registrar_shell_open')) {
 }
 
 if (!function_exists('schogms_registrar_shell_close')) {
-    function schogms_registrar_shell_close(): void
+    /** @param array{datatables?:bool,sweetalert?:bool,chart?:bool} $footerOpts */
+    function schogms_registrar_shell_close(array $footerOpts = []): void
     {
         echo "</div><!-- /.page-wrapper -->\n</div><!-- /#main-wrapper -->\n";
+        require_once __DIR__ . '/assets.php';
+        schogms_registrar_footer_scripts($footerOpts);
     }
 }

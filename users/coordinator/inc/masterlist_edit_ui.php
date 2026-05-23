@@ -135,6 +135,31 @@ $isTes = ($mlProgram === 'tes');
     var program = <?= json_encode($mlProgram) ?>;
     var campus = <?= json_encode($mlCampus) ?>;
 
+    function alertMsg(title, text, icon) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire(title, text, icon || 'info');
+        } else {
+            window.alert(title + (text ? ': ' + text : ''));
+        }
+    }
+
+    function fetchJson(url, options) {
+        return fetch(url, options || {}).then(function (r) {
+            return r.text().then(function (text) {
+                var data;
+                try {
+                    data = text ? JSON.parse(text) : {};
+                } catch (e) {
+                    throw new Error('Server returned an invalid response. Check PHP error logs.');
+                }
+                if (!r.ok && (!data || !data.message)) {
+                    throw new Error('Request failed (HTTP ' + r.status + ')');
+                }
+                return data;
+            });
+        });
+    }
+
     function clearGuideHighlights() {
         ['edit_course', 'edit_year_level'].forEach(function (id) {
             var el = document.getElementById(id);
@@ -250,67 +275,118 @@ $isTes = ($mlProgram === 'tes');
         }
     }
 
-    document.querySelectorAll('.btn-edit-student').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            var id = btn.getAttribute('data-id');
-            var guide = parseGuide(btn);
-            fetch('get_masterlist_student.php?id=' + encodeURIComponent(id) + '&program=' + encodeURIComponent(program) + '&campus=' + encodeURIComponent(campus))
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    if (!data.success) {
-                        Swal.fire('Error', data.message || 'Could not load student', 'error');
-                        return;
-                    }
-                    var row = data.row;
-                    document.getElementById('edit_student_id').value = id;
-                    document.getElementById('edit_lastname').value = row.lastname || '';
-                    document.getElementById('edit_firstname').value = row.firstname || '';
-                    document.getElementById('edit_middlename').value = row.middlename || '';
-                    document.getElementById('edit_app_no').value = row.app_no || '';
-                    document.getElementById('edit_seq').value = row.seq || '';
-                    document.getElementById('edit_ext').value = row.ext || row.extname || '';
-                    document.getElementById('edit_sex').value = row.sex || '';
-                    document.getElementById('edit_course').value = row.course_program_enrolled || '';
-                    document.getElementById('edit_year_level').value = row.year_level || '';
-                    if (program === 'tes') {
-                        document.getElementById('edit_street').value = row.street || '';
-                        document.getElementById('edit_town_city').value = row.town_city || '';
-                        document.getElementById('edit_contact').value = row.contact || '';
-                        document.getElementById('edit_batch_no').value = row.batch_no || '';
-                    } else {
-                        document.getElementById('edit_award_no').value = row.award_no || '';
-                        document.getElementById('edit_birthdate').value = row.birthdate || '';
-                        document.getElementById('edit_units').value = row.total_units_enrolled || '';
-                        document.getElementById('edit_status').value = row.status_of_enrollment || '';
-                        document.getElementById('edit_remarks').value = row.remarks || '';
-                    }
-                    document.getElementById('edit_cor_status').textContent = data.has_cor ? 'COR on file' : 'No COR yet — upload below';
-                    document.getElementById('edit_cog_status').textContent = data.has_cog ? 'COG on file' : 'No COG yet — upload below';
-                    applyValidationGuide(guide);
-                    $('#editStudentModal').modal('show');
-                });
-        });
-    });
+    function openEditModal(btn) {
+        var id = parseInt(btn.getAttribute('data-id') || '0', 10);
+        if (id < 1) {
+            alertMsg('Error', 'Invalid student record (missing id). Re-upload the masterlist or refresh the page.', 'error');
+            return;
+        }
+        var guide = parseGuide(btn);
+        var url = 'get_masterlist_student.php?id=' + encodeURIComponent(String(id))
+            + '&program=' + encodeURIComponent(program)
+            + '&campus=' + encodeURIComponent(campus);
 
-    $('#editStudentModal').on('hidden.bs.modal', function () {
-        clearGuideHighlights();
-        document.getElementById('edit_validation_guide').classList.add('d-none');
-    });
-
-    document.getElementById('editStudentForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        var fd = new FormData(this);
-        Swal.fire({ title: 'Saving…', allowOutsideClick: false, didOpen: function () { Swal.showLoading(); } });
-        fetch('update_masterlist_student.php', { method: 'POST', body: fd })
-            .then(function (r) { return r.json(); })
+        fetchJson(url)
             .then(function (data) {
-                if (data.success) {
-                    Swal.fire('Saved', data.message, 'success').then(function () { location.reload(); });
+                if (!data.success) {
+                    alertMsg('Error', data.message || 'Could not load student', 'error');
+                    return;
+                }
+                var row = data.row;
+                document.getElementById('edit_student_id').value = String(id);
+                document.getElementById('edit_lastname').value = row.lastname || '';
+                document.getElementById('edit_firstname').value = row.firstname || '';
+                document.getElementById('edit_middlename').value = row.middlename || '';
+                document.getElementById('edit_app_no').value = row.app_no || '';
+                document.getElementById('edit_seq').value = row.seq || '';
+                document.getElementById('edit_ext').value = row.ext || row.extname || '';
+                document.getElementById('edit_sex').value = row.sex || '';
+                document.getElementById('edit_course').value = row.course_program_enrolled || '';
+                document.getElementById('edit_year_level').value = row.year_level || '';
+                if (program === 'tes') {
+                    document.getElementById('edit_street').value = row.street || '';
+                    document.getElementById('edit_town_city').value = row.town_city || '';
+                    document.getElementById('edit_contact').value = row.contact || '';
+                    document.getElementById('edit_batch_no').value = row.batch_no || '';
                 } else {
-                    Swal.fire('Error', data.message || 'Save failed', 'error');
+                    document.getElementById('edit_award_no').value = row.award_no || '';
+                    document.getElementById('edit_birthdate').value = row.birthdate || '';
+                    document.getElementById('edit_units').value = row.total_units_enrolled || '';
+                    document.getElementById('edit_status').value = row.status_of_enrollment || '';
+                    document.getElementById('edit_remarks').value = row.remarks || '';
+                }
+                document.getElementById('edit_cor_status').textContent = data.has_cor ? 'COR on file' : 'No COR yet — upload below';
+                document.getElementById('edit_cog_status').textContent = data.has_cog ? 'COG on file' : 'No COG yet — upload below';
+                applyValidationGuide(guide);
+                if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+                    jQuery('#editStudentModal').modal('show');
+                } else {
+                    document.getElementById('editStudentModal').classList.add('show');
+                    document.getElementById('editStudentModal').style.display = 'block';
                 }
             })
-            .catch(function () { Swal.fire('Error', 'Request failed', 'error'); });
-    });
+            .catch(function (err) {
+                alertMsg('Error', err.message || 'Could not load student', 'error');
+            });
+    }
+
+    function bindEditHandlers() {
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('.btn-edit-student');
+            if (!btn) {
+                return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            openEditModal(btn);
+        }, true);
+
+        var form = document.getElementById('editStudentForm');
+        if (!form || form.dataset.bound === '1') {
+            return;
+        }
+        form.dataset.bound = '1';
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var fd = new FormData(this);
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ title: 'Saving…', allowOutsideClick: false, didOpen: function () { Swal.showLoading(); } });
+            }
+            fetchJson('update_masterlist_student.php', { method: 'POST', body: fd })
+                .then(function (data) {
+                    if (data.success) {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire('Saved', data.message, 'success').then(function () { location.reload(); });
+                        } else {
+                            location.reload();
+                        }
+                    } else {
+                        alertMsg('Error', data.message || 'Save failed', 'error');
+                    }
+                })
+                .catch(function (err) {
+                    alertMsg('Error', err.message || 'Request failed', 'error');
+                });
+        });
+
+        if (typeof jQuery !== 'undefined') {
+            jQuery('#editStudentModal').on('hidden.bs.modal', function () {
+                clearGuideHighlights();
+                var panel = document.getElementById('edit_validation_guide');
+                if (panel) {
+                    panel.classList.add('d-none');
+                }
+            });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bindEditHandlers);
+    } else {
+        bindEditHandlers();
+    }
 })();
 </script>
+<style>
+    #zero_config .btn-edit-student { pointer-events: auto; position: relative; z-index: 2; cursor: pointer; }
+</style>

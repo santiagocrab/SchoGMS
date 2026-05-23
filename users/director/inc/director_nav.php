@@ -154,8 +154,11 @@ if (!function_exists('schogms_director_shell_open')) {
 }
 
 if (!function_exists('schogms_director_shell_close')) {
-    function schogms_director_shell_close(): void
+    /** @param array{datatables?:bool} $footerOpts */
+    function schogms_director_shell_close(array $footerOpts = []): void
     {
         echo "</div><!-- /.page-wrapper -->\n</div><!-- /#main-wrapper -->\n";
+        require_once __DIR__ . '/director_assets.php';
+        schogms_director_footer_scripts($footerOpts);
     }
 }

@@ -4,6 +4,7 @@
  */
 
 require_once __DIR__ . '/masterlist_rows.php';
+require_once __DIR__ . '/../../../inc/schogms_document_uploads.php';
 
 if (!function_exists('schogms_masterlist_program_config')) {
     /** @return array{table: string, campus_col: string, program: string} */
@@ -50,7 +51,7 @@ if (!function_exists('schogms_masterlist_fetch_row')) {
     function schogms_masterlist_fetch_row(mysqli $conn, string $program, int $id, string $campus): ?array
     {
         $cfg = schogms_masterlist_program_config($program);
-        $sql = "SELECT * FROM {$cfg['table']} WHERE id = ? AND {$cfg['campus_col']} = ? LIMIT 1";
+        $sql = "SELECT * FROM {$cfg['table']} WHERE id = ? AND LOWER(TRIM({$cfg['campus_col']})) = LOWER(TRIM(?)) LIMIT 1";
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
             return null;
@@ -107,6 +108,11 @@ if (!function_exists('schogms_replace_student_document')) {
         if ($fileGroup === '') {
             $fileGroup = $category . ' ' . ucfirst(strtolower($campus));
         }
+        $fgCheck = schogms_document_uploads_normalize_file_group($conn, $fileGroup);
+        if (!$fgCheck['ok']) {
+            return ['success' => false, 'message' => $fgCheck['error']];
+        }
+        $fileGroup = $fgCheck['value'];
 
         $ln = (string) ($student['lastname'] ?? '');
         $fn = (string) ($student['firstname'] ?? '');
@@ -145,13 +151,21 @@ if (!function_exists('schogms_replace_student_document')) {
             return ['success' => false, 'message' => 'Database error'];
         }
         $stmt->bind_param('sssss', $campus, $fileGroup, $category, $dbFileName, $dbPath);
-        $ok = $stmt->execute();
+        try {
+            $ok = $stmt->execute();
+        } catch (mysqli_sql_exception $e) {
+            @unlink($destPath);
+            $stmt->close();
+
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+        $dbErr = $stmt->error;
         $stmt->close();
 
         if (!$ok) {
             @unlink($destPath);
 
-            return ['success' => false, 'message' => 'Could not save document record'];
+            return ['success' => false, 'message' => $dbErr !== '' ? $dbErr : 'Could not save document record'];
         }
 
         return ['success' => true, 'message' => $category . ' uploaded'];
@@ -181,14 +195,13 @@ if (!function_exists('schogms_update_masterlist_student')) {
                 'UPDATE ched_masterlist_tes SET
                     seq=?, app_no=?, lastname=?, firstname=?, ext=?, middlename=?, sex=?,
                     course_program_enrolled=?, year_level=?, street=?, town_city=?, contact=?, batch_no=?
-                 WHERE id=? AND campus=?'
+                 WHERE id=? AND LOWER(TRIM(campus)) = LOWER(TRIM(?))'
             );
             if (!$stmt) {
-                return ['success' => false, 'message' => 'Update failed'];
+                return ['success' => false, 'message' => 'Update failed: ' . $conn->error];
             }
-            $yl = (int) ($fields['year_level'] ?? $existing['year_level']);
             $stmt->bind_param(
-                'sssssssissssis',
+                str_repeat('s', 13) . 'is',
                 $fields['seq'],
                 $fields['app_no'],
                 $fields['lastname'],
@@ -197,7 +210,7 @@ if (!function_exists('schogms_update_masterlist_student')) {
                 $fields['middlename'],
                 $fields['sex'],
                 $fields['course_program_enrolled'],
-                $yl,
+                $fields['year_level'],
                 $fields['street'],
                 $fields['town_city'],
                 $fields['contact'],
@@ -211,10 +224,10 @@ if (!function_exists('schogms_update_masterlist_student')) {
                     seq=?, app_no=?, award_no=?, lastname=?, firstname=?, extname=?, middlename=?, sex=?,
                     birthdate=?, course_program_enrolled=?, year_level=?, total_units_enrolled=?,
                     status_of_enrollment=?, remarks=?
-                 WHERE id=? AND sheet_name=?'
+                 WHERE id=? AND LOWER(TRIM(sheet_name)) = LOWER(TRIM(?))'
             );
             if (!$stmt) {
-                return ['success' => false, 'message' => 'Update failed'];
+                return ['success' => false, 'message' => 'Update failed: ' . $conn->error];
             }
             $stmt->bind_param(
                 'ssssssssssssssis',
@@ -237,10 +250,17 @@ if (!function_exists('schogms_update_masterlist_student')) {
             );
         }
 
-        if (!$stmt->execute()) {
+        try {
+            if (!$stmt->execute()) {
+                $err = $stmt->error;
+                $stmt->close();
+
+                return ['success' => false, 'message' => 'Could not update student: ' . $err];
+            }
+        } catch (mysqli_sql_exception $e) {
             $stmt->close();
 
-            return ['success' => false, 'message' => 'Could not update student: ' . $conn->error];
+            return ['success' => false, 'message' => 'Could not update student: ' . $e->getMessage()];
         }
         $stmt->close();
 

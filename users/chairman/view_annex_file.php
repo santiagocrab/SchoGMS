@@ -34,15 +34,15 @@ if ($relative === '' || str_contains($relative, '..')) {
     exit('Invalid file path.');
 }
 
-$formsDir = realpath(__DIR__ . '/../coordinator/forms');
+$coordinatorRoot = realpath(__DIR__ . '/../coordinator');
 $filePath = realpath(__DIR__ . '/../coordinator/' . $relative);
 
-if ($formsDir === false || $filePath === false || !is_file($filePath)) {
+if ($coordinatorRoot === false || $filePath === false || !is_file($filePath)) {
     http_response_code(404);
     exit('File missing on server.');
 }
 
-if (!str_starts_with($filePath, $formsDir)) {
+if (!str_starts_with($filePath, $coordinatorRoot)) {
     http_response_code(403);
     exit('Path not allowed.');
 }

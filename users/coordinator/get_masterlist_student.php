@@ -1,9 +1,14 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/../config/session.php';
-require_once __DIR__ . '/inc/masterlist_edit.php';
-require_once __DIR__ . '/inc/masterlist_rows.php';
+try {
+    require_once __DIR__ . '/../config/session.php';
+    require_once __DIR__ . '/inc/masterlist_edit.php';
+    require_once __DIR__ . '/inc/masterlist_rows.php';
+} catch (Throwable $e) {
+    echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+    exit;
+}
 
 $id = (int) ($_GET['id'] ?? 0);
 $program = strtolower(trim((string) ($_GET['program'] ?? 'tdp')));

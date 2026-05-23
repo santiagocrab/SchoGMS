@@ -15,7 +15,7 @@ $defaultGroup = 'COR COG ' . ($corCogCampus !== '' ? ucfirst(strtolower($corCogC
             <strong>TDP and/or TES</strong> masterlist (e.g. <code>ABACARO, ROSE ANN PIQUE.pdf</code>).
             Unmatched files are <strong>removed</strong> and reported — they are not stored.
         </p>
-        <form id="corCogBulkUploadForm" enctype="multipart/form-data">
+        <form id="corCogBulkUploadForm" enctype="multipart/form-data" data-submit-url="<?= htmlspecialchars((string) ($corCogSubmitUrl ?? 'submit_document_cor_cog.php'), ENT_QUOTES, 'UTF-8') ?>">
             <input type="hidden" name="bulk_dual" value="1">
             <div class="row">
                 <div class="col-md-6 form-group">

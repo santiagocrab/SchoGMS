@@ -230,8 +230,13 @@ if (!function_exists('schogms_coordinator_shell_open')) {
 }
 
 if (!function_exists('schogms_coordinator_shell_close')) {
-    function schogms_coordinator_shell_close(): void
+    /**
+     * @param array{datatables?:bool,sweetalert?:bool,chart?:bool} $footerOpts
+     */
+    function schogms_coordinator_shell_close(array $footerOpts = []): void
     {
         echo "</div><!-- /.page-wrapper -->\n</div><!-- /#main-wrapper -->\n";
+        require_once __DIR__ . '/assets.php';
+        schogms_coordinator_footer_scripts($footerOpts);
     }
 }

@@ -6,6 +6,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/inc/cor_cog_upload_helpers.php';
+require_once __DIR__ . '/../../inc/schogms_document_uploads.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Invalid request method.']);
@@ -24,10 +25,12 @@ if (!in_array($scope, ['all', 'tdp', 'tes'], true)) {
     $scope = 'all';
 }
 
-if ($fileGroup === '') {
-    echo json_encode(['success' => false, 'message' => 'File group is required.']);
+$fgNorm = schogms_document_uploads_normalize_file_group($conn, $fileGroup);
+if (!$fgNorm['ok']) {
+    echo json_encode(['success' => false, 'message' => $fgNorm['error']]);
     exit;
 }
+$fileGroup = $fgNorm['value'];
 if ($campus === '') {
     echo json_encode(['success' => false, 'message' => 'Campus is required.']);
     exit;
@@ -91,7 +94,8 @@ if ($accepted === 0 && count($batch['rejected']) === 0 && count($batch['errors']
     exit;
 }
 
-echo json_encode([
+try {
+    $payload = [
     'success' => $accepted > 0,
     'message' => schogms_cor_cog_build_upload_message($batch),
     'uploaded' => $accepted,
@@ -116,4 +120,11 @@ echo json_encode([
         'errors' => count($batch['errors']),
         'scholars' => count($batch['by_student']),
     ],
-]);
+    ];
+    echo json_encode($payload);
+} catch (mysqli_sql_exception $e) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Upload failed: ' . $e->getMessage(),
+    ]);
+}

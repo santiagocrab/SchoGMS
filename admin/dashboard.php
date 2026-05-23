@@ -506,6 +506,7 @@ $conn->close();
     <!--This page plugins -->
     <script src="../assets/extra-libs/datatables.net/js/jquery.dataTables.min.js"></script>
     <script src="../dist/js/pages/datatable/datatable-basic.init.js"></script>
+<?php require_once __DIR__ . '/inc/admin_assets.php'; schogms_app_emit_nav_init_script(); ?>
 </body>
 
 </html>

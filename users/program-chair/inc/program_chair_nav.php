@@ -146,8 +146,11 @@ if (!function_exists('schogms_program_chair_shell_open')) {
 }
 
 if (!function_exists('schogms_program_chair_shell_close')) {
-    function schogms_program_chair_shell_close(): void
+    /** @param array{datatables?:bool} $footerOpts */
+    function schogms_program_chair_shell_close(array $footerOpts = []): void
     {
         echo "</div><!-- /.page-wrapper -->\n</div><!-- /#main-wrapper -->\n";
+        require_once __DIR__ . '/program_chair_assets.php';
+        schogms_program_chair_footer_scripts($footerOpts);
     }
 }

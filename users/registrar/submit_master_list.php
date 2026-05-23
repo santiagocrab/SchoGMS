@@ -1,242 +1,310 @@
 <?php
+/**
+ * Registrar masterlist upload → MySQL registrar_master_list.
+ */
+declare(strict_types=1);
 
-// Turn off error display to prevent HTML output
-error_reporting(0);
-ini_set('display_errors', 0);
-
-// Set JSON header first
-header('Content-Type: application/json');
-
-// Start output buffering to catch any unexpected output
+header('Content-Type: application/json; charset=utf-8');
 ob_start();
 
-// Require necessary dependencies
-try {
-    require '../../conn_mongodb.php';
-    require '../vendor/autoload.php';
-} catch (Exception $e) {
-    ob_clean();
-    echo json_encode(['success' => false, 'error' => 'Failed to load dependencies: ' . $e->getMessage()]);
-    exit;
-}
+require_once __DIR__ . '/../../config/schogms_helpers.php';
+require_once __DIR__ . '/config/conn.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
-// Enable error logging but not display
-ini_set('log_errors', '1');
-ini_set('error_log', __DIR__ . '/error_log.txt');
-
-$logFile = __DIR__ . '/error_log.txt'; // Path to error log file
-
-function logError($message)
-{
-    global $logFile;
-    $timestamp = date('Y-m-d H:i:s');
-    error_log("[$timestamp] $message" . PHP_EOL, 3, $logFile);
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+function registrar_upload_json(bool $success, string $message, array $extra = []): void
+{
+    ob_clean();
+    echo json_encode(array_merge([
+        'success' => $success,
+        'message' => $message,
+        'error' => $success ? '' : $message,
+    ], $extra));
+    exit;
+}
 
-    $sheet_name = isset($_POST['session_campus']) ? trim($_POST['session_campus']) : '';
-    $file_group = isset($_POST['file_group']) ? trim($_POST['file_group']) : '';
-    $academic_year = isset($_POST['academic_year']) ? trim($_POST['academic_year']) : '';
-    $semester = isset($_POST['semester']) ? trim($_POST['semester']) : '';
-    // Validate uploaded file
-    // Validate uploaded file
-    if ($_FILES['excelFile']['error'] !== UPLOAD_ERR_OK) {
-        $error = 'File upload error: ' . $_FILES['excelFile']['error'];
-        logError($error);
-        echo json_encode(['success' => false, 'error' => $error]);
-        exit;
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    registrar_upload_json(false, 'Invalid request method.');
+}
+
+if (!($conn instanceof mysqli)) {
+    registrar_upload_json(false, 'Database connection unavailable.');
+}
+
+if (!isset($_FILES['excelFile']) || (int) ($_FILES['excelFile']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+    registrar_upload_json(false, 'File upload failed. Select an Excel or CSV file.');
+}
+
+$campus = trim((string) ($_POST['session_campus'] ?? $_SESSION['sheet_name'] ?? ''));
+$fileGroup = trim((string) ($_POST['file_group'] ?? ''));
+$academicYear = trim((string) ($_POST['academic_year'] ?? ''));
+$semester = trim((string) ($_POST['semester'] ?? ''));
+
+if ($campus === '') {
+    registrar_upload_json(false, 'Campus is missing. Log out and sign in again as registrar.');
+}
+if ($fileGroup === '') {
+    registrar_upload_json(false, 'File group name is required.');
+}
+
+$uploadsDir = __DIR__ . '/uploads/masterlist/';
+$dirCheck = schogms_ensure_writable_upload_dir($uploadsDir);
+if (!$dirCheck['ok']) {
+    registrar_upload_json(false, $dirCheck['error']);
+}
+
+$uploadedFileName = basename((string) $_FILES['excelFile']['name']);
+$targetFilePath = $uploadsDir . time() . '_' . preg_replace('/[^a-zA-Z0-9._-]+/', '_', $uploadedFileName);
+
+if (!move_uploaded_file((string) $_FILES['excelFile']['tmp_name'], $targetFilePath)) {
+    registrar_upload_json(false, 'Could not save the uploaded file on the server.');
+}
+
+try {
+    $spreadsheet = IOFactory::load($targetFilePath);
+    $rows = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
+
+    if (count($rows) < 2) {
+        @unlink($targetFilePath);
+        registrar_upload_json(false, 'The file does not contain enough rows (need header + data).');
     }
 
-    // Define uploads directory
-    $uploadsDir = __DIR__ . '/uploads/';
-    if (!is_dir($uploadsDir)) {
-        if (!mkdir($uploadsDir, 0777, true)) {
-            logError("Failed to create uploads directory: $uploadsDir");
-            echo json_encode(['success' => false, 'error' => 'Failed to create uploads directory.']);
-            exit;
+    $dataStart = 1;
+    foreach (array_slice($rows, 0, 5) as $idx => $headerRow) {
+        if (!is_array($headerRow)) {
+            continue;
+        }
+        $a = strtolower(schogms_spreadsheet_cell($headerRow, 'A'));
+        if ($a === 'last name' || $a === 'lastname' || str_contains($a, 'last')) {
+            $dataStart = $idx + 1;
+            break;
         }
     }
-    
-    // Check if directory is writable
-    if (!is_writable($uploadsDir)) {
-        logError("Uploads directory is not writable: $uploadsDir");
-        echo json_encode(['success' => false, 'error' => 'Uploads directory is not writable.']);
-        exit;
+
+    $dataRows = array_slice($rows, $dataStart);
+
+    $sql = 'INSERT INTO registrar_master_list (
+        campus, file_group, filename, last_name, first_name, middle_name, ext_name, id_number, gender, student_type,
+        year_level, attended, course, curriculum, scholarship, gpa, cgpa, pass_percentage,
+        grade_remarks, enrolled, lec_unit, lab_unit, cor_printed, billing_profile, misc_fee_total,
+        misc_fee_paid, tuition_fee_total, tuition_fee_paid, street, barangay, municipality_city,
+        province, zip_code, date_of_birth, place_of_birth, civil_status, tribe, religion,
+        year_admitted, semester_admitted, school_last_attended, year_last_attended,
+        semester_last_attended, high_school_graduated, exam_date, exam_rating, ref_number,
+        guardian, guardian_address, guardian_contact, blood_type, email_address, mobile_number,
+        deped_number, scholarship_grant, scholarship_allowance, documents_submitted, lacking_documents
+    ) VALUES (
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    )';
+
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        @unlink($targetFilePath);
+        registrar_upload_json(false, 'Database prepare failed: ' . $conn->error);
     }
 
-    $uploadedFileName = basename($_FILES['excelFile']['name']);
-    $targetFilePath = $uploadsDir . $uploadedFileName;
+    $inserted = 0;
+    $skipped = 0;
+    $errors = 0;
 
-    // Attempt to move uploaded file
-    logError("Attempting to move file from: " . $_FILES['excelFile']['tmp_name'] . " to: " . $targetFilePath);
-    logError("File size: " . $_FILES['excelFile']['size'] . " bytes");
-    logError("Upload error code: " . $_FILES['excelFile']['error']);
-    
-    if (!move_uploaded_file($_FILES['excelFile']['tmp_name'], $targetFilePath)) {
-        $error = 'Failed to save the uploaded file. Check server logs for details.';
-        logError($error);
-        logError("Upload directory permissions: " . substr(sprintf('%o', fileperms($uploadsDir)), -4));
-        logError("Target file path: " . $targetFilePath);
-        echo json_encode(['success' => false, 'error' => $error]);
-        exit;
-    }
-    
-    logError("File successfully moved to: " . $targetFilePath);
+    $conn->begin_transaction();
 
-    try {
-        // Load the Excel file
-        $spreadsheet = IOFactory::load($targetFilePath);
-        $sheet = $spreadsheet->getActiveSheet();
-        $rows = $sheet->toArray(null, true, true, true); // Preserve all data
-
-        // Ensure file contains enough rows
-        if (count($rows) < 2) {
-            unlink($targetFilePath); // Remove invalid file
-            $error = 'The file does not contain enough rows.';
-            logError($error);
-            echo json_encode(['success' => false, 'error' => $error]);
-            exit;
+    foreach ($dataRows as $row) {
+        if (!is_array($row) || !array_filter($row, static fn($v) => trim((string) $v) !== '')) {
+            continue;
         }
 
-        // Extract data starting from row 2 (skip headers)
-        $dataRows = array_slice($rows, 1);
+        $lastName = schogms_spreadsheet_cell($row, 'A');
+        $firstName = schogms_spreadsheet_cell($row, 'B');
+        if ($lastName === '' && $firstName === '') {
+            continue;
+        }
 
-        // Get MongoDB collection
-        $registrarCollection = $mongodb->collection('registrar_master_list');
-
-        $successCount = 0;
-        $errorCount = 0;
-        $duplicateCount = 0;
-
-        foreach ($dataRows as $row) {
-            if (array_filter($row)) { // Skip empty rows
-                // Check if ID number already exists
-                $idNumber = $row['E'] ?? '';
-                if (!empty($idNumber)) {
-                    $existingRecord = $registrarCollection->findOne(['id_number' => $idNumber]);
-                    if ($existingRecord) {
-                        $duplicateCount++;
-                        continue; // Skip this row as it's a duplicate
-                    }
+        $idNumber = schogms_spreadsheet_cell($row, 'E');
+        if ($idNumber !== '') {
+            $dup = $conn->prepare(
+                'SELECT id FROM registrar_master_list WHERE campus = ? AND id_number = ? LIMIT 1'
+            );
+            if ($dup) {
+                $dup->bind_param('ss', $campus, $idNumber);
+                $dup->execute();
+                $dupRes = $dup->get_result();
+                if ($dupRes && $dupRes->num_rows > 0) {
+                    $skipped++;
+                    $dup->close();
+                    continue;
                 }
-
-                // Create document for MongoDB - Updated to match your CSV structure
-                $document = [
-                    'campus' => $sheet_name,
-                    'file_group' => $file_group,
-                    'academic_year' => $academic_year,
-                    'semester' => $semester,
-                    'filename' => $uploadedFileName,
-                    'last_name' => $row['A'] ?? '',           // Last Name
-                    'first_name' => $row['B'] ?? '',          // First Name
-                    'middle_name' => $row['C'] ?? '',         // Middle Name
-                    'ext_name' => $row['D'] ?? '',            // Ext. Name
-                    'id_number' => $row['E'] ?? '',           // ID Number
-                    'gender' => $row['F'] ?? '',              // Gender
-                    'student_type' => $row['G'] ?? '',        // Student Type
-                    'year_level' => $row['H'] ?? '',          // Year Level
-                    'attended' => $row['I'] ?? '',            // Attended
-                    'course' => $row['J'] ?? '',              // Course
-                    'curriculum' => $row['K'] ?? '',          // Curriculum
-                    'scholarship' => $row['L'] ?? '',         // Scholarship
-                    'gpa' => $row['M'] ?? '',                 // GPA
-                    'cgpa' => $row['N'] ?? '',                // CGPA
-                    'pass_percentage' => $row['O'] ?? '',     // % Pass
-                    'grade_remarks' => $row['P'] ?? '',       // Grade Remarks
-                    'enrolled' => $row['Q'] ?? '',            // Enrolled
-                    'lec_unit' => $row['R'] ?? '',            // Lec. Unit
-                    'lab_unit' => $row['S'] ?? '',            // Lab. Unit
-                    'cor_printed' => $row['T'] ?? '',         // COR Printed
-                    'billing_profile' => $row['U'] ?? '',     // Billing Profile
-                    'misc_fee_total' => $row['V'] ?? '',      // Misc. Fee Total
-                    'misc_fee_paid' => $row['W'] ?? '',       // Misc. Fee Paid
-                    'tuition_fee_total' => $row['X'] ?? '',   // Tuition Fee Total
-                    'tuition_fee_paid' => $row['Y'] ?? '',    // Tuition Fee Paid
-                    'street' => $row['Z'] ?? '',              // Street
-                    'barangay' => $row['AA'] ?? '',           // Barangay
-                    'municipality_city' => $row['AB'] ?? '',  // Municipality/City
-                    'province' => $row['AC'] ?? '',           // Province
-                    'zip_code' => $row['AD'] ?? '',           // Zip Code
-                    'date_of_birth' => $row['AE'] ?? '',      // Date of Birth
-                    'place_of_birth' => $row['AF'] ?? '',     // Place of Birth
-                    'civil_status' => $row['AG'] ?? '',       // Civil Status
-                    'tribe' => $row['AH'] ?? '',              // Tribe
-                    'religion' => $row['AI'] ?? '',           // Religion
-                    'year_admitted' => $row['AJ'] ?? '',      // Year Admitted
-                    'semester_admitted' => $row['AK'] ?? '',  // Semester Admitted
-                    'school_last_attended' => $row['AL'] ?? '', // School Last Attended
-                    'year_last_attended' => $row['AM'] ?? '', // Year Last Attended
-                    'semester_last_attended' => $row['AN'] ?? '', // Semester Last Attended
-                    'high_school_graduated' => $row['AO'] ?? '', // High School Graduated
-                    'exam_date' => $row['AP'] ?? '',          // Exam Date
-                    'exam_rating' => $row['AQ'] ?? '',        // Exam Rating
-                    'ref_number' => $row['AR'] ?? '',         // Ref. Number
-                    'guardian' => $row['AS'] ?? '',           // Guardian
-                    'guardian_address' => $row['AT'] ?? '',   // Address
-                    'guardian_contact' => $row['AU'] ?? '',   // Contact Number
-                    'blood_type' => $row['AV'] ?? '',         // Blood Type
-                    'email_address' => $row['AW'] ?? '',      // Email Address
-                    'mobile_number' => $row['AX'] ?? '',      // Mobile Number
-                    'deped_number' => $row['AY'] ?? '',       // DEPED Number
-                    'scholarship_grant' => $row['AZ'] ?? '',  // Scholarship Grant
-                    'scholarship_allowance' => $row['BA'] ?? '', // Scholarship Allowance
-                    'documents_submitted' => $row['BB'] ?? '', // Documents Submitted
-                    'lacking_documents' => $row['BC'] ?? '',  // Lacking Documents
-                    'created_at' => date('Y-m-d H:i:s'),
-                    'updated_at' => date('Y-m-d H:i:s')
-                ];
-
-                try {
-                    $result = $registrarCollection->insertOne($document);
-                    if ($result) {
-                        $successCount++;
-                        logError('Successfully inserted document for ID: ' . ($row['E'] ?? 'unknown'));
-                    } else {
-                        $errorCount++;
-                        logError('Error inserting document: ' . json_encode($row));
-                    }
-                } catch (Exception $e) {
-                    $errorCount++;
-                    logError('Error inserting document: ' . $e->getMessage() . ' | Row: ' . json_encode($row));
-                }
+                $dup->close();
             }
         }
 
-        unlink($targetFilePath); // Remove uploaded file after processing
+        $middleName = schogms_spreadsheet_cell($row, 'C');
+        $extName = schogms_spreadsheet_cell($row, 'D');
+        $gender = schogms_spreadsheet_cell($row, 'F');
+        $studentType = schogms_spreadsheet_cell($row, 'G');
+        $yearLevel = schogms_spreadsheet_cell($row, 'H');
+        $attended = schogms_spreadsheet_cell($row, 'I');
+        $course = schogms_spreadsheet_cell($row, 'J');
+        $curriculum = schogms_spreadsheet_cell($row, 'K');
+        $scholarship = schogms_spreadsheet_cell($row, 'L');
+        $gpa = schogms_spreadsheet_cell($row, 'M');
+        $cgpa = schogms_spreadsheet_cell($row, 'N');
+        $passPct = schogms_spreadsheet_cell($row, 'O');
+        $gradeRemarks = schogms_spreadsheet_cell($row, 'P');
+        $enrolled = schogms_spreadsheet_cell($row, 'Q');
+        $lecUnit = schogms_spreadsheet_cell($row, 'R');
+        $labUnit = schogms_spreadsheet_cell($row, 'S');
+        $corPrinted = schogms_spreadsheet_cell($row, 'T');
+        $billingProfile = schogms_spreadsheet_cell($row, 'U');
+        $miscFeeTotal = schogms_spreadsheet_cell($row, 'V');
+        $miscFeePaid = schogms_spreadsheet_cell($row, 'W');
+        $tuitionFeeTotal = schogms_spreadsheet_cell($row, 'X');
+        $tuitionFeePaid = schogms_spreadsheet_cell($row, 'Y');
+        $street = schogms_spreadsheet_cell($row, 'Z');
+        $barangay = schogms_spreadsheet_cell($row, 'AA');
+        $municipality = schogms_spreadsheet_cell($row, 'AB');
+        $province = schogms_spreadsheet_cell($row, 'AC');
+        $zipCode = schogms_spreadsheet_cell($row, 'AD');
+        $dob = schogms_spreadsheet_cell($row, 'AE');
+        $pob = schogms_spreadsheet_cell($row, 'AF');
+        $civilStatus = schogms_spreadsheet_cell($row, 'AG');
+        $tribe = schogms_spreadsheet_cell($row, 'AH');
+        $religion = schogms_spreadsheet_cell($row, 'AI');
+        $yearAdmitted = schogms_spreadsheet_cell($row, 'AJ');
+        $semAdmitted = schogms_spreadsheet_cell($row, 'AK');
+        $schoolLast = schogms_spreadsheet_cell($row, 'AL');
+        $yearLast = schogms_spreadsheet_cell($row, 'AM');
+        $semLast = schogms_spreadsheet_cell($row, 'AN');
+        $hsGrad = schogms_spreadsheet_cell($row, 'AO');
+        $examDate = schogms_spreadsheet_cell($row, 'AP');
+        $examRating = schogms_spreadsheet_cell($row, 'AQ');
+        $refNumber = schogms_spreadsheet_cell($row, 'AR');
+        $guardian = schogms_spreadsheet_cell($row, 'AS');
+        $guardianAddr = schogms_spreadsheet_cell($row, 'AT');
+        $guardianContact = schogms_spreadsheet_cell($row, 'AU');
+        $bloodType = schogms_spreadsheet_cell($row, 'AV');
+        $email = schogms_spreadsheet_cell($row, 'AW');
+        $mobile = schogms_spreadsheet_cell($row, 'AX');
+        $deped = schogms_spreadsheet_cell($row, 'AY');
+        $schGrant = schogms_spreadsheet_cell($row, 'AZ');
+        $schAllow = schogms_spreadsheet_cell($row, 'BA');
+        $docsSubmitted = schogms_spreadsheet_cell($row, 'BB');
+        $lackingDocs = schogms_spreadsheet_cell($row, 'BC');
 
-        $message = "Data processing completed successfully! ";
-        $message .= "Records inserted: $successCount, ";
-        $message .= "Duplicates skipped: $duplicateCount, ";
-        $message .= "Errors: $errorCount";
+        if ($enrolled === '' && $attended !== '') {
+            $enrolled = $attended;
+        }
+        if ($yearAdmitted === '' && $academicYear !== '') {
+            $yearAdmitted = $academicYear;
+        }
+        if ($semAdmitted === '' && $semester !== '') {
+            $semAdmitted = $semester;
+        }
 
-        // Clean any unexpected output before sending JSON
-        ob_clean();
-        echo json_encode([
-            'success' => true, 
-            'message' => $message,
-            'stats' => [
-                'inserted' => $successCount,
-                'duplicates' => $duplicateCount,
-                'errors' => $errorCount,
-                'total_rows_processed' => count($dataRows),
-                'file_name' => $uploadedFileName,
-                'campus' => $sheet_name,
-                'file_group' => $file_group,
-                'academic_year' => $academic_year,
-                'semester' => $semester
-            ]
-        ]);
-    } catch (Exception $e) {
-        logError('Error processing file: ' . $e->getMessage());
-        ob_clean();
-        echo json_encode(['success' => false, 'error' => 'Error processing file: ' . $e->getMessage()]);
+        $stmt->bind_param(
+            'ssssssssssssssssssssssssssssssssssssssssssssssssssssssssss',
+            $campus,
+            $fileGroup,
+            $uploadedFileName,
+            $lastName,
+            $firstName,
+            $middleName,
+            $extName,
+            $idNumber,
+            $gender,
+            $studentType,
+            $yearLevel,
+            $attended,
+            $course,
+            $curriculum,
+            $scholarship,
+            $gpa,
+            $cgpa,
+            $passPct,
+            $gradeRemarks,
+            $enrolled,
+            $lecUnit,
+            $labUnit,
+            $corPrinted,
+            $billingProfile,
+            $miscFeeTotal,
+            $miscFeePaid,
+            $tuitionFeeTotal,
+            $tuitionFeePaid,
+            $street,
+            $barangay,
+            $municipality,
+            $province,
+            $zipCode,
+            $dob,
+            $pob,
+            $civilStatus,
+            $tribe,
+            $religion,
+            $yearAdmitted,
+            $semAdmitted,
+            $schoolLast,
+            $yearLast,
+            $semLast,
+            $hsGrad,
+            $examDate,
+            $examRating,
+            $refNumber,
+            $guardian,
+            $guardianAddr,
+            $guardianContact,
+            $bloodType,
+            $email,
+            $mobile,
+            $deped,
+            $schGrant,
+            $schAllow,
+            $docsSubmitted,
+            $lackingDocs
+        );
+
+        if ($stmt->execute()) {
+            $inserted++;
+        } else {
+            $errors++;
+        }
     }
-} else {
-    logError('Invalid request method.');
-    ob_clean();
-    echo json_encode(['success' => false, 'error' => 'Invalid request method.']);
+
+    $stmt->close();
+    $conn->commit();
+    @unlink($targetFilePath);
+
+    if ($inserted === 0 && $errors === 0) {
+        registrar_upload_json(false, 'No student rows were imported. Check column headers (Last Name in column A).');
+    }
+
+    $msg = "Imported {$inserted} scholar(s) for {$campus}.";
+    if ($skipped > 0) {
+        $msg .= " Skipped {$skipped} duplicate ID(s).";
+    }
+    if ($errors > 0) {
+        $msg .= " {$errors} row(s) failed.";
+    }
+
+    registrar_upload_json($inserted > 0, $msg, [
+        'stats' => [
+            'inserted' => $inserted,
+            'duplicates' => $skipped,
+            'errors' => $errors,
+            'file_group' => $fileGroup,
+            'campus' => $campus,
+        ],
+    ]);
+} catch (Throwable $e) {
+    if ($conn instanceof mysqli) {
+        $conn->rollback();
+    }
+    @unlink($targetFilePath);
+    schogms_log_error('Registrar masterlist upload: ' . $e->getMessage());
+    registrar_upload_json(false, 'Error processing file: ' . $e->getMessage());
 }
-?>

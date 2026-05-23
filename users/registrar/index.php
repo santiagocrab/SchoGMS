@@ -1,12 +1,16 @@
 <?php
 include 'config/session.php';
 require_once __DIR__ . '/inc/registrar_data.php';
+require_once __DIR__ . '/inc/assets.php';
+require_once __DIR__ . '/inc/registrar_nav.php';
+
 $dashCounts = schogms_registrar_dashboard_counts($sheet_name ?? null);
 $totalRecords = $dashCounts['masterlist'];
 $totalCourses = $dashCounts['courses'];
 $totalFileGroups = $dashCounts['file_groups'];
 $corCount = $dashCounts['cor'];
 $cogCount = $dashCounts['cog'];
+$reqCount = $corCount + $cogCount;
 ?>
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
@@ -15,183 +19,110 @@ $cogCount = $dashCounts['cog'];
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Registrar Dashboard - SchoGMS</title>
-    <link href="../../dist/css/style.min.css" rel="stylesheet">
-    <style>.preloader{display:none!important}#main-wrapper{opacity:1!important}</style>
+    <?php schogms_registrar_head(); ?>
     <link href="../../assets/extra-libs/c3/c3.min.css" rel="stylesheet">
     <link href="../../assets/libs/chartist/dist/chartist.min.css" rel="stylesheet">
+    <style>
+        .chart-container {
+            width: 100%;
+            max-width: 500px;
+            height: 500px !important;
+            margin: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        canvas { max-width: 100% !important; height: auto !important; }
+        a.registrar-dash-card { color: inherit; text-decoration: none; }
+        a.registrar-dash-card:hover .card { box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+    </style>
 </head>
 <body>
 <?php schogms_loading_screen_once(); ?>
 
-    <div id="main-wrapper" data-theme="light" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
-        data-sidebar-position="fixed" data-header-position="fixed" data-boxed-layout="full">
-        
-        <!-- Header -->
-        <header class="topbar" data-navbarbg="skin6">
-            <nav class="navbar top-navbar navbar-expand-md">
-                <div class="navbar-header" data-logobg="skin6">
-                    <a class="nav-toggler waves-effect waves-light d-block d-md-none" href="javascript:void(0)"><i
-                            class="ti-menu ti-close"></i></a>
-                    <div class="navbar-brand">
-                        <a href="index.php">
-                            <b class="logo-icon">
-                                <img src="../../assets/images/logo.png" style="height: auto; width: 200px;"
-                                    alt="homepage" class="dark-logo" />
-                                <img src="../../assets/images/logo.png" alt="homepage" class="light-logo" />
-                            </b>
-                        </a>
-                    </div>
-                    <a class="topbartoggler d-block d-md-none waves-effect waves-light" href="javascript:void(0)"
-                        data-toggle="collapse" data-target="#navbarSupportedContent"
-                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><i
-                            class="ti-more"></i></a>
-                </div>
-                <div class="navbar-collapse collapse" id="navbarSupportedContent">
-                    <ul class="navbar-nav float-left mr-auto ml-3 pl-1">
-                        <h3 class="page-title text-truncate text-dark font-weight-medium mb-1">Scholarship and Grants
-                            Management System</h3>
-                    </ul>
-                    <ul class="navbar-nav float-right">
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="javascript:void(0)" data-toggle="dropdown"
-                                aria-haspopup="true" aria-expanded="false">
-                                <img src="../../assets/images/users/image.png" alt="user" class="rounded-circle"
-                                    width="40">
-                                <span class="ml-2 d-none d-lg-inline-block"><span>Hello,</span> <span
-                                        class="text-dark"><?= $fullname ?></span> <i data-feather="chevron-down"
-                                        class="svg-icon"></i></span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-right user-dd animated flipInY">
-                                <a class="dropdown-item" href="logout.php"><i data-feather="power"
-                                        class="svg-icon mr-2 ml-1"></i>
-                                    Logout</a>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-        </header>
-
-        <!-- Sidebar -->
-        <aside class="left-sidebar" data-sidebarbg="skin6">
-            <div class="scroll-sidebar" data-sidebarbg="skin6">
-                <nav class="sidebar-nav">
-                    <ul id="sidebarnav">
-                        <?php require __DIR__ . '/inc/registrar_sidebar_menu.php'; ?>
-                    </ul>
-                </nav>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <div class="page-wrapper">
+<?php schogms_registrar_shell_open('Registrar dashboard'); ?>
             <div class="container-fluid">
                 <div class="card-group">
-                    <!-- Total Records Card -->
-                    <div class="card border-right">
-                        <div class="card-body">
-                            <div class="d-flex d-lg-flex d-md-block align-items-center">
-                                <div>
-                                    <div class="d-inline-flex align-items-center">
-                                        <h2 class="text-dark mb-1 font-weight-medium"><?= $totalRecords; ?></h2>
+                    <a href="masterlist.php" class="registrar-dash-card">
+                        <div class="card border-right">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div>
+                                        <h2 class="text-dark mb-1 font-weight-medium"><?= (int) $totalRecords ?></h2>
+                                        <h6 class="text-muted font-weight-normal mb-0">Total Records</h6>
                                     </div>
-                                    <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">Total Records</h6>
-                                </div>
-                                <div class="ml-auto mt-md-3 mt-lg-0">
-                                    <span class="opacity-7 text-muted"><i data-feather="database"></i></span>
+                                    <div class="ml-auto"><i data-feather="database" class="feather-icon text-muted"></i></div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Total Courses Card -->
+                    </a>
                     <div class="card border-right">
                         <div class="card-body">
-                            <div class="d-flex d-lg-flex d-md-block align-items-center">
+                            <div class="d-flex align-items-center">
                                 <div>
-                                    <div class="d-inline-flex align-items-center">
-                                        <h2 class="text-dark mb-1 font-weight-medium"><?= $totalCourses; ?></h2>
-                                    </div>
-                                    <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">Total Courses</h6>
+                                    <h2 class="text-dark mb-1 font-weight-medium"><?= (int) $totalCourses ?></h2>
+                                    <h6 class="text-muted font-weight-normal mb-0">Total Courses</h6>
                                 </div>
-                                <div class="ml-auto mt-md-3 mt-lg-0">
-                                    <span class="opacity-7 text-muted"><i data-feather="book-open"></i></span>
-                                </div>
+                                <div class="ml-auto"><i data-feather="book-open" class="feather-icon text-muted"></i></div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Total File Groups Card -->
                     <div class="card border-right">
                         <div class="card-body">
-                            <div class="d-flex d-lg-flex d-md-block align-items-center">
+                            <div class="d-flex align-items-center">
                                 <div>
-                                    <div class="d-inline-flex align-items-center">
-                                        <h2 class="text-dark mb-1 font-weight-medium"><?= $totalFileGroups; ?></h2>
-                                    </div>
-                                    <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">Total File Groups</h6>
+                                    <h2 class="text-dark mb-1 font-weight-medium"><?= (int) $totalFileGroups ?></h2>
+                                    <h6 class="text-muted font-weight-normal mb-0">Total File Groups</h6>
                                 </div>
-                                <div class="ml-auto mt-md-3 mt-lg-0">
-                                    <span class="opacity-7 text-muted"><i data-feather="folder"></i></span>
-                                </div>
+                                <div class="ml-auto"><i data-feather="folder" class="feather-icon text-muted"></i></div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- COR Documents Card -->
-                    <div class="card border-right">
-                        <div class="card-body">
-                            <div class="d-flex d-lg-flex d-md-block align-items-center">
-                                <div>
-                                    <div class="d-inline-flex align-items-center">
-                                        <h2 class="text-dark mb-1 font-weight-medium"><?= $corCount; ?></h2>
+                    <a href="cor.php" class="registrar-dash-card">
+                        <div class="card border-right">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div>
+                                        <h2 class="text-dark mb-1 font-weight-medium"><?= (int) $corCount ?></h2>
+                                        <h6 class="text-muted font-weight-normal mb-0">COR Documents</h6>
                                     </div>
-                                    <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">COR Documents</h6>
-                                </div>
-                                <div class="ml-auto mt-md-3 mt-lg-0">
-                                    <span class="opacity-7 text-muted"><i data-feather="file-text"></i></span>
+                                    <div class="ml-auto"><i data-feather="file-text" class="feather-icon text-muted"></i></div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- COG Documents Card -->
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex d-lg-flex d-md-block align-items-center">
-                                <div>
-                                    <div class="d-inline-flex align-items-center">
-                                        <h2 class="text-dark mb-1 font-weight-medium"><?= $cogCount; ?></h2>
+                    </a>
+                    <a href="cog.php" class="registrar-dash-card">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div>
+                                        <h2 class="text-dark mb-1 font-weight-medium"><?= (int) $cogCount ?></h2>
+                                        <h6 class="text-muted font-weight-normal mb-0">COG Documents</h6>
                                     </div>
-                                    <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">COG Documents</h6>
+                                    <div class="ml-auto"><i data-feather="file-text" class="feather-icon text-muted"></i></div>
                                 </div>
-                                <div class="ml-auto mt-md-3 mt-lg-0">
-                                    <span class="opacity-7 text-muted"><i data-feather="file-text"></i></span>
-                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="row mt-3 mb-2">
+                    <div class="col-12">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body py-3 d-flex flex-wrap align-items-center">
+                                <span class="text-muted mr-3 mb-1 mb-md-0">Quick links:</span>
+                                <a href="masterlist.php" class="btn btn-outline-dark btn-sm mr-2 mb-1">Masterlist</a>
+                                <a href="cor-cog.php" class="btn btn-outline-primary btn-sm mr-2 mb-1">COR &amp; COG</a>
+                                <a href="enrollment_status.php" class="btn btn-outline-info btn-sm mr-2 mb-1">Enrollment status</a>
+                                <a href="requirements.php" class="btn btn-outline-success btn-sm mr-2 mb-1">
+                                    Requirements<?= $reqCount > 0 ? ' (' . (int) $reqCount . ')' : '' ?>
+                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <style>
-                    .chart-container {
-                        width: 100%;
-                        max-width: 500px;
-                        height: 500px !important;
-                        margin: auto;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    }
-                    canvas {
-                        max-width: 100% !important;
-                        height: auto !important;
-                    }
-                </style>
-
-                <!-- Charts Section -->
                 <div class="row">
-                    <!-- Total Courses Chart -->
                     <div class="col-lg-6 col-md-12">
                         <div class="card">
                             <div class="card-body text-center">
@@ -202,8 +133,6 @@ $cogCount = $dashCounts['cog'];
                             </div>
                         </div>
                     </div>
-
-                    <!-- Document Types Chart -->
                     <div class="col-lg-6 col-md-12">
                         <div class="card">
                             <div class="card-body text-center">
@@ -216,26 +145,14 @@ $cogCount = $dashCounts['cog'];
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <script src="../../assets/libs/jquery/dist/jquery.min.js"></script>
-    <script src="../../assets/libs/popper.js/dist/umd/popper.min.js"></script>
-    <script src="../../assets/libs/bootstrap/dist/js/bootstrap.min.js"></script>
-    <script src="../../dist/js/feather.min.js"></script>
-    <script src="../../assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js"></script>
-    <script src="../../dist/js/sidebarmenu.js"></script>
-    <script src="../../dist/js/custom.min.js"></script>
-    <script>if(typeof feather!=="undefined"){feather.replace();}</script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+<?php
+schogms_registrar_shell_close();
+schogms_registrar_footer_scripts(['chart' => true]);
+?>
     <script>
     $(document).ready(function() {
-        // Sample course data for chart
         var courseLabels = ["BSIT", "BSCS", "BSIS", "BSCE", "BSME", "BSEE"];
         var courseCounts = [150, 120, 100, 80, 60, 40];
-        
-        // Total Courses Chart (Bar Chart)
         new Chart(document.getElementById("total-courses-chart"), {
             type: 'bar',
             data: {
@@ -247,37 +164,23 @@ $cogCount = $dashCounts['cog'];
                 }]
             },
             options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
+                scales: { y: { beginAtZero: true } },
+                plugins: { legend: { display: false } }
             }
         });
-
-        // Document Types Chart (Doughnut Chart)
         new Chart(document.getElementById("document-types-chart"), {
             type: 'doughnut',
             data: {
                 labels: ["COR Documents", "COG Documents"],
                 datasets: [{
-                    data: [<?= $corCount ?>, <?= $cogCount ?>],
+                    data: [<?= (int) $corCount ?>, <?= (int) $cogCount ?>],
                     backgroundColor: ["#28a745", "#17a2b8"],
                     borderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
+                plugins: { legend: { position: 'bottom' } }
             }
         });
     });

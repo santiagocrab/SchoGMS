@@ -199,11 +199,8 @@ function ensureUploadDirs(): array
 
 function writePlaceholderPdf(string $fullPath, string $label): void
 {
-    $content = "%PDF-1.4\n";
-    $content .= "% SchoGMS DEMO placeholder\n";
-    $content .= "% " . substr(preg_replace('/[^\x20-\x7E]/', ' ', $label), 0, 200) . "\n";
-    $content .= "1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n";
-    file_put_contents($fullPath, $content);
+    require_once dirname(__DIR__) . '/config/schogms_helpers.php';
+    schogms_write_viewable_pdf($fullPath, $label, 'SchoGMS demo document');
 }
 
 function writePlaceholderXlsx(string $fullPath, string $title): void

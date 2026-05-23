@@ -1,0 +1,103 @@
+{
+    "generated_at": "2026-05-22T21:56:06+02:00",
+    "campus": "ACCESS",
+    "file_groups": {
+        "registrar": "DEMO PRESENT | Registrar ACCESS SY 2024-2025",
+        "tdp": "DEMO PRESENT | TDP ACCESS SY 2024-2025",
+        "tes": "DEMO PRESENT | TES ACCESS SY 2024-2025",
+        "cor": "DEMO PRESENT | COR ACCESS SY 2024-2025",
+        "cog": "DEMO PRESENT | COG ACCESS SY 2024-2025",
+        "annex7": "DEMO PRESENT | Annex7 ACCESS",
+        "billing": "DEMO PRESENT | Billing ACCESS SY 2024-2025"
+    },
+    "scholars": [
+        {
+            "display_name": "REYES, MARIA SANTOS",
+            "cor_file": "REYES, MARIA SANTOS.pdf",
+            "cog_file": "REYES, MARIA SANTOS.pdf",
+            "seq": "P001"
+        },
+        {
+            "display_name": "DELA CRUZ, JUAN TORRES",
+            "cor_file": "DELA CRUZ, JUAN TORRES.pdf",
+            "cog_file": "DELA CRUZ, JUAN TORRES.pdf",
+            "seq": "P002"
+        },
+        {
+            "display_name": "GARCIA, SOPHIA MENDOZA",
+            "cor_file": "GARCIA, SOPHIA MENDOZA.pdf",
+            "cog_file": "GARCIA, SOPHIA MENDOZA.pdf",
+            "seq": "P003"
+        },
+        {
+            "display_name": "BAUTISTA, CARLO AQUINO",
+            "cor_file": "BAUTISTA, CARLO AQUINO.pdf",
+            "cog_file": "BAUTISTA, CARLO AQUINO.pdf",
+            "seq": "P004"
+        },
+        {
+            "display_name": "FERNANDEZ, ANALYN CASTILLO",
+            "cor_file": "FERNANDEZ, ANALYN CASTILLO.pdf",
+            "cog_file": "FERNANDEZ, ANALYN CASTILLO.pdf",
+            "seq": "P005"
+        }
+    ],
+    "upload_order": [
+        {
+            "step": 1,
+            "role": "registrar",
+            "file": "01_registrar/registrar_masterlist_ACCESS_demo.xlsx",
+            "file_group": "DEMO PRESENT | Registrar ACCESS SY 2024-2025",
+            "when": "Start of demo \u2014 before coordinator validation"
+        },
+        {
+            "step": 2,
+            "role": "coordinator",
+            "file": "02_coordinator/ched_tdp_ACCESS_SY2024-2025_demo.xlsx",
+            "file_group": "DEMO PRESENT | TDP ACCESS SY 2024-2025",
+            "when": "After registrar \u2014 triggers chairman pending file group"
+        },
+        {
+            "step": 3,
+            "role": "coordinator",
+            "file": "02_coordinator/ched_tes_ACCESS_demo.xlsx",
+            "file_group": "DEMO PRESENT | TES ACCESS SY 2024-2025",
+            "when": "Optional \u2014 TES tab demo"
+        },
+        {
+            "step": 4,
+            "role": "coordinator",
+            "file": "03_cor_cog/COR/*.pdf",
+            "file_group": "DEMO PRESENT | COR ACCESS SY 2024-2025",
+            "when": "After TDP masterlist \u2014 Requirements \u2192 COR bulk upload"
+        },
+        {
+            "step": 5,
+            "role": "coordinator",
+            "file": "03_cor_cog/COG/*.pdf",
+            "file_group": "DEMO PRESENT | COG ACCESS SY 2024-2025",
+            "when": "After COR \u2014 COG bulk upload"
+        },
+        {
+            "step": 6,
+            "role": "coordinator",
+            "file": "02_coordinator/annex7_ACCESS_demo.xlsx",
+            "file_group": "DEMO PRESENT | Annex7 ACCESS",
+            "when": "Submit Form \u2014 Annex 7 to chairman"
+        },
+        {
+            "step": 7,
+            "role": "chairman",
+            "file": "(UI only)",
+            "file_group": "DEMO PRESENT | TDP ACCESS SY 2024-2025",
+            "when": "Review \u2192 File groups \u2192 Approve pending TDP"
+        },
+        {
+            "step": 8,
+            "role": "chairman",
+            "file": "04_chairman/billing_verified_scholars_ACCESS_demo.xlsx",
+            "file_group": "DEMO PRESENT | Billing ACCESS SY 2024-2025",
+            "when": "Verified scholars \u2014 import billing (if enabled)"
+        }
+    ]
+}

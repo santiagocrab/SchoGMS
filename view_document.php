@@ -1,167 +1,134 @@
 <?php
-// Document viewer - serves COR/COG files securely
+/**
+ * Shared COR/COG document viewer — resolves uploads/COR|COG paths on disk (MySQL-era storage).
+ */
+declare(strict_types=1);
+
 session_start();
 
-// Check if user is logged in (basic security)
 if (!isset($_SESSION['user_id'])) {
     http_response_code(403);
-    die("Access denied. Please log in.");
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'Access denied. Please log in.';
+    exit;
 }
 
-// Get document ID or path from query string
-$docId = $_GET['id'] ?? null;
-$filePath = $_GET['path'] ?? null;
+require_once __DIR__ . '/config/schogms_helpers.php';
+require_once __DIR__ . '/users/coordinator/inc/cor_cog_upload_helpers.php';
 
-if (!$docId && !$filePath) {
+$storedPath = '';
+$fileName = null;
+
+if (!empty($_GET['path'])) {
+    $decoded = base64_decode((string) $_GET['path'], true);
+    if ($decoded !== false && $decoded !== '') {
+        $storedPath = $decoded;
+    }
+}
+
+// Legacy registrar links: ?file=uploads/COR/x.pdf&type=COR
+if ($storedPath === '' && !empty($_GET['file'])) {
+    $storedPath = (string) $_GET['file'];
+}
+
+if ($storedPath === '') {
     http_response_code(400);
-    die("Missing document identifier");
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'Missing document path.';
+    exit;
 }
 
-require_once 'conn_mongodb.php';
-$documentCollection = $mongodb->collection('document_uploads');
+$storedPath = ltrim(str_replace('\\', '/', $storedPath), '/');
 
-// Find document
-$doc = null;
-if ($docId) {
-    $docs = $documentCollection->find(['id' => $docId], ['limit' => 1]);
-    foreach ($docs as $d) {
-        $doc = $d;
-        break;
-    }
-} else if ($filePath) {
-    // Decode the path
-    $filePath = base64_decode($filePath);
-    $docs = $documentCollection->find(['file_path' => $filePath], ['limit' => 1]);
-    foreach ($docs as $d) {
-        $doc = $d;
-        break;
-    }
+// Only allow COR/COG upload trees
+if (!preg_match('#^uploads/(COR|COG)/#i', $storedPath)
+    && !preg_match('#^users/(coordinator|registrar)/uploads/(COR|COG)/#i', $storedPath)) {
+    http_response_code(403);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'Invalid document path.';
+    exit;
 }
 
-if (!$doc || !isset($doc['file_path'])) {
+$actualPath = schogms_cor_cog_resolve_disk_path($storedPath, $fileName);
+
+if ($actualPath === null) {
     http_response_code(404);
-    die("Document not found");
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<p>File not found.</p>';
+    echo '<p><strong>Stored path:</strong> ' . htmlspecialchars($storedPath, ENT_QUOTES, 'UTF-8') . '</p>';
+    echo '<p>Expected under <code>users/coordinator/uploads/COR</code> or <code>users/coordinator/uploads/COG</code>.</p>';
+    exit;
 }
 
-// Get the actual file path
-$storedPath = $doc['file_path'];
-$actualPath = null;
-
-// Try multiple path variations to find the file
-$pathVariations = [];
-
-// If path is absolute (starts with /), use it as-is
-if (strpos($storedPath, '/') === 0) {
-    $pathVariations[] = $storedPath;
+$ext = strtolower(pathinfo($actualPath, PATHINFO_EXTENSION));
+$allowed = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
+if (!in_array($ext, $allowed, true)) {
+    http_response_code(400);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'Unsupported file type.';
+    exit;
 }
 
-// Try relative to SchoGMS root (most common case)
-$pathVariations[] = __DIR__ . '/' . ltrim($storedPath, '/');
+$mime = match ($ext) {
+    'pdf' => 'application/pdf',
+    'jpg', 'jpeg' => 'image/jpeg',
+    'png' => 'image/png',
+    'gif' => 'image/gif',
+    'webp' => 'image/webp',
+    default => 'application/octet-stream',
+};
 
-// IMPORTANT: Files are actually stored in users/registrar/uploads/
-// So if path starts with "uploads/", also try "users/registrar/uploads/"
-if (strpos($storedPath, 'uploads/') === 0) {
-    // Replace "uploads/" with "users/registrar/uploads/"
-    $registrarPath = str_replace('uploads/', 'users/registrar/uploads/', $storedPath);
-    $pathVariations[] = __DIR__ . '/' . $registrarPath;
-    $pathVariations[] = __DIR__ . '/' . ltrim($registrarPath, '/');
-}
+$downloadName = basename($actualPath);
+$servePath = $actualPath;
+$serveBytes = null;
 
-// Try other variations
-$pathVariations[] = dirname(__DIR__) . '/' . ltrim($storedPath, '/');
-
-// If path contains "uploads/", try different base paths
-if (strpos($storedPath, 'uploads/') !== false) {
-    $pathVariations[] = __DIR__ . '/' . $storedPath;
-    $pathVariations[] = $_SERVER['DOCUMENT_ROOT'] . '/SchoGMS/' . ltrim($storedPath, '/');
-    $pathVariations[] = $_SERVER['DOCUMENT_ROOT'] . '/SchoGMS/users/registrar/' . ltrim($storedPath, '/');
-    $pathVariations[] = $_SERVER['DOCUMENT_ROOT'] . '/' . ltrim($storedPath, '/');
-}
-
-// Also try with file_name if different
-if (isset($doc['file_name']) && $doc['file_name'] !== basename($storedPath)) {
-    $dirPath = dirname($storedPath);
-    $pathVariations[] = __DIR__ . '/' . $dirPath . '/' . $doc['file_name'];
-}
-
-// Try each variation until we find an existing file
-foreach ($pathVariations as $testPath) {
-    // Normalize the path
-    $testPath = str_replace('\\', '/', $testPath);
-    $testPath = preg_replace('#/+#', '/', $testPath);
-    
-    if (file_exists($testPath) && is_file($testPath)) {
-        $actualPath = $testPath;
-        break;
+if ($ext === 'pdf' && !schogms_pdf_is_viewable($actualPath)) {
+    $label = preg_replace('/\.(pdf|jpe?g|png)$/i', '', $downloadName);
+    $label = preg_replace('/_(COR|COG)$/i', '', $label);
+    $label = str_replace('_', ' ', $label);
+    $serveBytes = schogms_generate_minimal_pdf(
+        $label !== '' ? $label : 'Scholar document',
+        'Original file on server is a demo placeholder or invalid PDF. Upload a real COR/COG PDF to replace it.'
+    );
+    if (is_writable(dirname($actualPath))) {
+        @file_put_contents($actualPath, $serveBytes);
     }
 }
 
-// If still not found, try to find by filename in uploads directory
-if (!$actualPath && isset($doc['file_name'])) {
-    $fileName = $doc['file_name'];
-    $searchDirs = [
-        __DIR__ . '/uploads',
-        __DIR__ . '/uploads/documents',
-        __DIR__ . '/users/registrar/uploads',
-        __DIR__ . '/users/registrar/uploads/documents',
-        $_SERVER['DOCUMENT_ROOT'] . '/SchoGMS/uploads',
-        $_SERVER['DOCUMENT_ROOT'] . '/SchoGMS/users/registrar/uploads',
-    ];
-    
-    foreach ($searchDirs as $searchDir) {
-        if (is_dir($searchDir)) {
-            try {
-                $iterator = new RecursiveIteratorIterator(
-                    new RecursiveDirectoryIterator($searchDir, RecursiveDirectoryIterator::SKIP_DOTS),
-                    RecursiveIteratorIterator::SELF_FIRST
-                );
-                
-                foreach ($iterator as $file) {
-                    if ($file->isFile() && $file->getFilename() === $fileName) {
-                        $actualPath = $file->getRealPath();
-                        break 2;
-                    }
-                }
-            } catch (Exception $e) {
-                // Skip directories that can't be read
-                continue;
-            }
+if ($serveBytes !== null) {
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: inline; filename="' . str_replace('"', '', $downloadName) . '"');
+    header('Content-Length: ' . (string) strlen($serveBytes));
+    header('Cache-Control: private, max-age=0, must-revalidate');
+    header('Pragma: public');
+    echo $serveBytes;
+    exit;
+}
+
+$size = filesize($servePath);
+if ($size === false) {
+    http_response_code(500);
+    echo 'Could not read file.';
+    exit;
+}
+
+if ($ext === 'pdf') {
+    $handle = fopen($servePath, 'rb');
+    if ($handle) {
+        $header = fread($handle, 4);
+        fclose($handle);
+        if ($header !== '%PDF') {
+            http_response_code(400);
+            echo 'File is not a valid PDF document.';
+            exit;
         }
     }
 }
 
-// If still not found, return error with debugging info
-if (!$actualPath || !file_exists($actualPath)) {
-    http_response_code(404);
-    echo "File not found.<br><br>";
-    echo "<strong>Stored path:</strong> " . htmlspecialchars($storedPath) . "<br>";
-    echo "<strong>File name:</strong> " . htmlspecialchars($doc['file_name'] ?? 'N/A') . "<br>";
-    echo "<strong>Original name:</strong> " . htmlspecialchars($doc['original_name'] ?? 'N/A') . "<br>";
-    echo "<strong>__DIR__:</strong> " . htmlspecialchars(__DIR__) . "<br>";
-    echo "<strong>DOCUMENT_ROOT:</strong> " . htmlspecialchars($_SERVER['DOCUMENT_ROOT'] ?? 'N/A') . "<br><br>";
-    echo "<strong>Tried paths:</strong><br>";
-    foreach ($pathVariations as $tried) {
-        echo "- " . htmlspecialchars($tried) . " (" . (file_exists($tried) ? "EXISTS" : "NOT FOUND") . ")<br>";
-    }
-    exit;
-}
-
-// Check if it's a PDF
-$fileExtension = strtolower(pathinfo($actualPath, PATHINFO_EXTENSION));
-if ($fileExtension !== 'pdf') {
-    http_response_code(400);
-    die("Invalid file type");
-}
-
-// Set headers for PDF
-header('Content-Type: application/pdf');
-header('Content-Disposition: inline; filename="' . basename($actualPath) . '"');
-header('Content-Length: ' . filesize($actualPath));
+header('Content-Type: ' . $mime);
+header('Content-Disposition: inline; filename="' . str_replace('"', '', $downloadName) . '"');
+header('Content-Length: ' . (string) $size);
 header('Cache-Control: private, max-age=0, must-revalidate');
 header('Pragma: public');
-
-// Output the file
-readfile($actualPath);
+readfile($servePath);
 exit;
-?>
-

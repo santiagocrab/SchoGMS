@@ -1,0 +1,33 @@
+<?php
+/**
+ * Lean CSS/JS for admin pages.
+ */
+require_once __DIR__ . '/../../inc/schogms_app_scripts.php';
+
+if (!function_exists('schogms_admin_head')) {
+    function schogms_admin_head(bool $datatables = false): void
+    {
+        echo '<link href="../dist/css/style.min.css" rel="stylesheet">' . "\n";
+        echo '<style>.preloader{display:none!important}#main-wrapper{opacity:1!important}.topbar{position:relative;z-index:1030}.topbar .dropdown-menu{z-index:1050}</style>' . "\n";
+        if ($datatables) {
+            echo '<link href="../assets/extra-libs/datatables.net-bs4/css/dataTables.bootstrap4.css" rel="stylesheet">' . "\n";
+        }
+    }
+}
+
+if (!function_exists('schogms_admin_footer_scripts')) {
+    /** @param array{datatables?:bool} $opts */
+    function schogms_admin_footer_scripts(array $opts = []): void
+    {
+        static $datatablesDone = false;
+
+        schogms_app_emit_core_scripts();
+
+        if (!empty($opts['datatables']) && !$datatablesDone) {
+            $datatablesDone = true;
+            echo '<script src="../assets/extra-libs/datatables.net/js/jquery.dataTables.min.js"></script>' . "\n";
+            echo '<script src="../assets/extra-libs/datatables.net-bs4/js/dataTables.bootstrap4.min.js"></script>' . "\n";
+            echo '<script>jQuery(function(){if(!jQuery.fn.DataTable)return;jQuery("#zero_config").each(function(){if(!jQuery.fn.dataTable.isDataTable(this))jQuery(this).DataTable({pageLength:25,order:[]});});if(typeof window.schogmsInitTopbarUi==="function")window.schogmsInitTopbarUi();});</script>' . "\n";
+        }
+    }
+}

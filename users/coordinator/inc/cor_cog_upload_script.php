@@ -74,7 +74,8 @@
                 allowOutsideClick: false,
                 didOpen: function () { Swal.showLoading(); }
             });
-            fetch('submit_document_cor_cog.php', { method: 'POST', body: fd })
+            var submitUrl = form.getAttribute('data-submit-url') || 'submit_document_cor_cog.php';
+            fetch(submitUrl, { method: 'POST', body: fd })
                 .then(function (r) { return r.json(); })
                 .then(function (data) { showUploadResult(data); })
                 .catch(function () {

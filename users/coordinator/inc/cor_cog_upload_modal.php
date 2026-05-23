@@ -27,7 +27,7 @@ $corCogDocLabel = $corCogCategory === 'COR' ? 'Certificate of Registration' : 'C
                     Name each file <strong>LASTNAME, FIRSTNAME MIDDLENAME.pdf</strong> (must match the CHED masterlist).
                     Files that do not match any scholar on the masterlist are <strong>not saved</strong> and will be listed as removed.
                 </p>
-                <form id="corCogUploadForm" enctype="multipart/form-data">
+                <form id="corCogUploadForm" enctype="multipart/form-data" data-submit-url="<?= htmlspecialchars((string) ($corCogSubmitUrl ?? 'submit_document_cor_cog.php'), ENT_QUOTES, 'UTF-8') ?>">
                     <input type="hidden" name="category" value="<?= htmlspecialchars($corCogCategory) ?>">
                     <div class="form-group">
                         <label>Campus</label>

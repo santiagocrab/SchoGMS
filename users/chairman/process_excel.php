@@ -1,7 +1,13 @@
 <?php
+/**
+ * Chairman — billing Excel import (Verified Scholars billing layout, columns A–S).
+ */
+declare(strict_types=1);
+
 header('Content-Type: application/json; charset=utf-8');
 
 require __DIR__ . '/config/session.php';
+require_once __DIR__ . '/../../inc/schogms_billing_excel_import.php';
 require __DIR__ . '/../vendor/autoload.php';
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -15,10 +21,6 @@ if (!($conn instanceof mysqli)) {
     echo json_encode(['success' => false, 'error' => 'Database unavailable']);
     exit;
 }
-
-error_reporting(E_ALL);
-ini_set('log_errors', '1');
-ini_set('error_log', __DIR__ . '/error_log.txt');
 
 function chairmanBillingLog(string $message): void
 {
@@ -41,7 +43,7 @@ if (!is_dir($uploadsDir) && !mkdir($uploadsDir, 0775, true)) {
     exit;
 }
 
-$uploadedFileName = basename($_FILES['excelFile']['name']);
+$uploadedFileName = basename((string) $_FILES['excelFile']['name']);
 $ext = strtolower(pathinfo($uploadedFileName, PATHINFO_EXTENSION));
 if (!in_array($ext, ['xlsx', 'xls'], true)) {
     echo json_encode(['success' => false, 'error' => 'Please upload .xlsx or .xls only.']);
@@ -55,28 +57,25 @@ if (!move_uploaded_file($_FILES['excelFile']['tmp_name'], $targetFilePath)) {
 }
 
 try {
-    $spreadsheet = IOFactory::load($targetFilePath);
-    $sheet = $spreadsheet->getActiveSheet();
-    $rows = $sheet->toArray(null, true, true, true);
+    $tableCheck = $conn->query("SHOW TABLES LIKE 'billing_table'");
+    if (!$tableCheck || $tableCheck->num_rows === 0) {
+        throw new RuntimeException('Billing table is not set up on this server.');
+    }
+
+    $rows = IOFactory::load($targetFilePath)->getActiveSheet()->toArray(null, true, true, true);
 
     if (count($rows) < 3) {
-        @unlink($targetFilePath);
-        echo json_encode(['success' => false, 'error' => 'The file must have data starting at row 3.']);
-        exit;
+        throw new RuntimeException('The file must have data starting at row 3.');
+    }
+
+    if (schogms_billing_looks_like_annex7($rows)) {
+        throw new RuntimeException(
+            'This file looks like Annex 7. Coordinators should upload it under Submit Form, not billing import.'
+        );
     }
 
     $dataRows = array_slice($rows, 2);
-    $insertQuery = '
-        INSERT INTO billing_table (
-            last_name, first_name, scholarship_type, units_enrolled, course, campus, year_and_date_submitted_ched,
-            amount, first_semester, second_semester, status, payment_scholarship_type, payment_amount,
-            payment_year_and_date, payment_or_number, payment_amount_per_or, refund_first_sem, refund_second_sem,
-            refund_year_and_date_released
-        ) VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-        )';
-
-    $stmt = $conn->prepare($insertQuery);
+    $stmt = $conn->prepare(schogms_billing_import_sql());
     if (!$stmt) {
         throw new RuntimeException('Prepare failed: ' . $conn->error);
     }
@@ -86,50 +85,8 @@ try {
         if (!array_filter($row, static fn($v) => trim((string) $v) !== '')) {
             continue;
         }
-
-        $last_name = (string) ($row['A'] ?? 'N/A');
-        $first_name = (string) ($row['B'] ?? 'N/A');
-        $scholarship_type = (string) ($row['C'] ?? 'N/A');
-        $units_enrolled = isset($row['D']) ? (int) $row['D'] : 0;
-        $course = (string) ($row['E'] ?? 'N/A');
-        $campus = (string) ($row['F'] ?? 'N/A');
-        $year_and_date_submitted_ched = !empty($row['G']) ? date('Y-m-d', strtotime((string) $row['G'])) : null;
-        $amount = isset($row['H']) ? (float) str_replace(',', '', (string) $row['H']) : 0.0;
-        $first_semester = (string) ($row['I'] ?? 'N/A');
-        $second_semester = (string) ($row['J'] ?? 'N/A');
-        $status = (string) ($row['K'] ?? 'N/A');
-        $payment_scholarship_type = (string) ($row['L'] ?? 'N/A');
-        $payment_amount = isset($row['M']) ? (float) str_replace(',', '', (string) $row['M']) : 0.0;
-        $payment_year_and_date = !empty($row['N']) ? date('Y-m-d', strtotime((string) $row['N'])) : null;
-        $payment_or_number = (string) ($row['O'] ?? 'N/A');
-        $payment_amount_per_or = isset($row['P']) ? (float) str_replace(',', '', (string) $row['P']) : 0.0;
-        $refund_first_sem = isset($row['Q']) ? (float) str_replace(',', '', (string) $row['Q']) : 0.0;
-        $refund_second_sem = isset($row['R']) ? (float) str_replace(',', '', (string) $row['R']) : 0.0;
-        $refund_year_and_date_released = !empty($row['S']) ? date('Y-m-d', strtotime((string) $row['S'])) : null;
-
-        $stmt->bind_param(
-            'sssssssdssssdssddds',
-            $last_name,
-            $first_name,
-            $scholarship_type,
-            $units_enrolled,
-            $course,
-            $campus,
-            $year_and_date_submitted_ched,
-            $amount,
-            $first_semester,
-            $second_semester,
-            $status,
-            $payment_scholarship_type,
-            $payment_amount,
-            $payment_year_and_date,
-            $payment_or_number,
-            $payment_amount_per_or,
-            $refund_first_sem,
-            $refund_second_sem,
-            $refund_year_and_date_released
-        );
-
+        [$types, $values] = schogms_billing_row_bind_values($row);
+        $stmt->bind_param($types, ...$values);
         if ($stmt->execute()) {
             $imported++;
         } else {

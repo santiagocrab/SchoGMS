@@ -245,9 +245,10 @@
                             <div class="card-body">
                                 <h4 class="card-title text-primary mb-3">Here is the format</h4>
                                 <p class="text-muted mb-3">
-                                    Upload the <strong>Annex 7 — Scholarship Grant Utilization</strong> file for chairman review.
+                                    Upload the <strong>Annex 7 — Scholarship Grant Utilization</strong> file for chairman review (the system saves the file; it does not import billing rows here).
                                     Accepted files: <strong>.xlsx</strong>, <strong>.xls</strong>, or <strong>.csv</strong>.
-                                    Row 1 is the report title, row 2 is the column headers, and <strong>student data starts on row 3</strong> (one scholar per row).
+                                    Use the sample layout below or your campus Annex 7 template. Row 1 = title, row 2 = headers, <strong>data from row 3</strong>.
+                                    For <strong>billing payment data</strong>, use <a href="verified-scholars.php">Verified Scholars</a> instead.
                                 </p>
                                 <div class="mb-3">
                                     <a href="download_submit_form_sample.php" class="btn btn-outline-primary btn-sm">
@@ -392,7 +393,7 @@
 
             Swal.fire({
                 title: "Are you sure?",
-                text: "Do you want to upload and process this file?",
+                text: "Submit this Annex 7 file to the chairman for review?",
                 icon: "question",
                 showCancelButton: true,
                 confirmButtonText: "Yes, upload it!",
@@ -408,7 +409,7 @@
 
                     Swal.fire({
                         title: "Uploading...",
-                        text: "Please wait while the file is being uploaded and processed.",
+                        text: "Please wait while your Annex 7 file is being uploaded.",
                         icon: "info",
                         allowOutsideClick: false,
                         showConfirmButton: false,
@@ -422,7 +423,7 @@
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
-                                Swal.fire("Success!", data.message || "File processed successfully!", "success");
+                                Swal.fire("Success!", data.message || "Annex 7 submitted successfully!", "success");
                                 setTimeout(() => location.reload(), 1500);
                             } else {
                                 Swal.fire("Error!", data.error || "An error occurred during file processing.", "error");

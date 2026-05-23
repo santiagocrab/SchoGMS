@@ -112,9 +112,15 @@ if (!function_exists('schogms_chairman_render_sidebar')) {
                         <li class="list-divider"></li>
                         <li class="nav-small-cap"><span class="hide-menu">Review</span></li>
                         <li class="sidebar-item">
-                            <a class="<?= schogms_chairman_nav_link_class('file_groups.php', ['file_group_view.php', 'file_group_action.php', 'anex-form2.php']) ?>" href="file_groups.php">
+                            <a class="<?= schogms_chairman_nav_link_class('file_groups.php', ['file_group_view.php', 'file_group_action.php']) ?>" href="file_groups.php">
                                 <i data-feather="check-square" class="feather-icon"></i>
                                 <span class="hide-menu">File groups</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a class="<?= schogms_chairman_nav_link_class('annex7.php', ['anex-form2.php', 'view_annex_file.php']) ?>" href="annex7.php">
+                                <i data-feather="file-text" class="feather-icon"></i>
+                                <span class="hide-menu">Annex 7</span>
                             </a>
                         </li>
 
@@ -187,8 +193,11 @@ if (!function_exists('schogms_chairman_shell_open')) {
 }
 
 if (!function_exists('schogms_chairman_shell_close')) {
-    function schogms_chairman_shell_close(): void
+    /** @param array{datatables?:bool,sweetalert?:bool} $footerOpts */
+    function schogms_chairman_shell_close(array $footerOpts = []): void
     {
         echo "</div><!-- /.page-wrapper -->\n</div><!-- /#main-wrapper -->\n";
+        require_once __DIR__ . '/assets.php';
+        schogms_chairman_footer_scripts($footerOpts);
     }
 }

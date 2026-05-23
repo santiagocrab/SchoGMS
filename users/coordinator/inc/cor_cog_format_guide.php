@@ -5,7 +5,7 @@
  * @param string $category COR or COG
  * @param string $campus   Coordinator campus (sheet_name)
  */
-function schogms_coordinator_render_cor_cog_format(string $category, string $campus = ''): void
+function schogms_coordinator_render_cor_cog_format(string $category, string $campus = '', string $assetBase = ''): void
 {
     $category = strtoupper(trim($category));
     if (!in_array($category, ['COR', 'COG'], true)) {
@@ -14,6 +14,7 @@ function schogms_coordinator_render_cor_cog_format(string $category, string $cam
     $label = $category === 'COR' ? 'Certificate of Registration (COR)' : 'Certificate of Grades (COG)';
     $campus = trim($campus);
     $fileGroupExample = $category . ($campus !== '' ? ' ' . ucfirst(strtolower($campus)) : ' Campus');
+    $assetBase = trim($assetBase);
     ?>
     <div class="row mt-3" id="upload-format">
         <div class="col-12">
@@ -26,7 +27,7 @@ function schogms_coordinator_render_cor_cog_format(string $category, string $cam
                         Each filename must match the scholar name on the CHED masterlist so documents link automatically on validation pages.
                     </p>
                     <div class="mb-3">
-                        <a href="download_cor_cog_naming_guide.php?category=<?= urlencode($category) ?>"
+                        <a href="<?= htmlspecialchars($assetBase, ENT_QUOTES, 'UTF-8') ?>download_cor_cog_naming_guide.php?category=<?= urlencode($category) ?>"
                            class="btn btn-outline-primary btn-sm">
                             <i data-feather="download" class="feather-icon"></i>
                             Download naming guide (text)

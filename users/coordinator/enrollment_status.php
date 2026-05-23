@@ -66,7 +66,13 @@
             : schogms_coordinator_ched_tdp_rows($conn, $campus);
         $enrollmentRows = $listData['rows'];
         $loadError = $listData['error'];
-        $enrollmentRows = schogms_coordinator_ched_apply_row_filters($enrollmentRows, $filterFilename, $filterFileGroup);
+        $enrollmentRows = schogms_coordinator_ched_apply_row_filters(
+            $conn,
+            $campus,
+            $enrollmentRows,
+            $filterFilename,
+            $filterFileGroup
+        );
     }
 
     $enrolledCount = 0;
@@ -123,6 +129,7 @@
                                         Campus: <strong><?= htmlspecialchars($campus, ENT_QUOTES, 'UTF-8') ?></strong>.
                                         <strong>Enrollment status</strong> is computed from uploaded <strong>COR</strong> and <strong>COG</strong>
                                         (both required for <span class="badge badge-success">Enrolled</span>).
+                                        File group filters include coordinator CHED uploads, <strong>registrar masterlist</strong> batches, and registrar <strong>COR/COG</strong> uploads.
                                         <?php if ($program === 'tdp'): ?>
                                         <strong>CHED status (import)</strong> comes from column <em>Status of enrollment</em> in your TDP masterlist Excel (column M).
                                         <?php endif; ?>
@@ -213,7 +220,7 @@
                                                     foreach ($enrollmentRows as $row):
                                                         $hasCor = !empty($row['cor_path']);
                                                         $hasCog = !empty($row['cog_path']);
-                                                        $isEnrolled = ($row['enrollment_status'] ?? '') === 'Enrolled';
+                                                        $isEnrolled = $hasCor && $hasCog;
                                                         $chedStatus = schogms_ched_import_status_value($row);
                                                         $chedBadge = schogms_ched_import_status_badge_class($chedStatus);
                                                 ?>

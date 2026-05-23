@@ -11,6 +11,7 @@ if (!function_exists('schogms_registrar_masterlist_active_chips')) {
     function schogms_registrar_masterlist_active_chips(array $filters): array
     {
         $labels = [
+            'campus' => 'Campus',
             'category' => 'Source file',
             'file_group' => 'File group',
             'academic_year' => 'Academic year',
@@ -43,21 +44,27 @@ if (!function_exists('schogms_registrar_masterlist_render_cor_cog')) {
     /** @param array{has_cor: bool, has_cog: bool, cor_path: string, cog_path: string} $docs */
     function schogms_registrar_masterlist_render_cor_cog(array $docs): void
     {
+        if (!function_exists('schogms_cor_cog_view_document_url')) {
+            require_once __DIR__ . '/../../coordinator/inc/cor_cog_upload_helpers.php';
+        }
+
         $hasCor = !empty($docs['has_cor']);
         $hasCog = !empty($docs['has_cog']);
         $corPath = (string) ($docs['cor_path'] ?? '');
         $cogPath = (string) ($docs['cog_path'] ?? '');
 
         if ($hasCor && $corPath !== '') {
-            echo '<a href="view_document.php?file=' . htmlspecialchars(urlencode($corPath), ENT_QUOTES, 'UTF-8')
-                . '&type=COR" target="_blank" class="badge badge-success rml-doc-badge" title="View COR">COR</a> ';
+            $corUrl = schogms_cor_cog_view_document_url($corPath, 'registrar');
+            echo '<a href="' . htmlspecialchars($corUrl, ENT_QUOTES, 'UTF-8')
+                . '" target="_blank" rel="noopener" class="badge badge-success rml-doc-badge" title="View COR">COR</a> ';
         } elseif ($hasCor) {
             echo '<span class="badge badge-success rml-doc-badge">COR</span> ';
         }
 
         if ($hasCog && $cogPath !== '') {
-            echo '<a href="view_document.php?file=' . htmlspecialchars(urlencode($cogPath), ENT_QUOTES, 'UTF-8')
-                . '&type=COG" target="_blank" class="badge badge-primary rml-doc-badge" title="View COG">COG</a>';
+            $cogUrl = schogms_cor_cog_view_document_url($cogPath, 'registrar');
+            echo '<a href="' . htmlspecialchars($cogUrl, ENT_QUOTES, 'UTF-8')
+                . '" target="_blank" rel="noopener" class="badge badge-primary rml-doc-badge" title="View COG">COG</a>';
         } elseif ($hasCog) {
             echo '<span class="badge badge-primary rml-doc-badge">COG</span>';
         }

@@ -1,186 +1,137 @@
 <?php
-header('Content-Type: application/json');
+/**
+ * Import verified scholars billing Excel into billing_table (registrar campus uploads).
+ */
+header('Content-Type: application/json; charset=utf-8');
 
-// Require necessary dependencies
-require 'config/conn.php';
-require '../vendor/autoload.php';
+require_once __DIR__ . '/config/session.php';
+require_once __DIR__ . '/../../inc/schogms_billing_excel_import.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
-// Enable error reporting for debugging purposes
-error_reporting(E_ALL);
-ini_set('log_errors', '1');
-ini_set('error_log', __DIR__ . '/error_log.txt');
+if (($role ?? '') !== 'registrar') {
+    echo json_encode(['success' => false, 'error' => 'Access denied.']);
+    exit;
+}
 
-$logFile = __DIR__ . '/error_log.txt'; // Path to error log file
+if (!($conn instanceof mysqli)) {
+    echo json_encode(['success' => false, 'error' => 'Database unavailable.']);
+    exit;
+}
 
-function logError($message)
+$registrarCampus = trim((string) ($sheet_name ?? ''));
+
+$logFile = __DIR__ . '/error_log.txt';
+
+function registrar_billing_log(string $message): void
 {
     global $logFile;
-    $timestamp = date('Y-m-d H:i:s');
-    error_log("[$timestamp] $message" . PHP_EOL, 3, $logFile);
+    error_log('[' . date('Y-m-d H:i:s') . '] ' . $message . PHP_EOL, 3, $logFile);
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Validate uploaded file
-    if (!isset($_FILES['excelFile']['tmp_name']) || empty($_FILES['excelFile']['tmp_name'])) {
-        $error = 'No file uploaded.';
-        logError($error);
-        echo json_encode(['success' => false, 'error' => $error]);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode(['success' => false, 'error' => 'Invalid request method.']);
+    exit;
+}
+
+if (!isset($_FILES['excelFile']['tmp_name']) || $_FILES['excelFile']['tmp_name'] === '') {
+    echo json_encode(['success' => false, 'error' => 'No file uploaded.']);
+    exit;
+}
+
+$tableCheck = $conn->query("SHOW TABLES LIKE 'billing_table'");
+if (!$tableCheck || $tableCheck->num_rows === 0) {
+    echo json_encode(['success' => false, 'error' => 'Billing table is not set up. Run database migrations or contact the administrator.']);
+    exit;
+}
+
+$uploadsDir = __DIR__ . '/uploads/';
+$writable = schogms_ensure_writable_upload_dir($uploadsDir);
+if (!$writable['ok']) {
+    echo json_encode(['success' => false, 'error' => $writable['error']]);
+    exit;
+}
+
+$uploadedFileName = basename((string) $_FILES['excelFile']['name']);
+$targetFilePath = $uploadsDir . $uploadedFileName;
+
+if (!move_uploaded_file($_FILES['excelFile']['tmp_name'], $targetFilePath)) {
+    echo json_encode(['success' => false, 'error' => 'Failed to save the uploaded file.']);
+    exit;
+}
+
+try {
+    $spreadsheet = IOFactory::load($targetFilePath);
+    $sheet = $spreadsheet->getActiveSheet();
+    $rows = $sheet->toArray(null, true, true, true);
+
+    if (count($rows) < 3) {
+        unlink($targetFilePath);
+        echo json_encode(['success' => false, 'error' => 'The file does not contain enough rows (data starts at row 3).']);
         exit;
     }
 
-    // Debugging: Log temporary file details
-    error_log("Temp file: " . $_FILES['excelFile']['tmp_name']);
-    error_log("Original file name: " . $_FILES['excelFile']['name']);
-
-    // Define uploads directory
-    $uploadsDir = __DIR__ . '/uploads/';
-    if (!is_dir($uploadsDir)) {
-        if (!mkdir($uploadsDir, 0777, true)) {
-            error_log("Failed to create uploads directory: $uploadsDir");
-            $error = 'Failed to create uploads directory.';
-            logError($error);
-            echo json_encode(['success' => false, 'error' => $error]);
-            exit;
-        }
-    }
-    
-    $uploadedFileName = basename($_FILES['excelFile']['name']);
-    $targetFilePath = $uploadsDir . $uploadedFileName;
-
-    // Debugging: Log target path
-    error_log("Target file path: $targetFilePath");
-
-    // Attempt to move uploaded file
-    if (!move_uploaded_file($_FILES['excelFile']['tmp_name'], $targetFilePath)) {
-        $error = 'Failed to save the uploaded file.';
-        logError($error);
-        echo json_encode(['success' => false, 'error' => $error]);
+    if (schogms_billing_looks_like_annex7($rows)) {
+        unlink($targetFilePath);
+        echo json_encode([
+            'success' => false,
+            'error' => 'This file looks like Annex 7. Coordinators upload Annex 7 under Submit Form, not billing import.',
+        ]);
         exit;
     }
 
-    echo json_encode(['success' => true, 'message' => 'File uploaded successfully.']);
+    $dataRows = array_slice($rows, 2);
 
-    try {
-        // Load the Excel file
-        $spreadsheet = IOFactory::load($targetFilePath);
-        $sheet = $spreadsheet->getActiveSheet();
-        $rows = $sheet->toArray(null, true, true, true); // Preserve all data and avoid empty rows
-
-        // Ensure file contains enough rows
-        if (count($rows) < 3) {
-            unlink($targetFilePath); // Remove invalid file
-            $error = 'The file does not contain enough rows.';
-            logError($error);
-            echo json_encode(['success' => false, 'error' => $error]);
-            exit;
-        }
-
-        // Extract data starting from row 3
-        $dataRows = array_slice($rows, 2);
-
-        // Database connection details
-        $servername = "localhost";
-        $username = "root";
-        $password = "";
-        $dbname = "schogms";
-
-        // Establish database connection
-        $conn = new mysqli($servername, $username, $password, $dbname);
-        if ($conn->connect_error) {
-            $error = 'Database connection failed: ' . $conn->connect_error;
-            logError($error);
-            echo json_encode(['success' => false, 'error' => $error]);
-            exit;
-        }
-
-        // Prepare the SQL insert query
-        $insertQuery = "
-            INSERT INTO billing_table (
-                last_name, first_name, scholarship_type, units_enrolled, course, campus, year_and_date_submitted_ched,
-                amount, first_semester, second_semester, status, payment_scholarship_type, payment_amount,
-                payment_year_and_date, payment_or_number, payment_amount_per_or, refund_first_sem, refund_second_sem,
-                refund_year_and_date_released
-            ) VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-            )
-        ";
-
-        $stmt = $conn->prepare($insertQuery);
-        if (!$stmt) {
-            $error = 'Failed to prepare SQL statement: ' . $conn->error;
-            logError($error);
-            echo json_encode(['success' => false, 'error' => $error]);
-            exit;
-        }
-        foreach ($dataRows as $row) {
-            if (array_filter($row)) { // Skip empty rows
-                // Map Excel data to variables
-                $last_name = $row['A'] ?? 'N/A';
-                $first_name = $row['B'] ?? 'N/A';
-                $scholarship_type = $row['C'] ?? 'N/A';
-                $units_enrolled = isset($row['D']) ? intval($row['D']) : 0;
-                $course = $row['E'] ?? 'N/A';
-                $campus = $row['F'] ?? 'N/A';
-                $year_and_date_submitted_ched = isset($row['G']) ? date('Y-m-d', strtotime($row['G'])) : null;
-                $amount = isset($row['H']) ? floatval(str_replace(',', '', $row['H'])) : 0.0;
-                $first_semester = $row['I'] ?? 'N/A';
-                $second_semester = $row['J'] ?? 'N/A';
-                $status = $row['K'] ?? 'N/A';
-                $payment_scholarship_type = $row['L'] ?? 'N/A';
-                $payment_amount = isset($row['M']) ? floatval(str_replace(',', '', $row['M'])) : 0.0;
-                $payment_year_and_date = isset($row['N']) ? date('Y-m-d', strtotime($row['N'])) : null;
-                $payment_or_number = $row['O'] ?? 'N/A';
-                $payment_amount_per_or = isset($row['P']) ? floatval(str_replace(',', '', $row['P'])) : 0.0;
-                $refund_first_sem = isset($row['Q']) ? floatval(str_replace(',', '', $row['Q'])) : 0.0;
-                $refund_second_sem = isset($row['R']) ? floatval(str_replace(',', '', $row['R'])) : 0.0;
-                $refund_year_and_date_released = isset($row['S']) ? date('Y-m-d', strtotime($row['S'])) : null;
-
-                // Bind variables to the prepared statement
-                $stmt->bind_param(
-                    "sssssssdssssdssddds",
-                    $last_name,
-                    $first_name,
-                    $scholarship_type,
-                    $units_enrolled,
-                    $course,
-                    $campus,
-                    $year_and_date_submitted_ched,
-                    $amount,
-                    $first_semester,
-                    $second_semester,
-                    $status,
-                    $payment_scholarship_type,
-                    $payment_amount,
-                    $payment_year_and_date,
-                    $payment_or_number,
-                    $payment_amount_per_or,
-                    $refund_first_sem,
-                    $refund_second_sem,
-                    $refund_year_and_date_released
-                );
-
-                // Execute the query
-                if (!$stmt->execute()) {
-                    logError('Error executing query: ' . $stmt->error . ' | Row: ' . json_encode($row));
-                }
-            }
-        }
-
-        $stmt->close();
-        $conn->close();
-        unlink($targetFilePath); // Remove uploaded file after processing
-
-        echo json_encode(['success' => true, 'message' => 'Data successfully uploaded.']);
-    } catch (Exception $e) {
-        $error = 'Error processing file: ' . $e->getMessage();
-        logError($error);
-        echo json_encode(['success' => false, 'error' => $error]);
+    $stmt = $conn->prepare(schogms_billing_import_sql());
+    if (!$stmt) {
+        unlink($targetFilePath);
+        echo json_encode(['success' => false, 'error' => 'Failed to prepare import: ' . $conn->error]);
+        exit;
     }
-} else {
-    $error = 'Invalid request method.';
-    logError($error);
-    echo json_encode(['success' => false, 'error' => $error]);
+
+    $imported = 0;
+    $skipped = 0;
+
+    foreach ($dataRows as $row) {
+        if (!array_filter($row)) {
+            continue;
+        }
+
+        [$types, $values] = schogms_billing_row_bind_values($row);
+        $campus = trim((string) $values[5]);
+        if ($campus === '' || strtoupper($campus) === 'N/A') {
+            $values[5] = $registrarCampus !== '' ? $registrarCampus : 'N/A';
+            $campus = (string) $values[5];
+        }
+
+        if ($registrarCampus !== '' && strcasecmp($campus, $registrarCampus) !== 0) {
+            $skipped++;
+            continue;
+        }
+
+        $stmt->bind_param($types, ...$values);
+
+        if ($stmt->execute()) {
+            $imported++;
+        } else {
+            registrar_billing_log('Insert failed: ' . $stmt->error);
+        }
+    }
+
+    $stmt->close();
+    unlink($targetFilePath);
+
+    $msg = $imported . ' billing row(s) imported.';
+    if ($skipped > 0) {
+        $msg .= ' ' . $skipped . ' row(s) skipped (campus does not match your assigned campus).';
+    }
+
+    echo json_encode(['success' => $imported > 0, 'message' => $msg, 'imported' => $imported, 'skipped' => $skipped]);
+} catch (Throwable $e) {
+    if (is_file($targetFilePath)) {
+        unlink($targetFilePath);
+    }
+    registrar_billing_log($e->getMessage());
+    echo json_encode(['success' => false, 'error' => 'Error processing file: ' . $e->getMessage()]);
 }
-?>

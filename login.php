@@ -77,7 +77,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $locationPrefix = $base . '/';
     }
 
-    // Find user in MongoDB - by name, then by email
+    // Prefer MySQL accounts (admin-created users, deans, program chairs) before legacy MongoDB JSON.
+    if (schogms_mysql_users_login($username, $password, $locationPrefix)) {
+        exit();
+    }
+    if (schogms_dean_mysql_login($username, $password, $locationPrefix)) {
+        exit();
+    }
+    if (schogms_program_chair_mysql_login($username, $password, $locationPrefix)) {
+        exit();
+    }
+
+    // Legacy MongoDB users (coordinator, chairman, etc.)
     $user = $users->findOne(['name' => $username]);
 
     if (!$user) {
@@ -168,35 +179,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             exit();
         }
 
-        if (schogms_dean_mysql_login($username, $password, $locationPrefix)) {
-            exit();
-        }
-        if (schogms_program_chair_mysql_login($username, $password, $locationPrefix)) {
-            exit();
-        }
-        if (schogms_mysql_users_login($username, $password, $locationPrefix)) {
-            exit();
-        }
-        if (schogms_dean_mysql_login($username, $password, $locationPrefix)) {
-            exit();
-        }
-        if (schogms_program_chair_mysql_login($username, $password, $locationPrefix)) {
-            exit();
-        }
-        error_log("Login failed for user: $username - Password verification failed (Mongo, MySQL users, APC)");
+        error_log("Login failed for user: $username - Password verification failed (Mongo user, wrong password)");
         header('Location: ' . $locationPrefix . 'index.php?ERROR=1&msg=wrongpassword');
-        exit();
-    }
-
-    if (schogms_mysql_users_login($username, $password, $locationPrefix)) {
-        exit();
-    }
-
-    if (schogms_dean_mysql_login($username, $password, $locationPrefix)) {
-        exit();
-    }
-
-    if (schogms_program_chair_mysql_login($username, $password, $locationPrefix)) {
         exit();
     }
 

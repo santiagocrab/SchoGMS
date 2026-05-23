@@ -75,7 +75,8 @@ $tabBase = 'file_groups.php';
     <div class="fg-hero">
         <h4>File group review</h4>
         <p>
-            Review coordinator and campus uploads from all campuses (replaces the old Annex 7 submissions list).
+            Review CHED TDP/TES masterlist batches from all campuses.
+            Coordinator <strong>Annex 7</strong> files are reviewed on <a href="annex7.php" class="text-white font-weight-bold"><u>Annex 7</u></a>.
             <strong>Approve</strong> or <strong>deny</strong> batches, <strong>rename</strong> file group labels,
             or <strong>delete</strong> a batch and its scholar records. Legacy batches without a review record are treated as <strong>approved</strong>.
         </p>

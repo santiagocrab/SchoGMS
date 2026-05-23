@@ -1,6 +1,7 @@
 <?php
 include '../config/session.php';
 require_once __DIR__ . '/../../inc/schogms_upload_format.php';
+require_once __DIR__ . '/../../inc/schogms_ched_masterlist_upload.php';
 ?>
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
@@ -58,6 +59,7 @@ require_once __DIR__ . '/../../inc/schogms_upload_format.php';
                         </div>
                     </div>
                     <div class="col-5 align-self-center">
+                        <?php schogms_ched_masterlist_upload_button(); ?>
                         <div class="customize-input float-right" style="margin-left:10px;">
                             <button type="button" class="btn waves-effect waves-light btn-rounded btn-success"
                                 onclick="showValidation('validate_tes.php')">
@@ -96,47 +98,18 @@ require_once __DIR__ . '/../../inc/schogms_upload_format.php';
                     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
-                    <!-- <div class="col-5 align-self-center">
-                        <div class="customize-input float-right">
-                            <button type="button" class="btn waves-effect waves-light btn-rounded btn-success"
-                                data-toggle="modal" data-target="#uploadModal">
-                                Upload File
-                            </button>
-                        </div>
-                    </div> -->
                 </div>
             </div>
-            <div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel"
-                aria-hidden="true">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="uploadModalLabel">Upload Student Data</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <?php schogms_upload_format_modal_hint('ched_tes', '../../'); ?>
-                            <form id="uploadForm">
-                                <div class="mb-3">
-                                    <label for="file-group" class="form-label">File Group</label>
-                                    <input type="text" class="form-control" id="file_group" name="file_group"
-                                        placeholder="Input file group name">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="excelFile" class="form-label">Choose Excel File</label>
-                                    <input type="file" class="form-control" id="excelFile" name="excelFile"
-                                        accept=".xls,.xlsx, .csv">
-                                </div>
-                                <button type="submit" class="btn btn-primary">Upload</button>
-                            </form>
-                            <div id="message"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- Modal -->
+            <?php
+            schogms_ched_masterlist_upload_modal([
+                'program' => 'tes',
+                'role' => 'coordinator',
+                'base_path' => '../../',
+                'campus' => (string) ($sheet_name ?? ''),
+                'campus_editable' => false,
+                'submit_url' => 'submit_ched_masterlist_tes.php',
+            ]);
+            ?>
             <!-- ============================================================== -->
             <!-- End Bread crumb and right sidebar toggle -->
             <!-- ============================================================== -->
@@ -287,139 +260,10 @@ require_once __DIR__ . '/../../inc/schogms_upload_format.php';
             <!-- End footer -->
             <!-- ============================================================== -->
         </div>
-        <!-- ============================================================== -->
-        <!-- End Page wrapper  -->
-        <!-- ============================================================== -->
-    </div>
-    <!-- ============================================================== -->
-    <!-- End Wrapper -->
-    <!-- ============================================================== -->
-    <!-- End Wrapper -->
-    <!-- ============================================================== -->
-    <!-- All Jquery -->
-    <!-- ============================================================== -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        document.getElementById('uploadForm').addEventListener('submit', function (event) {
-            event.preventDefault();
-
-            const fileGroupInput = document.getElementById('file_group');
-            const fileInput = document.getElementById('excelFile');
-            const file = fileInput.files[0];
-
-            if (!file) {
-                showToast("Please select a file!", "error");
-                return;
-            }
-
-            const fileGroup = fileGroupInput.value.trim();
-            if (!fileGroup) {
-                showToast("Please enter a file group name!", "error");
-                return;
-            }
-
-            // Validate file type (Accepts CSV, XLS, XLSX)
-            const allowedTypes = [
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-                'application/vnd.ms-excel', // .xls
-                'text/csv' // .csv
-            ];
-
-            const fileExtension = file.name.split('.').pop().toLowerCase();
-            const allowedExtensions = ['xls', 'xlsx', 'csv'];
-
-            if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
-                showToast("Please upload a valid Excel or CSV file.", "error");
-                console.error("Invalid file type:", file.type);
-                return;
-            }
-
-            // Show SweetAlert confirmation before proceeding
-            Swal.fire({
-                title: "Are you sure?",
-                text: "Do you want to upload and process this file?",
-                icon: "question",
-                showCancelButton: true,
-                confirmButtonText: "Yes, upload it!",
-                cancelButtonText: "Cancel",
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const formData = new FormData();
-                    formData.append('file_group', fileGroup);
-                    formData.append('excelFile', file);
-
-                    // Display loading message
-                    Swal.fire({
-                        title: "Uploading...",
-                        text: "Please wait while the file is being uploaded and processed.",
-                        icon: "info",
-                        allowOutsideClick: false,
-                        showConfirmButton: false,
-                        willOpen: () => {
-                            Swal.showLoading();
-                        }
-                    });
-
-                    // Send file via Fetch API
-                    fetch('submit_ched_masterlist.php', {
-                        method: 'POST',
-                        body: formData
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                Swal.fire({
-                                    title: "Success!",
-                                    text: data.message || "File processed successfully!",
-                                    icon: "success",
-                                    timer: 3000
-                                });
-                                setTimeout(() => {
-                                    location.reload();
-                                }, 1500);
-                            } else {
-                                Swal.fire({
-                                    title: "Error!",
-                                    text: data.error || "An error occurred during file processing.",
-                                    icon: "error"
-                                });
-                                console.error("Server error:", data.error);
-                            }
-                        })
-                        .catch(error => {
-                            Swal.fire({
-                                title: "Upload Failed!",
-                                text: "An error occurred while uploading the file.",
-                                icon: "error"
-                            });
-                            console.error("Fetch error:", error);
-                        });
-                }
-            });
-        });
-    </script>
-
-
-
-
-    <script src="../../assets/libs/jquery/dist/jquery.min.js"></script>
-    <script src="../../assets/libs/popper.js/dist/umd/popper.min.js"></script>
-    <script src="../../assets/libs/bootstrap/dist/js/bootstrap.min.js"></script>
-    <!-- apps -->
-
-    <!-- apps -->
-    <script src="../../dist/js/app-style-switcher.js"></script>
-    <script src="../../dist/js/feather.min.js"></script>
-    <script src="../../assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js"></script>
-    <script src="../../dist/js/sidebarmenu.js"></script>
-    <!--Custom JavaScript -->
-    <script src="../../dist/js/custom.min.js"></script>
-    <?php require_once __DIR__ . '/inc/assets.php'; schogms_coordinator_footer_scripts(['datatables' => true, 'sweetalert' => true]); ?>
+<?php
+    schogms_coordinator_shell_close(['datatables' => true, 'sweetalert' => true]);
+    schogms_ched_masterlist_upload_scripts();
+?>
     <?php
     $mlProgram = 'tes';
     $mlCampus = (string) ($sheet_name ?? '');

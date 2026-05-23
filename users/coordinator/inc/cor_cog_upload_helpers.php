@@ -5,6 +5,128 @@
 
 require_once __DIR__ . '/masterlist_rows.php';
 require_once __DIR__ . '/masterlist_edit.php';
+require_once __DIR__ . '/../../../inc/schogms_document_uploads.php';
+
+if (!function_exists('schogms_cor_cog_upload_root')) {
+    /** Shared storage: users/coordinator/uploads/{COR|COG}/ (all roles use same table + paths). */
+    function schogms_cor_cog_upload_root(string $category): string
+    {
+        $category = strtoupper(trim($category));
+        if (!in_array($category, ['COR', 'COG'], true)) {
+            $category = 'COR';
+        }
+
+        return dirname(__DIR__) . '/uploads/' . $category . '/';
+    }
+}
+
+if (!function_exists('schogms_cor_cog_storage_bases')) {
+    /** @return list<string> Absolute directories to prefix stored relative paths (uploads/COR/…). */
+    function schogms_cor_cog_storage_bases(): array
+    {
+        $coordinatorDir = dirname(__DIR__);
+        $usersDir = dirname(__DIR__, 2);
+        $projectRoot = dirname(__DIR__, 3);
+
+        return array_values(array_unique([
+            $coordinatorDir . '/',
+            $usersDir . '/registrar/',
+            $projectRoot . '/',
+            $usersDir . '/',
+        ]));
+    }
+}
+
+if (!function_exists('schogms_cor_cog_resolve_disk_path')) {
+    /**
+     * Resolve document_uploads.file_path to an absolute file on disk.
+     */
+    function schogms_cor_cog_resolve_disk_path(string $storedPath, ?string $fileName = null): ?string
+    {
+        $storedPath = trim(str_replace('\\', '/', $storedPath));
+        if ($storedPath === '') {
+            return null;
+        }
+
+        if (preg_match('#^https?://#i', $storedPath)) {
+            return null;
+        }
+
+        $candidates = [];
+        if ($storedPath[0] === '/') {
+            $candidates[] = $storedPath;
+        }
+
+        $relative = ltrim($storedPath, '/');
+        foreach (schogms_cor_cog_storage_bases() as $base) {
+            $candidates[] = $base . $relative;
+        }
+
+        if (str_starts_with($relative, 'uploads/')) {
+            $tail = substr($relative, strlen('uploads/'));
+            foreach (schogms_cor_cog_storage_bases() as $base) {
+                $candidates[] = $base . 'uploads/' . $tail;
+            }
+        }
+
+        if ($fileName !== null && $fileName !== '') {
+            $dir = trim(str_replace('\\', '/', dirname($relative)), '.');
+            foreach (schogms_cor_cog_storage_bases() as $base) {
+                $candidates[] = $base . ($dir !== '' ? $dir . '/' : '') . $fileName;
+                $candidates[] = $base . 'uploads/COR/' . $fileName;
+                $candidates[] = $base . 'uploads/COG/' . $fileName;
+            }
+        }
+
+        foreach ($candidates as $path) {
+            $path = preg_replace('#/+#', '/', $path);
+            if (is_file($path) && is_readable($path)) {
+                return $path;
+            }
+        }
+
+        return null;
+    }
+}
+
+if (!function_exists('schogms_cor_cog_view_document_url')) {
+    /** URL for the shared PDF/image viewer (path relative to SchoGMS project root). */
+    function schogms_cor_cog_view_document_url(string $storedPath, string $viewerRole = 'registrar'): string
+    {
+        $storedPath = trim(str_replace('\\', '/', $storedPath));
+        if ($storedPath === '') {
+            return '';
+        }
+        if (preg_match('#^https?://#i', $storedPath)) {
+            return $storedPath;
+        }
+
+        $prefix = match ($viewerRole) {
+            'coordinator' => '../../',
+            'chairman' => '../../',
+            'registrar' => '../../',
+            default => '../../',
+        };
+
+        return $prefix . 'view_document.php?path=' . rawurlencode(base64_encode(ltrim($storedPath, '/')));
+    }
+}
+
+if (!function_exists('schogms_cor_cog_file_href')) {
+    /** Build browser URL for a stored document_uploads.file_path from coordinator or registrar pages. */
+    function schogms_cor_cog_file_href(string $filePath, string $viewerRole = 'coordinator'): string
+    {
+        $filePath = trim($filePath);
+        if ($filePath === '') {
+            return '';
+        }
+        if (preg_match('#^https?://#i', $filePath)) {
+            return $filePath;
+        }
+
+        return schogms_cor_cog_view_document_url($filePath, $viewerRole);
+    }
+}
 
 if (!function_exists('schogms_cor_cog_normalize_name_key')) {
     function schogms_cor_cog_normalize_name_key(string $text): string
@@ -139,14 +261,27 @@ if (!function_exists('schogms_cor_cog_process_upload_batch')) {
             return $result;
         }
 
-        $allowedExt = ['pdf', 'jpg', 'jpeg', 'png'];
-        $maxBytes = 15 * 1024 * 1024;
-        $uploadRoot = dirname(__DIR__) . '/uploads/' . $category . '/';
-        if (!is_dir($uploadRoot) && !mkdir($uploadRoot, 0755, true) && !is_dir($uploadRoot)) {
+        $fgCheck = schogms_document_uploads_normalize_file_group($conn, $fileGroup);
+        if (!$fgCheck['ok']) {
             $result['errors'][] = [
                 'file' => '(all)',
                 'category' => $category,
-                'reason' => 'Could not create upload directory.',
+                'reason' => $fgCheck['error'],
+            ];
+
+            return $result;
+        }
+        $fileGroup = $fgCheck['value'];
+
+        $allowedExt = ['pdf', 'jpg', 'jpeg', 'png'];
+        $maxBytes = 15 * 1024 * 1024;
+        $uploadRoot = schogms_cor_cog_upload_root($category);
+        $dirCheck = schogms_ensure_writable_upload_dir($uploadRoot);
+        if (!$dirCheck['ok']) {
+            $result['errors'][] = [
+                'file' => '(all)',
+                'category' => $category,
+                'reason' => $dirCheck['error'],
             ];
 
             return $result;
@@ -255,10 +390,18 @@ if (!function_exists('schogms_cor_cog_process_upload_batch')) {
             $stmt->bind_param('sssss', $campus, $fileGroup, $category, $dbFileName, $dbPath);
             if (!$stmt->execute()) {
                 @unlink($destPath);
+                $dbErr = trim((string) $stmt->error);
+                $reason = 'Database insert failed.';
+                if ($dbErr !== '' && stripos($dbErr, 'file_group') !== false) {
+                    $reason = 'File group name is too long for the database. Use a shorter batch label (max '
+                        . schogms_document_uploads_file_group_max() . ' characters).';
+                } elseif ($dbErr !== '') {
+                    $reason = 'Database insert failed: ' . $dbErr;
+                }
                 $result['errors'][] = [
                     'file' => $originalName,
                     'category' => $category,
-                    'reason' => 'Database insert failed.',
+                    'reason' => $reason,
                 ];
                 continue;
             }

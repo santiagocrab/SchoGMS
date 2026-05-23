@@ -38,7 +38,6 @@ $campus = trim((string) ($sheet_name ?? ''));
             <footer class="footer text-center text-muted">
                 All Rights Reserved 2026. Scholarship and Grants Management System (SchoGMS).
             </footer>
-<?php schogms_director_shell_close(); ?>
-<?php schogms_director_footer_scripts(['datatables' => true]); ?>
+<?php schogms_director_shell_close(['datatables' => true]); ?>
 </body>
 </html>

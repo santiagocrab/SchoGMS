@@ -6,8 +6,8 @@
 if (!function_exists('schogms_registrar_db')) {
     function schogms_registrar_db(): mysqli
     {
-        static $conn = null;
-        if ($conn instanceof mysqli) {
+        global $conn;
+        if (isset($conn) && $conn instanceof mysqli) {
             return $conn;
         }
         require_once __DIR__ . '/../config/conn.php';
@@ -48,6 +48,27 @@ if (!function_exists('schogms_registrar_masterlist_file_groups')) {
         }
 
         return $groups;
+    }
+}
+
+if (!function_exists('schogms_registrar_masterlist_campuses')) {
+    /** @return list<string> */
+    function schogms_registrar_masterlist_campuses(?mysqli $db = null): array
+    {
+        $db = $db instanceof mysqli ? $db : schogms_registrar_db();
+        $campuses = [];
+        $result = $db->query(
+            "SELECT DISTINCT campus FROM registrar_master_list
+             WHERE campus IS NOT NULL AND TRIM(campus) <> ''
+             ORDER BY campus ASC"
+        );
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $campuses[] = (string) ($row['campus'] ?? '');
+            }
+        }
+
+        return $campuses;
     }
 }
 
@@ -194,6 +215,62 @@ if (!function_exists('schogms_registrar_masterlist_fetch')) {
     }
 }
 
+if (!function_exists('schogms_registrar_documents')) {
+    /**
+     * COR/COG list for registrar pages (same data as coordinator — document_uploads).
+     *
+     * @return array{rows: array<int, array<string, mixed>>, error: string}
+     */
+    function schogms_registrar_documents(mysqli $conn, string $campus, string $category, int $limit = 500): array
+    {
+        require_once __DIR__ . '/../../coordinator/inc/cor_cog_upload_helpers.php';
+
+        $rows = [];
+        $error = '';
+        $category = strtoupper(trim($category));
+        if (!in_array($category, ['COR', 'COG'], true)) {
+            return ['rows' => [], 'error' => 'Invalid document category.'];
+        }
+        $limit = max(1, min($limit, 2000));
+        $campus = trim($campus);
+
+        try {
+            if ($campus !== '') {
+                $stmt = $conn->prepare(
+                    'SELECT id, campus, file_group, category, file_name, file_path, uploaded_at
+                     FROM document_uploads
+                     WHERE category = ? AND campus = ?
+                     ORDER BY uploaded_at DESC
+                     LIMIT ?'
+                );
+                $stmt->bind_param('ssi', $category, $campus, $limit);
+            } else {
+                $stmt = $conn->prepare(
+                    'SELECT id, campus, file_group, category, file_name, file_path, uploaded_at
+                     FROM document_uploads
+                     WHERE category = ?
+                     ORDER BY uploaded_at DESC
+                     LIMIT ?'
+                );
+                $stmt->bind_param('si', $category, $limit);
+            }
+            $stmt->execute();
+            $res = $stmt->get_result();
+            while ($res && ($row = $res->fetch_assoc())) {
+                $path = (string) ($row['file_path'] ?? '');
+                $row['file_path'] = schogms_cor_cog_file_href($path, 'registrar');
+                $rows[] = $row;
+            }
+            $stmt->close();
+        } catch (Throwable $e) {
+            $error = 'Could not load documents.';
+            schogms_log_error('Registrar document_uploads: ' . $e->getMessage());
+        }
+
+        return ['rows' => $rows, 'error' => $error];
+    }
+}
+
 if (!function_exists('schogms_registrar_document_fetch')) {
     /**
      * @param array<string, mixed> $params
@@ -277,10 +354,8 @@ if (!function_exists('schogms_registrar_document_fetch')) {
                 } elseif (stripos($fg, 'summer') !== false) {
                     $sem = 'Summer';
                 }
-                $filePath = (string) ($row['file_path'] ?? '');
-                if ($filePath !== '' && $filePath[0] !== '/') {
-                    $filePath = '../../' . ltrim($filePath, '/');
-                }
+                require_once __DIR__ . '/../../coordinator/inc/cor_cog_upload_helpers.php';
+                $filePath = schogms_cor_cog_file_href((string) ($row['file_path'] ?? ''), 'registrar');
                 $rows[] = [
                     'category' => $row['category'] ?? '',
                     'original_name' => $row['file_name'] ?? '',

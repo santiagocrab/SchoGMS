@@ -1,6 +1,19 @@
 # Demo test data (SchoGMS)
 
-## Run the seed
+## Presentation kit (manual upload — all accounts)
+
+For a **step-by-step demo** with real files to upload in order:
+
+1. Build files: `/Applications/XAMPP/xamppfiles/bin/php tools/build_demo_package.php`
+2. Read: **`demo/DEMO_GUIDE.md`** (when to upload each file per role)
+3. Files live in: **`demo/files/`** (`01_registrar`, `02_coordinator`, `03_cor_cog`, `04_chairman`)
+4. Logins: **`demo/ACCOUNTS.md`**
+
+Uses file group prefix **`DEMO PRESENT |`** (5 scholars, ACCESS campus).
+
+---
+
+## Run the seed (auto-fill database)
 
 **Massive (default)** — thousands of rows + hundreds of files:
 

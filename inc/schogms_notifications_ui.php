@@ -4,6 +4,7 @@
  */
 
 require_once __DIR__ . '/schogms_notifications.php';
+require_once __DIR__ . '/schogms_app_scripts.php';
 
 if (!function_exists('schogms_notifications_render_bell')) {
     function schogms_notifications_render_bell(mysqli $conn, int $userId, string $role): void
@@ -18,7 +19,7 @@ if (!function_exists('schogms_notifications_render_bell')) {
             : '';
         ?>
         <li class="nav-item dropdown schogms-notif-wrap">
-            <a class="nav-link schogms-notif-toggle" href="javascript:void(0)" id="schogmsNotifToggle"
+            <a class="nav-link dropdown-toggle schogms-notif-toggle" href="javascript:void(0)" id="schogmsNotifToggle"
                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Notifications">
                 <i data-feather="bell" class="schogms-notif-icon"></i>
                 <?= $badge ?>
@@ -36,7 +37,9 @@ if (!function_exists('schogms_notifications_render_bell')) {
         </li>
         <style>
             .schogms-notif-wrap { position: relative; }
-            .schogms-notif-toggle { position: relative; padding: 0.5rem 0.75rem !important; }
+            .topbar { position: relative; z-index: 1030; }
+            .topbar .dropdown-menu { z-index: 1050; }
+            .schogms-notif-toggle { position: relative; padding: 0.5rem 0.75rem !important; cursor: pointer; }
             .schogms-notif-icon { width: 20px; height: 20px; }
             .schogms-notif-badge {
                 position: absolute; top: 4px; right: 2px;
@@ -63,7 +66,7 @@ if (!function_exists('schogms_notifications_footer_script')) {
         ?>
         <script>
         (function () {
-            var apiUrl = '../notifications_api.php';
+            var apiUrl = <?= json_encode(schogms_notifications_api_url(), JSON_THROW_ON_ERROR) ?>;
             var toggle = document.getElementById('schogmsNotifToggle');
             if (!toggle) return;
 
@@ -128,8 +131,11 @@ if (!function_exists('schogms_notifications_footer_script')) {
                     });
             }
 
+            if (typeof jQuery !== 'undefined') {
+                jQuery(toggle).on('shown.bs.dropdown', loadNotifications);
+            }
             toggle.addEventListener('click', function () {
-                setTimeout(loadNotifications, 80);
+                setTimeout(loadNotifications, 120);
             });
 
             if (listEl) {

@@ -4,5 +4,5 @@
  */
 include 'config/session.php';
 
-header('Location: file_groups.php?status=pending');
+header('Location: annex7.php?status=pending');
 exit;

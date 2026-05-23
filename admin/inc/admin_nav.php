@@ -150,8 +150,11 @@ if (!function_exists('schogms_admin_shell_open')) {
 }
 
 if (!function_exists('schogms_admin_shell_close')) {
-    function schogms_admin_shell_close(): void
+    /** @param array{datatables?:bool} $footerOpts */
+    function schogms_admin_shell_close(array $footerOpts = []): void
     {
         echo "</div><!-- /.page-wrapper -->\n</div><!-- /#main-wrapper -->\n";
+        require_once __DIR__ . '/admin_assets.php';
+        schogms_admin_footer_scripts($footerOpts);
     }
 }

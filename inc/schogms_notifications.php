@@ -324,6 +324,139 @@ if (!function_exists('schogms_notify_file_group_submitted')) {
     }
 }
 
+if (!function_exists('schogms_notify_annex7_submitted')) {
+    /**
+     * Coordinator Annex 7 upload → notify chairman (+ confirmation to uploader).
+     *
+     * @param array{id?: int, name?: string, email?: string} $uploader
+     */
+    function schogms_notify_annex7_submitted(
+        mysqli $conn,
+        string $campus,
+        string $fileName,
+        array $uploader
+    ): void {
+        require_once __DIR__ . '/../config/email_templates.php';
+
+        $campus = trim($campus);
+        $fileName = trim($fileName);
+        $uploaderName = trim((string) ($uploader['name'] ?? 'Coordinator'));
+        $uploaderId = isset($uploader['id']) ? (int) $uploader['id'] : 0;
+        $chairLink = 'annex7.php?status=pending';
+        $chairTitle = 'New Annex 7 submitted';
+        $chairMsg = "{$uploaderName} submitted Annex 7 \"{$fileName}\" for campus {$campus}. Please review and approve.";
+
+        foreach (schogms_notifications_chairman_users($conn) as $chair) {
+            if ($chair['user_id'] < 1) {
+                continue;
+            }
+            schogms_notifications_create(
+                $conn,
+                $chair['user_id'],
+                'annex7_pending',
+                $chairTitle,
+                $chairMsg,
+                $chairLink,
+                null,
+                $campus,
+                $fileName
+            );
+            if ($chair['email'] !== '' && filter_var($chair['email'], FILTER_VALIDATE_EMAIL)) {
+                $html = schogms_email_file_group_pending_chairman([
+                    'name' => $chair['name'] !== '' ? $chair['name'] : 'Chairman',
+                    'program' => 'Annex 7',
+                    'campus' => $campus,
+                    'file_group' => $fileName,
+                    'uploader' => 'Coordinator · ' . $uploaderName,
+                    'link' => schogms_app_base_url() . '/users/chairman/' . $chairLink,
+                ]);
+                schogms_send_mail(
+                    $chair['email'],
+                    'SchoGMS: New Annex 7 awaiting your review',
+                    $html,
+                    $chair['name'] !== '' ? $chair['name'] : null
+                );
+            }
+        }
+
+        if ($uploaderId > 0) {
+            schogms_notifications_create(
+                $conn,
+                $uploaderId,
+                'annex7_waiting',
+                'Annex 7 submitted',
+                "Your Annex 7 file \"{$fileName}\" was submitted and is waiting for chairman approval.",
+                'submit_form.php',
+                null,
+                $campus,
+                $fileName
+            );
+        }
+    }
+}
+
+if (!function_exists('schogms_notify_annex7_reviewed')) {
+    function schogms_notify_annex7_reviewed(
+        mysqli $conn,
+        int $submissionId,
+        string $status,
+        string $reviewerName
+    ): void {
+        require_once __DIR__ . '/../config/email_templates.php';
+        require_once __DIR__ . '/schogms_annex7.php';
+
+        $row = schogms_annex7_fetch($conn, $submissionId);
+        if ($row === null) {
+            return;
+        }
+
+        $uploaderId = (int) ($row['user_id'] ?? 0);
+        if ($uploaderId < 1) {
+            return;
+        }
+
+        $campus = (string) ($row['campus'] ?? '');
+        $fileName = (string) ($row['file_name'] ?? '');
+        $approved = strtolower($status) === 'approved';
+
+        $title = $approved ? 'Annex 7 approved' : 'Annex 7 declined';
+        $message = $approved
+            ? "Chairman {$reviewerName} approved your Annex 7 \"{$fileName}\" for {$campus}."
+            : "Chairman {$reviewerName} declined your Annex 7 \"{$fileName}\" for {$campus}.";
+
+        schogms_notifications_create(
+            $conn,
+            $uploaderId,
+            $approved ? 'annex7_approved' : 'annex7_rejected',
+            $title,
+            $message,
+            'submit_form.php',
+            null,
+            $campus,
+            $fileName
+        );
+
+        $uploader = schogms_notifications_user_by_id($conn, $uploaderId);
+        if ($uploader === null || $uploader['email'] === '' || !filter_var($uploader['email'], FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+
+        if ($approved) {
+            $html = schogms_email_chairman_approved([
+                'campus' => $campus,
+                'file_name' => $fileName,
+                'user_id' => (string) $uploaderId,
+            ]);
+            schogms_send_mail(
+                $uploader['email'],
+                'Annex 7 Approved — SchoGMS',
+                $html,
+                $uploader['name'] !== '' ? $uploader['name'] : 'Coordinator'
+            );
+        }
+    }
+}
+
 if (!function_exists('schogms_notify_file_group_reviewed')) {
     function schogms_notify_file_group_reviewed(
         mysqli $conn,
